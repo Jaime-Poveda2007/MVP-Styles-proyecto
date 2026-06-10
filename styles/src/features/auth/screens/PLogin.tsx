@@ -1,3 +1,4 @@
+// src/features/auth/screens/PLogin.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -14,14 +15,10 @@ import { supabase } from '../../../lib/supabase';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
-// ─── Constantes de bloqueo (RF-U01) ──────────────────────────────────────────
-
 const MAX_INTENTOS = 5;
-const BLOQUEO_MS = 15 * 60 * 1000; // 15 minutos en milisegundos
+const BLOQUEO_MS = 15 * 60 * 1000;
 const KEY_INTENTOS = 'login_intentos';
 const KEY_BLOQUEO = 'login_bloqueo_timestamp';
-
-// ─── Helpers de AsyncStorage ──────────────────────────────────────────────────
 
 const getIntentos = async (): Promise<number> => {
   const val = await AsyncStorage.getItem(KEY_INTENTOS);
@@ -38,13 +35,10 @@ const resetBloqueo = async () => {
   await AsyncStorage.removeItem(KEY_BLOQUEO);
 };
 
-// Devuelve los minutos que faltan para desbloquear, o 0 si ya pasaron
 const minutosRestantes = (timestamp: number): number => {
   const diff = BLOQUEO_MS - (Date.now() - timestamp);
   return diff > 0 ? Math.ceil(diff / 60000) : 0;
 };
-
-// ─── Pantalla ─────────────────────────────────────────────────────────────────
 
 export default function LoginScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
@@ -61,9 +55,8 @@ export default function LoginScreen({ navigation }: Props) {
     setLoading(true);
 
     try {
-      // ── Verificar si la cuenta está bloqueada ────────────────────────────
+      // Verificar bloqueo
       const timestamp = await getTimestampBloqueo();
-
       if (timestamp) {
         const mins = minutosRestantes(timestamp);
         if (mins > 0) {
@@ -73,23 +66,19 @@ export default function LoginScreen({ navigation }: Props) {
           );
           return;
         }
-        // Ya pasaron los 15 minutos: resetear conteo
         await resetBloqueo();
       }
 
-      // ── Intento de login ─────────────────────────────────────────────────
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
       });
 
       if (error) {
-        // Contar intento fallido
         const intentos = (await getIntentos()) + 1;
         await AsyncStorage.setItem(KEY_INTENTOS, String(intentos));
 
         if (intentos >= MAX_INTENTOS) {
-          // Guardar timestamp del momento del bloqueo
           await AsyncStorage.setItem(KEY_BLOQUEO, String(Date.now()));
           Alert.alert(
             'Cuenta bloqueada',
@@ -106,11 +95,27 @@ export default function LoginScreen({ navigation }: Props) {
         return;
       }
 
-      // ── Login exitoso: limpiar conteo ────────────────────────────────────
+      // Login exitoso
       await resetBloqueo();
 
-      // La navegación al Home la maneja App.tsx al detectar la sesión activa.
-      // No es necesario navegar manualmente aquí.
+      if (data.user) {
+        // Verificar si ya completó el onboarding
+        const { data: usuario } = await supabase
+          .from('usuarios')
+          .select('onboarding_completo')
+          .eq('id', data.user.id)
+          .single();
+
+        // En handleLogin, reemplaza el navigate actual:
+        if (usuario?.onboarding_completo) {
+          Alert.alert('Bienvenido', 'Login exitoso. El Feed se implementa en el Mes 2.');
+        } else {
+          navigation.navigate('OnboardingEstilo', {
+            userId: data.user.id,
+            onComplete: () => { }, // App.tsx lo detecta vía onAuthStateChange + refreshSession
+          });
+        }
+      }
 
     } catch (err: any) {
       Alert.alert('Error', err.message ?? 'Ocurrió un error inesperado.');
@@ -150,16 +155,12 @@ export default function LoginScreen({ navigation }: Props) {
         </TouchableOpacity>
       </View>
 
-      {/* Recuperar contraseña — se activa en la siguiente pantalla */}
       <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
         <Text>¿Olvidaste tu contraseña?</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={handleLogin} disabled={loading}>
-        {loading
-          ? <ActivityIndicator />
-          : <Text>Iniciar sesión</Text>
-        }
+        {loading ? <ActivityIndicator /> : <Text>Iniciar sesión</Text>}
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate('Register')}>

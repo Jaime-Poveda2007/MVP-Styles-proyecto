@@ -8,33 +8,32 @@ import ForgotPasswordScreen from './screens/PRecuperarPassword';
 import OnboardingEstiloScreen from './screens/POnboardingEstilo';
 
 export type AuthStackParamList = {
-  Login: undefined;
+  Login: { onLoginExitoso: () => void } | undefined;
   Register: undefined;
   EmailConfirmation: { email: string };
   ForgotPassword: undefined;
-  OnboardingEstilo: {
-    userId: string;
-    onComplete: () => void; // ← se pasa como param
-  };
+  OnboardingEstilo: { userId: string; onComplete: () => void };
 };
 
-const Stack = createNativeStackNavigator<AuthStackParamList>();
+const Stack = createNativeStackNavigator<AuthStackParamList>(); // ← esta línea faltaba
 
 interface Props {
   initialRoute?: keyof AuthStackParamList;
-  onboardingParams?: {
-    userId: string;
-    onComplete: () => void;
-  };
+  onboardingParams?: { userId: string; onComplete: () => void };
+  onLoginExitoso?: () => void;
 }
 
-export default function AuthNavigator({ initialRoute = 'Login', onboardingParams }: Props) {
+export default function AuthNavigator({ initialRoute = 'Login', onboardingParams, onLoginExitoso }: Props) {
   return (
     <Stack.Navigator
       initialRouteName={initialRoute}
       screenOptions={{ headerShown: false }}
     >
-      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen
+        name="Login"
+        component={LoginScreen}
+        initialParams={{ onLoginExitoso }}
+      />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="EmailConfirmation" component={EmailConfirmationScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />

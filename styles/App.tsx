@@ -63,7 +63,12 @@ export default function App() {
         <RootStack.Navigator screenOptions={{ headerShown: false }}>
           {estado === 'listo' ? (
             <RootStack.Screen name="Home">
-              {() => <HomeScreen onCerrarSesion={() => setEstado('sin-sesion')} />}
+                      {() => (
+          <HomeScreen
+            userId={userId ?? ''}
+            onCerrarSesion={() => setEstado('sin-sesion')}
+          />
+        )}
             </RootStack.Screen>
           ) : (
             <RootStack.Screen name="Auth">

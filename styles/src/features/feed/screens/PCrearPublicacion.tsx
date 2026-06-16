@@ -11,15 +11,22 @@ import {
     subirImagen,
     crearPublicacion,
 } from '../services/publicacionesService';
+import EtiquetadoImagen, {
+    EtiquetaPendiente,
+} from '../../etiquetas/components/EtiquetadoImagen';
+import {
+    crearEtiquetaCatalogo,
+    crearEtiquetaManual,
+} from '../../etiquetas/etiquetas.api';
 
 interface Props {
     onPublicado: () => void;
 }
-
 export default function PCrearPublicacion({ onPublicado }: Props) {
     const [imagenUri, setImagenUri] = useState<string | null>(null);
     const [descripcion, setDescripcion] = useState('');
     const [cargando, setCargando] = useState(false);
+    const [etiquetas, setEtiquetas] = useState<EtiquetaPendiente[]>([]);
 
     const elegirDeGaleria = async () => {
         try {
@@ -29,7 +36,6 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
             Alert.alert('Error', e.message);
         }
     };
-
     const usarCamara = async () => {
         try {
             const uri = await tomarFoto();
@@ -37,6 +43,19 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
         } catch (e: any) {
             Alert.alert('Error', e.message);
         }
+    };
+
+    // ── Etiquetado (RF-U09): se guarda solo en memoria mientras se edita ──
+    const agregarEtiqueta = (etiqueta: EtiquetaPendiente) => {
+        setEtiquetas((prev) => [...prev, etiqueta]);
+    };
+    const eliminarEtiqueta = (id: string) => {
+        setEtiquetas((prev) => prev.filter((e) => e.id !== id));
+    };
+    const reposicionarEtiqueta = (id: string, posX: number, posY: number) => {
+        setEtiquetas((prev) =>
+            prev.map((e) => (e.id === id ? { ...e, posX, posY } : e))
+        );
     };
 
     const publicar = async () => {
@@ -48,10 +67,42 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
         try {
             const uriFinal = await comprimirSiEsNecesario(imagenUri);
             const url = await subirImagen(uriFinal);
-            await crearPublicacion(url, descripcion);
+            const publicacionId = await crearPublicacion(url, descripcion);
+
+            // Guardar las etiquetas pendientes en Supabase, una por una.
+            // Si alguna falla, se avisa pero la publicación ya quedó creada.
+            for (const etq of etiquetas) {
+                if (
+                    typeof etq.posX !== 'number' ||
+                    typeof etq.posY !== 'number' ||
+                    Number.isNaN(etq.posX) ||
+                    Number.isNaN(etq.posY)
+                ) {
+                    console.error('Etiqueta con posición inválida, se omite:', etq);
+                    continue;
+                }
+                if (etq.esManual) {
+                    await crearEtiquetaManual({
+                        publicacionId,
+                        posX: etq.posX,
+                        posY: etq.posY,
+                        nombreManual: etq.nombreManual!,
+                        marcaManual: etq.marcaManual,
+                        precioManual: etq.precioManual,
+                    });
+                } else {
+                    await crearEtiquetaCatalogo({
+                        publicacionId,
+                        posX: etq.posX,
+                        posY: etq.posY,
+                        prendaId: etq.prendaId!,
+                    });
+                }
+            }
 
             setImagenUri(null);
             setDescripcion('');
+            setEtiquetas([]);
             onPublicado();
         } catch (e: any) {
             Alert.alert('Error al publicar', e.message ?? 'Algo salió mal.');
@@ -59,24 +110,25 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
             setCargando(false);
         }
     };
-
     return (
         <ScrollView contentContainerStyle={styles.container}>
-
             <TouchableOpacity onPress={onPublicado}>
                 <Text>← Volver</Text>
             </TouchableOpacity>
-
             <Text style={styles.titulo}>Nueva publicación</Text>
-
             {imagenUri ? (
-                <Image source={{ uri: imagenUri }} style={styles.preview} />
+                <EtiquetadoImagen
+                    imagenUri={imagenUri}
+                    etiquetas={etiquetas}
+                    onAgregarEtiqueta={agregarEtiqueta}
+                    onEliminarEtiqueta={eliminarEtiqueta}
+                    onReposicionarEtiqueta={reposicionarEtiqueta}
+                />
             ) : (
                 <View style={styles.placeholder}>
                     <Text style={{ color: C.muted }}>Sin imagen seleccionada</Text>
                 </View>
             )}
-
             <View style={styles.fila}>
                 <TouchableOpacity style={styles.botonSecundario} onPress={elegirDeGaleria}>
                     <Text style={styles.textoSecundario}>Galería</Text>
@@ -85,7 +137,6 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
                     <Text style={styles.textoSecundario}>Cámara</Text>
                 </TouchableOpacity>
             </View>
-
             <TextInput
                 style={styles.input}
                 placeholder="Describe tu outfit (máx. 300 caracteres)"
@@ -96,7 +147,6 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
                 maxLength={300}
             />
             <Text style={styles.contador}>{descripcion.length}/300</Text>
-
             <TouchableOpacity
                 style={[styles.botonPrincipal, cargando && { opacity: 0.6 }]}
                 onPress={publicar}
@@ -110,7 +160,6 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
         </ScrollView>
     );
 }
-
 const styles = StyleSheet.create({
     container: { padding: 16, gap: 12, backgroundColor: C.surface, flexGrow: 1 },
     titulo: { fontSize: 20, fontWeight: '700', color: C.ink },

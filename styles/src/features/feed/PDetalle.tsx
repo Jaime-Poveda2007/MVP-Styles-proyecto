@@ -55,10 +55,16 @@ export default function PDetalle({ publicacion: pub, userId, onVolver }: Props) 
         {/* Imagen con etiquetas */}
         <View style={d.imagenWrap}>
           <Image source={{ uri: pub.imagen_url }} style={d.imagen} resizeMode="cover" />
+          {/*
+            pos_x y pos_y se guardan en Supabase como fracción 0–1
+            (igual que en la pantalla de creación, EtiquetadoImagen.tsx).
+            Se multiplican por 100 aquí porque "left"/"top" en CSS/RN
+            esperan un porcentaje (0–100), no la fracción cruda.
+          */}
           {pub.etiquetas.map(etq => (
             <TouchableOpacity
               key={etq.id}
-              style={[d.etqPunto, { left: `${etq.pos_x}%`, top: `${etq.pos_y}%` }, etqSel?.id === etq.id && d.etqPuntoActivo]}
+              style={[d.etqPunto, { left: `${etq.pos_x * 100}%`, top: `${etq.pos_y * 100}%` }, etqSel?.id === etq.id && d.etqPuntoActivo]}
               onPress={() => setEtqSel(prev => prev?.id === etq.id ? null : etq)}
             >
               <Tag size={10} color="#fff" strokeWidth={2.5} />
@@ -66,9 +72,9 @@ export default function PDetalle({ publicacion: pub, userId, onVolver }: Props) 
           ))}
           {etqSel && (
             <View style={[d.popup, {
-              left:  etqSel.pos_x <= 60 ? `${Math.min(etqSel.pos_x, 55)}%` : undefined,
-              right: etqSel.pos_x >  60 ? '8%' : undefined,
-              top:   `${Math.min(etqSel.pos_y + 5, 70)}%`,
+              left:  etqSel.pos_x * 100 <= 60 ? `${Math.min(etqSel.pos_x * 100, 55)}%` : undefined,
+              right: etqSel.pos_x * 100 >  60 ? '8%' : undefined,
+              top:   `${Math.min(etqSel.pos_y * 100 + 5, 70)}%`,
             }]}>
               <Text style={d.popupNombre}>{etqSel.es_manual ? etqSel.nombre_manual : etqSel.prenda?.nombre}</Text>
               <Text style={d.popupMarca}>{etqSel.es_manual ? etqSel.marca_manual : etqSel.prenda?.marca?.nombre}</Text>

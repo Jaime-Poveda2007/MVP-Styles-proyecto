@@ -8,6 +8,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthStackParamList } from '../NavDeAuntenticacion';
 import { supabase } from '../../../lib/supabase';
+import { asegurarPerfilUsuario } from '../../../lib/perfil';
 import { C, R } from '../../../shared/theme';
 
 interface FormData {
@@ -105,9 +106,17 @@ export default function RegisterScreen({ navigation }: Props) {
         throw error;
       }
       if (data.user) {
-        data.session
-          ? navigation.navigate('OnboardingEstilo', { userId: data.user.id, onComplete: () => {} })
-          : navigation.navigate('EmailConfirmation', { email: form.email.trim().toLowerCase() });
+        if (data.session) {
+          // El proyecto de Supabase tiene confirmación de email desactivada
+          // (o ya estaba confirmado): hay sesión inmediata, así que el
+          // perfil en public.usuarios se crea de una vez.
+          const perfil = await asegurarPerfilUsuario(data.session);
+          navigation.navigate('OnboardingEstilo', { userId: perfil.id, onComplete: () => {} });
+        } else {
+          // Confirmación de email obligatoria (RF-U01): el perfil se crea
+          // en el primer login exitoso, una vez haya sesión real (ver PLogin.tsx).
+          navigation.navigate('EmailConfirmation', { email: form.email.trim().toLowerCase() });
+        }
       }
     } catch (err: any) {
       Alert.alert('Error al registrarse', err.message ?? 'Ocurrió un error inesperado.');

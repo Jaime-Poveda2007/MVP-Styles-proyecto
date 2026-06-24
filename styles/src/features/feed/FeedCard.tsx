@@ -1,12 +1,14 @@
 // src/features/feed/FeedCard.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View, Text, Image, TouchableOpacity,
-  StyleSheet, useWindowDimensions,
+  StyleSheet, useWindowDimensions, Alert,
 } from 'react-native';
-import { Heart, Repeat2 } from 'lucide-react-native';
 import { Publicacion } from './types';
-import { supabase } from '../../lib/supabase';
+import { useLikes } from './useLikes';
+import IconCorazon from '../../shared/icons/IconCorazon';
+import IconRepost from '../../shared/icons/IconRepost';
+import ImagenConCarga from '../../shared/components/ImagenConCarga';
 import { C } from '../../shared/theme';
 
 const GAP     = 8;
@@ -23,24 +25,23 @@ export default function FeedCard({ item, userId, onPress }: Props) {
   const CARD_WIDTH  = (width - PADDING * 2 - GAP) / 2;
   const CARD_HEIGHT = CARD_WIDTH * 1.2; // ratio 6:5 — compacto y proporcional
 
-  const [likes,    setLikes]    = useState(item.likes_count);
-  const [yoDiLike, setYoDiLike] = useState(item.yo_di_like);
-  const [toggling, setToggling] = useState(false);
+  // RF-U06: no se puede dar like a una publicación propia (de usuario o de marca)
+  const esPropia = item.usuario_id === userId || item.marca_id === userId;
 
-  const toggleLike = async () => {
-    if (toggling) return;
-    setToggling(true);
-    const nuevo = !yoDiLike;
-    setYoDiLike(nuevo);
-    setLikes(p => p + (nuevo ? 1 : -1));
-    if (nuevo) {
-      await supabase.from('likes').insert({ usuario_id: userId, publicacion_id: item.id });
-    } else {
-      await supabase.from('likes').delete()
-        .eq('usuario_id', userId)
-        .eq('publicacion_id', item.id);
+  const { likes, yoLike, toggleLike } = useLikes({
+    publicacionId: item.id,
+    userId,
+    esPropia,
+    likesInicial: item.likes_count,
+    yoLikeInicial: item.yo_di_like,
+  });
+
+  const onPressLike = async () => {
+    if (esPropia) {
+      Alert.alert('No puedes dar like', 'No puedes dar like a tu propia publicación.');
+      return;
     }
-    setToggling(false);
+    await toggleLike();
   };
 
   const nombre  = item.es_de_marca ? item.marca?.nombre   : item.usuario?.username;
@@ -52,10 +53,9 @@ export default function FeedCard({ item, userId, onPress }: Props) {
       onPress={() => onPress(item)}
       activeOpacity={0.93}
     >
-      <Image
-        source={{ uri: item.imagen_url }}
+      <ImagenConCarga
+        uri={item.imagen_url}
         style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}
-        resizeMode="cover"
       />
 
       {item.es_de_marca && (
@@ -76,20 +76,19 @@ export default function FeedCard({ item, userId, onPress }: Props) {
         </View>
 
         <View style={s.acciones}>
-          <TouchableOpacity style={s.accionBtn} onPress={toggleLike} activeOpacity={0.7}>
-            <Heart
-              size={13}
-              color={yoDiLike ? C.earth : C.muted}
-              fill={yoDiLike ? C.earth : 'none'}
-              strokeWidth={2}
-            />
+          <TouchableOpacity
+            style={[s.accionBtn, esPropia && s.accionBtnDeshabilitado]}
+            onPress={onPressLike}
+            activeOpacity={esPropia ? 1 : 0.7}
+          >
+            <IconCorazon activo={yoLike} size={14} colorInactivo={esPropia ? C.border : C.muted} />
             {likes > 0 && (
-              <Text style={[s.count, yoDiLike && { color: C.earth }]}>{likes}</Text>
+              <Text style={[s.count, yoLike && { color: C.earth }]}>{likes}</Text>
             )}
           </TouchableOpacity>
 
           <View style={s.accionBtn}>
-            <Repeat2 size={13} color={C.muted} strokeWidth={2} />
+            <IconRepost size={14} colorInactivo={C.muted} />
             {item.reposts_count > 0 && (
               <Text style={s.count}>{item.reposts_count}</Text>
             )}
@@ -112,5 +111,6 @@ const s = StyleSheet.create({
   autorNombre: { fontSize: 11, color: C.muted, fontWeight: '500', flex: 1 },
   acciones:    { flexDirection: 'row', gap: 8 },
   accionBtn:   { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  accionBtnDeshabilitado: { opacity: 0.5 },
   count:       { fontSize: 11, color: C.muted, fontWeight: '500' },
 });

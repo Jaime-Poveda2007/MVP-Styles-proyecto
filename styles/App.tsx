@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './src/lib/supabase';
+import { asegurarPerfilUsuario } from './src/lib/perfil';
 import AuthNavigator from './src/features/auth/NavDeAuntenticacion';
 import HomeScreen from './src/features/Home/NavHome';
 
@@ -27,14 +28,15 @@ export default function App() {
       setEstado('sin-sesion');
       return;
     }
-    const { data: perfil } = await supabase
-      .from('usuarios')
-      .select('onboarding_completo')
-      .eq('id', session.user.id)
-      .single();
-
-    setUserId(session.user.id);
-    setEstado(perfil?.onboarding_completo ? 'listo' : 'onboarding-pendiente');
+    try {
+      const perfil = await asegurarPerfilUsuario(session);
+      setUserId(perfil.id);
+      setEstado(perfil.onboardingCompleto ? 'listo' : 'onboarding-pendiente');
+    } catch {
+      // Si falla la creación/lectura del perfil, no dejamos a la persona
+      // atrapada en el splash: la mandamos a iniciar sesión de nuevo.
+      setEstado('sin-sesion');
+    }
   };
 
   useEffect(() => {

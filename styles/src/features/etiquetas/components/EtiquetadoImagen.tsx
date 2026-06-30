@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Image,
   Pressable,
   Text,
   GestureResponderEvent,
-  LayoutChangeEvent,
 } from 'react-native';
 import SelectorTipoEtiqueta from './SelectorTipoEtiqueta';
 
@@ -22,7 +21,6 @@ export interface EtiquetaPendiente {
   nombreManual?: string;
   marcaManual?: string;
   precioManual?: number;
-  estiloId?: string | null;
 }
 
 interface Props {
@@ -47,35 +45,56 @@ export default function EtiquetadoImagen({
     null
   );
   const [etiquetaEditando, setEtiquetaEditando] = useState<string | null>(null);
-
-  function onLayoutImagen(e: LayoutChangeEvent) {
-    const { width, height } = e.nativeEvent.layout;
-    setTamanoImagen({ width, height });
-  }
+  const contenedorRef = useRef<View>(null);
 
   function onTocarImagen(e: GestureResponderEvent) {
     if (etiquetas.length >= maxEtiquetas) {
+      // límite alcanzado, no abrir selector
       return;
     }
-    if (tamanoImagen.width === 0 || tamanoImagen.height === 0) return;
+    if (!contenedorRef.current) return;
 
-    const { locationX, locationY } = e.nativeEvent;
+    const { pageX, pageY } = e.nativeEvent;
 
-    const posX = locationX / tamanoImagen.width;
-    const posY = locationY / tamanoImagen.height;
+    // measure() da la posición absoluta del contenedor en pantalla (px, py)
+    // y su tamaño real renderizado (width, height). Funciona igual en
+    // nativo y en web, a diferencia de locationX/locationY que en web
+    // viene undefined porque el evento real es un PointerEvent del DOM.
+    contenedorRef.current.measure((_x, _y, width, height, px, py) => {
+      if (width === 0 || height === 0) {
+        console.warn('EtiquetadoImagen: measure() devolvió tamaño 0, intenta de nuevo');
+        return;
+      }
 
-    setPuntoPendiente({ x: posX, y: posY });
+      const posX = (pageX - px) / width;
+      const posY = (pageY - py) / height;
+
+      if (Number.isNaN(posX) || Number.isNaN(posY)) {
+        console.warn('EtiquetadoImagen: posición calculada inválida', {
+          pageX,
+          pageY,
+          px,
+          py,
+          width,
+          height,
+        });
+        return;
+      }
+
+      // recorta a [0,1] por si el toque cae justo en el borde
+      const posXClamped = Math.min(1, Math.max(0, posX));
+      const posYClamped = Math.min(1, Math.max(0, posY));
+
+      setTamanoImagen({ width, height });
+      setPuntoPendiente({ x: posXClamped, y: posYClamped });
+    });
   }
 
   function cerrarSelector() {
     setPuntoPendiente(null);
   }
 
-  function confirmarEtiquetaCatalogo(
-    prendaId: string,
-    prendaNombre: string,
-    estiloId: string | null
-  ) {
+  function confirmarEtiquetaCatalogo(prendaId: string, prendaNombre: string) {
     if (!puntoPendiente) return;
     onAgregarEtiqueta({
       id: `temp-${Date.now()}`,
@@ -84,7 +103,6 @@ export default function EtiquetadoImagen({
       esManual: false,
       prendaId,
       prendaNombre,
-      estiloId,
     });
     setPuntoPendiente(null);
   }
@@ -92,8 +110,7 @@ export default function EtiquetadoImagen({
   function confirmarEtiquetaManual(
     nombreManual: string,
     marcaManual?: string,
-    precioManual?: number,
-    estiloId?: string | null
+    precioManual?: number
   ) {
     if (!puntoPendiente) return;
     onAgregarEtiqueta({
@@ -104,58 +121,59 @@ export default function EtiquetadoImagen({
       nombreManual,
       marcaManual,
       precioManual,
-      estiloId,
     });
     setPuntoPendiente(null);
   }
 
   return (
     <View>
-      <Pressable onPress={onTocarImagen} onLayout={onLayoutImagen}>
-        <Image
-          source={{ uri: imagenUri }}
-          style={{ width: '100%', aspectRatio: 1 }}
-          resizeMode="cover"
-        />
-
-        {/* Pin temporal mientras se elige catálogo/manual */}
-        {puntoPendiente && (
-          <View
-            style={{
-              position: 'absolute',
-              left: puntoPendiente.x * tamanoImagen.width - 12,
-              top: puntoPendiente.y * tamanoImagen.height - 12,
-              width: 24,
-              height: 24,
-              borderRadius: 12,
-              backgroundColor: 'red',
-            }}
+      <View ref={contenedorRef} collapsable={false}>
+        <Pressable onPress={onTocarImagen}>
+          <Image
+            source={{ uri: imagenUri }}
+            style={{ width: '100%', aspectRatio: 1 }}
+            resizeMode="cover"
           />
-        )}
 
-        {/* Pines de etiquetas ya colocadas */}
-        {etiquetas.map((etq) => (
-          <Pressable
-            key={etq.id}
-            onPress={() => setEtiquetaEditando(etq.id)}
-            style={{
-              position: 'absolute',
-              left: etq.posX * tamanoImagen.width - 12,
-              top: etq.posY * tamanoImagen.height - 12,
-              width: 24,
-              height: 24,
-              borderRadius: 12,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: etq.esManual ? '#999' : '#444',
-            }}
-          >
-            <Text style={{ color: '#fff', fontSize: 10 }}>
-              {etq.esManual ? 'M' : 'C'}
-            </Text>
-          </Pressable>
-        ))}
-      </Pressable>
+          {/* Pin temporal mientras se elige catálogo/manual */}
+          {puntoPendiente && (
+            <View
+              style={{
+                position: 'absolute',
+                left: puntoPendiente.x * tamanoImagen.width - 12,
+                top: puntoPendiente.y * tamanoImagen.height - 12,
+                width: 24,
+                height: 24,
+                borderRadius: 12,
+                backgroundColor: 'red',
+              }}
+            />
+          )}
+
+          {/* Pines de etiquetas ya colocadas */}
+          {etiquetas.map((etq) => (
+            <Pressable
+              key={etq.id}
+              onPress={() => setEtiquetaEditando(etq.id)}
+              style={{
+                position: 'absolute',
+                left: etq.posX * tamanoImagen.width - 12,
+                top: etq.posY * tamanoImagen.height - 12,
+                width: 24,
+                height: 24,
+                borderRadius: 12,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: etq.esManual ? '#999' : '#444',
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 10 }}>
+                {etq.esManual ? 'M' : 'C'}
+              </Text>
+            </Pressable>
+          ))}
+        </Pressable>
+      </View>
 
       <Text>
         {etiquetas.length}/{maxEtiquetas} etiquetas

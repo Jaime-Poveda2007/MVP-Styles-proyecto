@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { Publicacion } from './types';
 import FeedCard from './FeedCard';
+import EsqueletoFeed from './EsqueletoFeed';
 import { C } from '../../shared/theme';
 
 const GAP     = 8;
@@ -36,11 +37,7 @@ export default function FeedGrid({
   ), [userId, onPressTarjeta]);
 
   if (cargando) {
-    return (
-      <View style={g.loader}>
-        <ActivityIndicator size="large" color={C.earth} />
-      </View>
-    );
+    return <EsqueletoFeed />;
   }
 
   return (
@@ -85,7 +82,6 @@ export default function FeedGrid({
 const g = StyleSheet.create({
   content:     { paddingHorizontal: PADDING, paddingTop: 10, paddingBottom: 20 },
   row:         { justifyContent: 'space-between', marginBottom: GAP },
-  loader:      { flex: 1, justifyContent: 'center', alignItems: 'center' },
   footerLoader:{ paddingVertical: 20, alignItems: 'center' },
   empty:       { flex: 1, alignItems: 'center', paddingTop: 80, gap: 12 },
   emptyIcon:   { fontSize: 48 },

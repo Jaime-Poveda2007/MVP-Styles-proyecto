@@ -78,14 +78,25 @@ export default function OnboardingEstilo({ userId, onComplete }: Props) {
   const guardarYCompletar = async () => {
     setGuardando(true);
     try {
-      const { error } = await supabase.from('usuarios').update({
-        preferencias_estilos: preferencias.estilos,
-        preferencias_telas:   preferencias.telas,
-        preferencias_colores: preferencias.colores,
-        onboarding_completo:  true,
-        updated_at:           new Date().toISOString(),
-      }).eq('id', userId);
-      if (error) throw error;
+      // preferencias_usuario es una tabla aparte (estilos/telas/colores),
+      // NO columnas de "usuarios" — alineado con styles_database.sql.
+      const { error: errorPref } = await supabase
+        .from('preferencias_usuario')
+        .upsert({
+          usuario_id: userId,
+          estilos:    preferencias.estilos,
+          telas:      preferencias.telas,
+          colores:    preferencias.colores,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'usuario_id' });
+      if (errorPref) throw errorPref;
+
+      const { error: errorUsuario } = await supabase
+        .from('usuarios')
+        .update({ onboarding_completo: true })
+        .eq('id', userId);
+      if (errorUsuario) throw errorUsuario;
+
       await supabase.auth.refreshSession();
       onComplete();
     } catch {

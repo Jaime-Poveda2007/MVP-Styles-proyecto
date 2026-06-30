@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthStackParamList } from '../NavDeAuntenticacion';
 import { supabase } from '../../../lib/supabase';
+import { asegurarPerfilUsuario } from '../../../lib/perfil';
 import { C, R } from '../../../shared/theme';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
@@ -64,14 +65,13 @@ export default function LoginScreen({ navigation, route }: Props) {
       }
 
       await resetBloqueo();
-      if (data.user) {
-        const { data: perfil } = await supabase
-          .from('usuarios').select('onboarding_completo').eq('id', data.user.id).single();
-        if (perfil?.onboarding_completo) {
+      if (data.user && data.session) {
+        const perfil = await asegurarPerfilUsuario(data.session);
+        if (perfil.onboardingCompleto) {
           route.params?.onLoginExitoso?.();
         } else {
           navigation.navigate('OnboardingEstilo', {
-            userId: data.user.id,
+            userId: perfil.id,
             onComplete: route.params?.onLoginExitoso ?? (() => {}),
           });
         }

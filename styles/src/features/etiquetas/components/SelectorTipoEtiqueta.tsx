@@ -6,12 +6,18 @@ import {
 } from 'react-native';
 import { Search, PenLine, ChevronLeft, X, Tag, Check } from 'lucide-react-native';
 import BuscadorPrendas from './BuscadorPrendas';
-import { C, R } from '../../../shared/theme';
+import SelectorEstilo from './SelectorEstilo';
+import { useEstilos } from '../hooks/useEstilos';
 
 interface Props {
   onCerrar: () => void;
-  onSeleccionarCatalogo: (prendaId: string, prendaNombre: string) => void;
-  onSeleccionarManual: (nombreManual: string, marcaManual?: string, precioManual?: number) => void;
+  onSeleccionarCatalogo: (prendaId: string, prendaNombre: string, estiloId: string | null) => void;
+  onSeleccionarManual: (
+    nombreManual: string,
+    marcaManual?: string,
+    precioManual?: number,
+    estiloId?: string | null
+  ) => void;
 }
 
 type Modo = 'elegir' | 'catalogo' | 'manual';
@@ -23,137 +29,92 @@ export default function SelectorTipoEtiqueta({
   const [nombreManual, setNombreManual] = useState('');
   const [marcaManual, setMarcaManual] = useState('');
   const [precioManual, setPrecioManual] = useState('');
+  const [estiloId, setEstiloId] = useState<string | null>(null);
+
+  const { estilos, loading: loadingEstilos } = useEstilos();
 
   const nombreValido = nombreManual.trim().length > 0;
 
   function enviarManual() {
     if (!nombreValido) return;
     const precio = precioManual ? Number(precioManual) : undefined;
-    onSeleccionarManual(nombreManual.trim(), marcaManual.trim() || undefined, precio);
+    onSeleccionarManual(nombreManual.trim(), marcaManual.trim() || undefined, precio, estiloId);
   }
 
   return (
-    <Modal
-      visible
-      transparent
-      animationType="fade"
-      onRequestClose={onCerrar}
-      statusBarTranslucent
-    >
-      <Pressable style={s.backdrop} onPress={onCerrar} />
+    <View>
+      <Pressable onPress={onCerrar}>
+        <Text>Cancelar</Text>
+      </Pressable>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={s.sheetWrap}
-        pointerEvents="box-none"
-      >
-        <View style={s.sheet}>
-          {/* Handle */}
-          <View style={s.handle} />
+      {modo === 'elegir' && (
+        <View>
+          <Text>¿Qué tipo de etiqueta quieres agregar?</Text>
+          <Pressable onPress={() => setModo('catalogo')}>
+            <Text>Buscar en catálogo</Text>
+          </Pressable>
+          <Pressable onPress={() => setModo('manual')}>
+            <Text>Agregar prenda manual</Text>
+          </Pressable>
+        </View>
+      )}
 
-          {/* Header */}
-          <View style={s.header}>
-            {modo !== 'elegir' ? (
-              <Pressable style={s.headerBtn} onPress={() => setModo('elegir')}>
-                <ChevronLeft size={20} color={C.ink} strokeWidth={2} />
-              </Pressable>
-            ) : <View style={s.headerBtn} />}
+      {modo === 'catalogo' && (
+        <View>
+          <BuscadorPrendas
+            onSeleccionar={(prenda) =>
+              onSeleccionarCatalogo(prenda.id, prenda.nombre, estiloId)
+            }
+          />
+          <SelectorEstilo
+            estilos={estilos}
+            loading={loadingEstilos}
+            seleccionado={estiloId}
+            onSeleccionar={setEstiloId}
+          />
+          <Pressable onPress={() => setModo('elegir')}>
+            <Text>Volver</Text>
+          </Pressable>
+        </View>
+      )}
 
-            <Text style={s.headerTitle}>
-              {modo === 'elegir' && 'Nueva etiqueta'}
-              {modo === 'catalogo' && 'Buscar en catálogo'}
-              {modo === 'manual' && 'Prenda manual'}
-            </Text>
+      {modo === 'manual' && (
+        <View>
+          <Text>Nombre de la prenda</Text>
+          <TextInput
+            value={nombreManual}
+            onChangeText={setNombreManual}
+            placeholder="Ej: Chaqueta de cuero"
+          />
 
-            <Pressable style={s.headerBtn} onPress={onCerrar}>
-              <X size={20} color={C.muted} strokeWidth={2} />
-            </Pressable>
-          </View>
+          <Text>Marca (opcional)</Text>
+          <TextInput
+            value={marcaManual}
+            onChangeText={setMarcaManual}
+            placeholder="Ej: Zara"
+          />
 
-          {/* ── Elegir tipo ──────────────────────────────────────────── */}
-          {modo === 'elegir' && (
-            <View style={s.opciones}>
-              <Pressable style={s.opcionCard} onPress={() => setModo('catalogo')}>
-                <View style={s.opcionIcono}>
-                  <Search size={20} color={C.earth} strokeWidth={2} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.opcionTitulo}>Buscar en catálogo</Text>
-                  <Text style={s.opcionSub}>Prendas de marcas registradas en Styles</Text>
-                </View>
-              </Pressable>
+          <Text>Precio (opcional)</Text>
+          <TextInput
+            value={precioManual}
+            onChangeText={setPrecioManual}
+            placeholder="Ej: 120000"
+            keyboardType="numeric"
+          />
 
-              <Pressable style={s.opcionCard} onPress={() => setModo('manual')}>
-                <View style={s.opcionIcono}>
-                  <PenLine size={20} color={C.earth} strokeWidth={2} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.opcionTitulo}>Agregar prenda manual</Text>
-                  <Text style={s.opcionSub}>Si no está en el catálogo de marcas</Text>
-                </View>
-              </Pressable>
-            </View>
-          )}
+          <SelectorEstilo
+            estilos={estilos}
+            loading={loadingEstilos}
+            seleccionado={estiloId}
+            onSeleccionar={setEstiloId}
+          />
 
-          {/* ── Catálogo ─────────────────────────────────────────────── */}
-          {modo === 'catalogo' && (
-            <View style={s.catalogoWrap}>
-              <BuscadorPrendas
-                onSeleccionar={(prenda) => onSeleccionarCatalogo(prenda.id, prenda.nombre)}
-              />
-            </View>
-          )}
-
-          {/* ── Manual ───────────────────────────────────────────────── */}
-          {modo === 'manual' && (
-            <View style={s.form}>
-              <View style={s.campo}>
-                <Text style={s.label}>Nombre de la prenda</Text>
-                <TextInput
-                  style={s.input}
-                  value={nombreManual}
-                  onChangeText={setNombreManual}
-                  placeholder="Ej: Chaqueta de cuero"
-                  placeholderTextColor={C.muted}
-                />
-              </View>
-
-              <View style={s.campo}>
-                <Text style={s.label}>Marca <Text style={s.opcional}>(opcional)</Text></Text>
-                <TextInput
-                  style={s.input}
-                  value={marcaManual}
-                  onChangeText={setMarcaManual}
-                  placeholder="Ej: Zara"
-                  placeholderTextColor={C.muted}
-                />
-              </View>
-
-              <View style={s.campo}>
-                <Text style={s.label}>Precio <Text style={s.opcional}>(opcional)</Text></Text>
-                <View style={s.inputPrecioWrap}>
-                  <Text style={s.simbolo}>$</Text>
-                  <TextInput
-                    style={s.inputPrecio}
-                    value={precioManual}
-                    onChangeText={setPrecioManual}
-                    placeholder="120.000"
-                    placeholderTextColor={C.muted}
-                    keyboardType="numeric"
-                  />
-                </View>
-              </View>
-
-              <Pressable
-                style={[s.confirmarBtn, !nombreValido && s.confirmarBtnDisabled]}
-                onPress={enviarManual}
-                disabled={!nombreValido}
-              >
-                <Check size={16} color="#fff" strokeWidth={2.5} />
-                <Text style={s.confirmarText}>Confirmar etiqueta</Text>
-              </Pressable>
-            </View>
-          )}
+          <Pressable onPress={enviarManual}>
+            <Text>Confirmar etiqueta manual</Text>
+          </Pressable>
+          <Pressable onPress={() => setModo('elegir')}>
+            <Text>Volver</Text>
+          </Pressable>
         </View>
       </KeyboardAvoidingView>
     </Modal>

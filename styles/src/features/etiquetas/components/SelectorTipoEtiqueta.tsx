@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, TextInput } from 'react-native';
 import BuscadorPrendas from './BuscadorPrendas';
+import SelectorEstilo from './SelectorEstilo';
+import { useEstilos } from '../hooks/useEstilos';
 
 interface Props {
   onCerrar: () => void;
-  onSeleccionarCatalogo: (prendaId: string, prendaNombre: string) => void;
+  onSeleccionarCatalogo: (prendaId: string, prendaNombre: string, estiloId: string | null) => void;
   onSeleccionarManual: (
     nombreManual: string,
     marcaManual?: string,
-    precioManual?: number
+    precioManual?: number,
+    estiloId?: string | null
   ) => void;
 }
 
@@ -20,16 +23,17 @@ export default function SelectorTipoEtiqueta({
   onSeleccionarManual,
 }: Props) {
   const [modo, setModo] = useState<Modo>('elegir');
-
-  // campos del formulario manual
   const [nombreManual, setNombreManual] = useState('');
   const [marcaManual, setMarcaManual] = useState('');
   const [precioManual, setPrecioManual] = useState('');
+  const [estiloId, setEstiloId] = useState<string | null>(null);
+
+  const { estilos, loading: loadingEstilos } = useEstilos();
 
   function enviarManual() {
     if (nombreManual.trim().length === 0) return;
     const precio = precioManual ? Number(precioManual) : undefined;
-    onSeleccionarManual(nombreManual.trim(), marcaManual.trim() || undefined, precio);
+    onSeleccionarManual(nombreManual.trim(), marcaManual.trim() || undefined, precio, estiloId);
   }
 
   return (
@@ -54,8 +58,14 @@ export default function SelectorTipoEtiqueta({
         <View>
           <BuscadorPrendas
             onSeleccionar={(prenda) =>
-              onSeleccionarCatalogo(prenda.id, prenda.nombre)
+              onSeleccionarCatalogo(prenda.id, prenda.nombre, estiloId)
             }
+          />
+          <SelectorEstilo
+            estilos={estilos}
+            loading={loadingEstilos}
+            seleccionado={estiloId}
+            onSeleccionar={setEstiloId}
           />
           <Pressable onPress={() => setModo('elegir')}>
             <Text>Volver</Text>
@@ -85,6 +95,13 @@ export default function SelectorTipoEtiqueta({
             onChangeText={setPrecioManual}
             placeholder="Ej: 120000"
             keyboardType="numeric"
+          />
+
+          <SelectorEstilo
+            estilos={estilos}
+            loading={loadingEstilos}
+            seleccionado={estiloId}
+            onSeleccionar={setEstiloId}
           />
 
           <Pressable onPress={enviarManual}>

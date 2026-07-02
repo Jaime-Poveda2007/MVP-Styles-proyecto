@@ -1,6 +1,6 @@
 // src/features/feed/PDetalle.tsx
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions, Linking, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions, Linking, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, ExternalLink, Tag, Trash2 } from 'lucide-react-native';
 import { Publicacion, Etiqueta } from './types';
@@ -46,26 +46,31 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
   };
   const [eliminando, setEliminando] = useState(false);
 
+const eliminarConfirmado = async () => {
+    setEliminando(true);
+    try {
+      await eliminarPublicacion(pub.id);
+      onEliminado();
+    } catch (e: any) {
+      Alert.alert('Error', e.message ?? 'No se pudo eliminar la publicación.');
+      setEliminando(false);
+    }
+  };
+
   const handleEliminar = () => {
+    if (Platform.OS === 'web') {
+      // Alert.alert con varios botones no funciona en RN Web — usamos el confirm nativo del navegador
+      if (window.confirm('¿Seguro que quieres eliminar esta publicación? Esta acción no se puede deshacer.')) {
+        eliminarConfirmado();
+      }
+      return;
+    }
     Alert.alert(
       'Eliminar publicación',
       '¿Seguro que quieres eliminarla? Esta acción no se puede deshacer.',
       [
         { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            setEliminando(true);
-            try {
-              await eliminarPublicacion(pub.id);
-              onEliminado();
-            } catch (e: any) {
-              Alert.alert('Error', e.message ?? 'No se pudo eliminar la publicación.');
-              setEliminando(false);
-            }
-          },
-        },
+        { text: 'Eliminar', style: 'destructive', onPress: eliminarConfirmado },
       ]
     );
   };
@@ -156,34 +161,19 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
 
           {pub.descripcion && <View style={d.seccion}><Text style={d.descripcion}>{pub.descripcion}</Text></View>}
 
-          {/* Acciones */}
+{/* Acciones */}
           <View style={d.accionesWrap}>
             <TouchableOpacity
-              key={etq.id}
-              style={[d.etqPunto, { left: `${etq.pos_x * 100}%`, top: `${etq.pos_y * 100}%` }, etqSel?.id === etq.id && d.etqPuntoActivo]}
-              onPress={() => setEtqSel(prev => prev?.id === etq.id ? null : etq)}
+              style={[d.accionBtn, esPropia && d.accionBtnDeshabilitado]}
+              onPress={onPressLike}
+              activeOpacity={esPropia ? 1 : 0.7}
             >
               <IconCorazon activo={yoLike} size={22} colorInactivo={esPropia ? C.border : C.muted} />
               <Text style={[d.accionCount, yoLike && { color: C.earth }]}>{likes} {likes === 1 ? 'like' : 'likes'}</Text>
             </TouchableOpacity>
-          ))}
-          {etqSel && (
-            <View style={[d.popup, {
-              left:  etqSel.pos_x <= 60 ? `${Math.min(etqSel.pos_x * 100, 55)}%` : undefined,
-              right: etqSel.pos_x > 0.60 ? '8%' : undefined,
-              top:   `${Math.min(etqSel.pos_y * 100 + 5, 70)}%`,
-            }]}>
-              <Text style={d.popupNombre}>{etqSel.es_manual ? etqSel.nombre_manual : etqSel.prenda?.nombre}</Text>
-              <Text style={d.popupMarca}>{etqSel.es_manual ? etqSel.marca_manual : etqSel.prenda?.marca?.nombre}</Text>
-              {(etqSel.es_manual ? etqSel.precio_manual : etqSel.prenda?.precio) != null && (
-                <Text style={d.popupPrecio}>${(etqSel.es_manual ? etqSel.precio_manual : etqSel.prenda?.precio)?.toLocaleString('es-CO')}</Text>
-              )}
-              {!etqSel.es_manual && etqSel.prenda?.url_tienda && (
-                <TouchableOpacity style={d.popupBtn} onPress={() => abrirTienda(etqSel.prenda?.url_tienda)}>
-                  <ExternalLink size={10} color="#fff" strokeWidth={2.5} />
-                  <Text style={d.popupBtnText}>Ver en tienda</Text>
-                </TouchableOpacity>
-              )}
+            <View style={d.accionBtn}>
+              <IconRepost size={22} colorInactivo={C.muted} />
+              <Text style={d.accionCount}>{pub.reposts_count} {pub.reposts_count === 1 ? 'repost' : 'reposts'}</Text>
             </View>
           </View>
 

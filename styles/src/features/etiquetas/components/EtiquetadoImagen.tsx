@@ -21,6 +21,7 @@ export interface EtiquetaPendiente {
   nombreManual?: string;
   marcaManual?: string;
   precioManual?: number;
+  estiloId?: string | null;
 }
 
 interface Props {
@@ -75,7 +76,7 @@ export default function EtiquetadoImagen({
     setPuntoPendiente(null);
   }
 
-  function confirmarEtiquetaCatalogo(prendaId: string, prendaNombre: string) {
+function confirmarEtiquetaCatalogo(prendaId: string, prendaNombre: string, estiloId: string | null) {
     if (!puntoPendiente) return;
     onAgregarEtiqueta({
       id: `temp-${Date.now()}`,
@@ -84,11 +85,12 @@ export default function EtiquetadoImagen({
       esManual: false,
       prendaId,
       prendaNombre,
+      estiloId,
     });
     setPuntoPendiente(null);
   }
 
-  function confirmarEtiquetaManual(nombreManual: string, marcaManual?: string, precioManual?: number) {
+  function confirmarEtiquetaManual(nombreManual: string, marcaManual?: string, precioManual?: number, estiloId?: string | null) {
     if (!puntoPendiente) return;
     onAgregarEtiqueta({
       id: `temp-${Date.now()}`,
@@ -98,10 +100,10 @@ export default function EtiquetadoImagen({
       nombreManual,
       marcaManual,
       precioManual,
+      estiloId,
     });
     setPuntoPendiente(null);
   }
-
   const etiquetaSeleccionada = etiquetas.find(e => e.id === etiquetaEditando);
 
   return (

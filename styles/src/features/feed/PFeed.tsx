@@ -33,12 +33,13 @@ export default function PFeed({ userId, onCerrarSesion }: Props) {
     setRefrescando(false);
   };
 
-  if (detalle) {
+if (detalle) {
     return (
       <PDetalle
         publicacion={detalle}
         userId={userId}
         onVolver={() => setDetalle(null)}
+        onEliminado={() => { setDetalle(null); refrescar(); }}
       />
     );
   }

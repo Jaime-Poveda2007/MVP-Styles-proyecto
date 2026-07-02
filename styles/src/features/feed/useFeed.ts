@@ -3,7 +3,7 @@ import { useState, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Publicacion } from './types';
 
-const PAGE_SIZE             = 10;
+const PAGE_SIZE = 10;
 const MAX_MARCAS_POR_PAGINA = 2; // proporción 1:5
 
 interface UseFeedResult {
@@ -19,13 +19,13 @@ interface UseFeedResult {
 
 export function useFeed(): UseFeedResult {
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
-  const [cargando,      setCargando]      = useState(false);
-  const [cargandoMas,   setCargandoMas]   = useState(false);
-  const [error,         setError]         = useState<string | null>(null);
-  const [hayMas,        setHayMas]        = useState(true);
+  const [cargando, setCargando] = useState(false);
+  const [cargandoMas, setCargandoMas] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hayMas, setHayMas] = useState(true);
 
-  const userIdRef       = useRef<string>('');
-  const offsetRef       = useRef<number>(0);
+  const userIdRef = useRef<string>('');
+  const offsetRef = useRef<number>(0);
   const preferenciasRef = useRef<{ estilos: string[]; colores: string[] }>({ estilos: [], colores: [] });
 
   const obtenerPreferencias = async (userId: string) => {
@@ -45,12 +45,12 @@ export function useFeed(): UseFeedResult {
       ]);
       return {
         ...p,
-        usuario:       Array.isArray(p.usuario) ? p.usuario[0] ?? null : p.usuario ?? null,
-        marca:         Array.isArray(p.marca)   ? p.marca[0]   ?? null : p.marca   ?? null,
-        likes_count:   likesCount   ?? 0,
+        usuario: Array.isArray(p.usuario) ? p.usuario[0] ?? null : p.usuario ?? null,
+        marca: Array.isArray(p.marca) ? p.marca[0] ?? null : p.marca ?? null,
+        likes_count: likesCount ?? 0,
         reposts_count: repostsCount ?? 0,
-        yo_di_like:    setLikes.has(p.id),
-        etiquetas:     p.etiquetas  ?? [],
+        yo_di_like: setLikes.has(p.id),
+        etiquetas: p.etiquetas ?? [],
       } as Publicacion;
     }));
   };
@@ -61,10 +61,11 @@ export function useFeed(): UseFeedResult {
       usuario_id, marca_id,
       usuario:usuarios!publicaciones_usuario_id_fkey ( id, nombre, username, foto_url ),
       marca:marcas!publicaciones_marca_id_fkey ( id, nombre, logo_url ),
-      etiquetas (
+     etiquetas (
         id, pos_x, pos_y, es_manual,
         nombre_manual, marca_manual, precio_manual,
-        prenda:prendas ( id, nombre, precio, imagen_url, url_tienda, marca:marcas ( nombre ) )
+        prenda:prendas ( id, nombre, precio, imagen_url, url_tienda, marca:marcas ( nombre ) ),
+        estilo:estilos ( nombre )
       )
     `;
 
@@ -77,7 +78,7 @@ export function useFeed(): UseFeedResult {
         .eq('es_de_marca', true)
         .order('created_at', { ascending: false })
         .range(Math.floor(offset / PAGE_SIZE) * MAX_MARCAS_POR_PAGINA,
-               Math.floor(offset / PAGE_SIZE) * MAX_MARCAS_POR_PAGINA + MAX_MARCAS_POR_PAGINA - 1),
+          Math.floor(offset / PAGE_SIZE) * MAX_MARCAS_POR_PAGINA + MAX_MARCAS_POR_PAGINA - 1),
     ]);
 
     if (errU) throw errU;
@@ -92,7 +93,7 @@ export function useFeed(): UseFeedResult {
 
     const [usuariosE, marcasE] = await Promise.all([
       enriquecer(postsUsuarios ?? [], setLikes),
-      enriquecer(postsMarcas   ?? [], setLikes),
+      enriquecer(postsMarcas ?? [], setLikes),
     ]);
 
     // Intercalar 1:5
@@ -109,8 +110,8 @@ export function useFeed(): UseFeedResult {
     setCargando(true);
     setError(null);
     try {
-      userIdRef.current       = userId;
-      offsetRef.current       = 0;
+      userIdRef.current = userId;
+      offsetRef.current = 0;
       preferenciasRef.current = await obtenerPreferencias(userId);
       const pagina = await fetchPagina(userId, 0);
       setPublicaciones(pagina);

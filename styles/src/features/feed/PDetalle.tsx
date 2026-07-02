@@ -2,21 +2,23 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions, Linking, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, ExternalLink, Tag } from 'lucide-react-native';
+import { ChevronLeft, ExternalLink, Tag, Trash2 } from 'lucide-react-native';
 import { Publicacion, Etiqueta } from './types';
 import { useLikes } from './useLikes';
 import IconCorazon from '../../shared/icons/IconCorazon';
 import IconRepost from '../../shared/icons/IconRepost';
 import ImagenConCarga from '../../shared/components/ImagenConCarga';
+import { eliminarPublicacion } from './services/publicacionesService';
 import { C } from '../../shared/theme';
 
 interface Props {
   publicacion: Publicacion;
   userId: string;
   onVolver: () => void;
+  onEliminado: () => void;
 }
 
-export default function PDetalle({ publicacion: pub, userId, onVolver }: Props) {
+export default function PDetalle({ publicacion: pub, userId, onVolver, onEliminado }: Props) {
   // useWindowDimensions (en vez de Dimensions.get fijo al montar) para que
   // el detalle se adapte si el dispositivo rota o si la ventana cambia de
   // tamaño (split-screen / web), corrigiendo la responsividad de esta pantalla.
@@ -42,7 +44,31 @@ export default function PDetalle({ publicacion: pub, userId, onVolver }: Props) 
     }
     await toggleLike();
   };
+  const [eliminando, setEliminando] = useState(false);
 
+  const handleEliminar = () => {
+    Alert.alert(
+      'Eliminar publicación',
+      '¿Seguro que quieres eliminarla? Esta acción no se puede deshacer.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            setEliminando(true);
+            try {
+              await eliminarPublicacion(pub.id);
+              onEliminado();
+            } catch (e: any) {
+              Alert.alert('Error', e.message ?? 'No se pudo eliminar la publicación.');
+              setEliminando(false);
+            }
+          },
+        },
+      ]
+    );
+  };
   const abrirTienda = (url?: string | null) => {
     if (!url) { Alert.alert('Sin enlace', 'Esta prenda no tiene enlace de tienda.'); return; }
     Linking.openURL(url);
@@ -62,11 +88,18 @@ export default function PDetalle({ publicacion: pub, userId, onVolver }: Props) 
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={{ marginHorizontal: margenLateral }}>
 
-          <View style={d.header}>
+  <View style={d.header}>
             <TouchableOpacity style={d.backBtn} onPress={onVolver}>
               <ChevronLeft size={24} color={C.ink} strokeWidth={2} />
             </TouchableOpacity>
-            {pub.es_de_marca && <View style={d.badge}><Text style={d.badgeText}>Marca</Text></View>}
+            <View style={d.headerDerecha}>
+              {pub.es_de_marca && <View style={d.badge}><Text style={d.badgeText}>Marca</Text></View>}
+              {esPropia && (
+                <TouchableOpacity style={d.backBtn} onPress={handleEliminar} disabled={eliminando}>
+                  <Trash2 size={18} color={C.muted} strokeWidth={2} />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           {/* Imagen con etiquetas */}
@@ -95,6 +128,7 @@ export default function PDetalle({ publicacion: pub, userId, onVolver }: Props) 
               }]}>
                 <Text style={d.popupNombre}>{etqSel.es_manual ? etqSel.nombre_manual : etqSel.prenda?.nombre}</Text>
                 <Text style={d.popupMarca}>{etqSel.es_manual ? etqSel.marca_manual : etqSel.prenda?.marca?.nombre}</Text>
+                {etqSel.estilo?.nombre && <Text style={d.popupEstilo}>{etqSel.estilo.nombre}</Text>}
                 {(etqSel.es_manual ? etqSel.precio_manual : etqSel.prenda?.precio) != null && (
                   <Text style={d.popupPrecio}>${(etqSel.es_manual ? etqSel.precio_manual : etqSel.prenda?.precio)?.toLocaleString('es-CO')}</Text>
                 )}
@@ -143,15 +177,17 @@ export default function PDetalle({ publicacion: pub, userId, onVolver }: Props) 
             <View style={d.seccion}>
               <Text style={d.seccionTitulo}>Prendas en este look</Text>
               {pub.etiquetas.map(etq => {
-                const nom    = etq.es_manual ? etq.nombre_manual : etq.prenda?.nombre;
+const nom    = etq.es_manual ? etq.nombre_manual : etq.prenda?.nombre;
                 const marca  = etq.es_manual ? etq.marca_manual  : etq.prenda?.marca?.nombre;
                 const precio = etq.es_manual ? etq.precio_manual : etq.prenda?.precio;
+                const estilo = etq.estilo?.nombre ?? null;
                 return (
                   <View key={etq.id} style={d.prendaRow}>
                     <View style={d.prendaIcono}><Tag size={14} color={C.earth} strokeWidth={2} /></View>
                     <View style={{ flex: 1 }}>
                       <Text style={d.prendaNombre} numberOfLines={1}>{nom}</Text>
                       {marca && <Text style={d.prendaMarca}>{marca}</Text>}
+                      {estilo && <Text style={d.prendaEstilo}>{estilo}</Text>}
                     </View>
                     <View style={d.prendaDerecha}>
                       {precio != null && <Text style={d.prendaPrecio}>${precio.toLocaleString('es-CO')}</Text>}
@@ -179,6 +215,7 @@ const d = StyleSheet.create({
   header:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
   backBtn:       { width: 40, height: 40, borderRadius: 20, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: C.border },
   badge:         { backgroundColor: C.earth, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4 },
+  headerDerecha: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   badgeText:     { color: '#fff', fontSize: 11, fontWeight: '700' },
   imagenWrap:    { position: 'relative', alignSelf: 'center' },
   imagen:        { width: '100%', height: '100%' },
@@ -187,6 +224,7 @@ const d = StyleSheet.create({
   popup:         { position: 'absolute', backgroundColor: 'rgba(26,22,20,0.92)', borderRadius: 12, padding: 12, minWidth: 140, maxWidth: 180, gap: 3, elevation: 8 },
   popupNombre:   { fontSize: 13, fontWeight: '700', color: '#fff' },
   popupMarca:    { fontSize: 11, color: 'rgba(255,255,255,0.7)' },
+  popupEstilo: { fontSize: 10, color: 'rgba(255,255,255,0.55)', marginTop: 1 },
   popupPrecio:   { fontSize: 13, fontWeight: '600', color: C.earthLight, marginTop: 2 },
   popupBtn:      { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.earth, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5, marginTop: 6, alignSelf: 'flex-start' },
   popupBtnText:  { fontSize: 11, color: '#fff', fontWeight: '600' },
@@ -207,6 +245,7 @@ const d = StyleSheet.create({
   prendaIcono:   { width: 36, height: 36, borderRadius: 10, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
   prendaNombre:  { fontSize: 14, fontWeight: '600', color: C.ink },
   prendaMarca:   { fontSize: 12, color: C.muted, marginTop: 2 },
+  prendaEstilo: { fontSize: 11, color: C.earth, marginTop: 2, fontWeight: '600' },
   prendaDerecha: { alignItems: 'flex-end', gap: 4 },
   prendaPrecio:  { fontSize: 14, fontWeight: '700', color: C.ink },
   verBtn:        { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: C.earth, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },

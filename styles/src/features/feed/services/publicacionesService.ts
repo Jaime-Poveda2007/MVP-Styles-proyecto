@@ -86,3 +86,7 @@ export async function obtenerFeed(): Promise<Publicacion[]> {
   if (error) throw error;
   return data ?? [];
 }
+export async function eliminarPublicacion(publicacionId: string): Promise<void> {
+  const { error } = await supabase.from('publicaciones').delete().eq('id', publicacionId);
+  if (error) throw error;
+}

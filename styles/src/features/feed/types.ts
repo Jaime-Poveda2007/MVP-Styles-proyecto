@@ -40,6 +40,7 @@ export interface Etiqueta {
   nombre_manual: string | null;
   marca_manual: string | null;
   precio_manual: number | null;
+  estilo: { nombre: string} | null;
   prenda: {
     id: string;
     nombre: string;

@@ -159,16 +159,31 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
           {/* Acciones */}
           <View style={d.accionesWrap}>
             <TouchableOpacity
-              style={[d.accionBtn, esPropia && d.accionBtnDeshabilitado]}
-              onPress={onPressLike}
-              activeOpacity={esPropia ? 1 : 0.7}
+              key={etq.id}
+              style={[d.etqPunto, { left: `${etq.pos_x * 100}%`, top: `${etq.pos_y * 100}%` }, etqSel?.id === etq.id && d.etqPuntoActivo]}
+              onPress={() => setEtqSel(prev => prev?.id === etq.id ? null : etq)}
             >
               <IconCorazon activo={yoLike} size={22} colorInactivo={esPropia ? C.border : C.muted} />
               <Text style={[d.accionCount, yoLike && { color: C.earth }]}>{likes} {likes === 1 ? 'like' : 'likes'}</Text>
             </TouchableOpacity>
-            <View style={d.accionBtn}>
-              <IconRepost size={22} colorInactivo={C.muted} />
-              <Text style={d.accionCount}>{pub.reposts_count} {pub.reposts_count === 1 ? 'repost' : 'reposts'}</Text>
+          ))}
+          {etqSel && (
+            <View style={[d.popup, {
+              left:  etqSel.pos_x <= 60 ? `${Math.min(etqSel.pos_x * 100, 55)}%` : undefined,
+              right: etqSel.pos_x > 0.60 ? '8%' : undefined,
+              top:   `${Math.min(etqSel.pos_y * 100 + 5, 70)}%`,
+            }]}>
+              <Text style={d.popupNombre}>{etqSel.es_manual ? etqSel.nombre_manual : etqSel.prenda?.nombre}</Text>
+              <Text style={d.popupMarca}>{etqSel.es_manual ? etqSel.marca_manual : etqSel.prenda?.marca?.nombre}</Text>
+              {(etqSel.es_manual ? etqSel.precio_manual : etqSel.prenda?.precio) != null && (
+                <Text style={d.popupPrecio}>${(etqSel.es_manual ? etqSel.precio_manual : etqSel.prenda?.precio)?.toLocaleString('es-CO')}</Text>
+              )}
+              {!etqSel.es_manual && etqSel.prenda?.url_tienda && (
+                <TouchableOpacity style={d.popupBtn} onPress={() => abrirTienda(etqSel.prenda?.url_tienda)}>
+                  <ExternalLink size={10} color="#fff" strokeWidth={2.5} />
+                  <Text style={d.popupBtnText}>Ver en tienda</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
 

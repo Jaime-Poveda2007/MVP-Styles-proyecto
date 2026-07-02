@@ -6,12 +6,19 @@ import {
 } from 'react-native';
 import { Search, PenLine, ChevronLeft, X, Tag, Check } from 'lucide-react-native';
 import BuscadorPrendas from './BuscadorPrendas';
+import SelectorEstilo from './SelectorEstilo';
+import { useEstilos } from '../hooks/useEstilos';
 import { C, R } from '../../../shared/theme';
 
 interface Props {
   onCerrar: () => void;
-  onSeleccionarCatalogo: (prendaId: string, prendaNombre: string) => void;
-  onSeleccionarManual: (nombreManual: string, marcaManual?: string, precioManual?: number) => void;
+  onSeleccionarCatalogo: (prendaId: string, prendaNombre: string, estiloId: string | null) => void;
+  onSeleccionarManual: (
+    nombreManual: string,
+    marcaManual?: string,
+    precioManual?: number,
+    estiloId?: string | null
+  ) => void;
 }
 
 type Modo = 'elegir' | 'catalogo' | 'manual';
@@ -23,13 +30,16 @@ export default function SelectorTipoEtiqueta({
   const [nombreManual, setNombreManual] = useState('');
   const [marcaManual, setMarcaManual] = useState('');
   const [precioManual, setPrecioManual] = useState('');
+  const [estiloId, setEstiloId] = useState<string | null>(null);
+
+  const { estilos, loading: loadingEstilos } = useEstilos();
 
   const nombreValido = nombreManual.trim().length > 0;
 
   function enviarManual() {
     if (!nombreValido) return;
     const precio = precioManual ? Number(precioManual) : undefined;
-    onSeleccionarManual(nombreManual.trim(), marcaManual.trim() || undefined, precio);
+    onSeleccionarManual(nombreManual.trim(), marcaManual.trim() || undefined, precio, estiloId);
   }
 
   return (
@@ -99,7 +109,13 @@ export default function SelectorTipoEtiqueta({
           {modo === 'catalogo' && (
             <View style={s.catalogoWrap}>
               <BuscadorPrendas
-                onSeleccionar={(prenda) => onSeleccionarCatalogo(prenda.id, prenda.nombre)}
+                onSeleccionar={(prenda) => onSeleccionarCatalogo(prenda.id, prenda.nombre, estiloId)}
+              />
+              <SelectorEstilo
+                estilos={estilos}
+                loading={loadingEstilos}
+                seleccionado={estiloId}
+                onSeleccionar={setEstiloId}
               />
             </View>
           )}
@@ -143,6 +159,13 @@ export default function SelectorTipoEtiqueta({
                   />
                 </View>
               </View>
+
+              <SelectorEstilo
+                estilos={estilos}
+                loading={loadingEstilos}
+                seleccionado={estiloId}
+                onSeleccionar={setEstiloId}
+              />
 
               <Pressable
                 style={[s.confirmarBtn, !nombreValido && s.confirmarBtnDisabled]}

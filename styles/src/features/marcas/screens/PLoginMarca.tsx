@@ -1,4 +1,14 @@
-// src/features/auth/screens/PLogin.tsx
+// src/features/marcas/screens/PLoginMarca.tsx
+//
+// Login de marca. Se mantiene separado del login de usuario (PLogin.tsx)
+// porque, aunque ambos usan supabase.auth, cada uno debe resolver el
+// perfil en una tabla distinta (marcas vs usuarios) y no queremos crear
+// por error una fila de usuario para una cuenta de marca.
+//
+// El "bloqueo de acceso hasta aprobación manual" (RF-M01) se resuelve
+// acá: si la marca existe pero su estado no es 'aprobada', se le manda
+// a la pantalla de espera en vez de al panel.
+
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
@@ -8,24 +18,24 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AuthStackParamList } from '../NavDeAuntenticacion';
+import { AuthStackParamList } from '../../auth/NavDeAuntenticacion';
 import { supabase } from '../../../lib/supabase';
-import { asegurarPerfilUsuario } from '../../../lib/perfil';
+import { asegurarPerfilMarca } from '../../../lib/marcaPerfil';
 import { C, R } from '../../../shared/theme';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
+type Props = NativeStackScreenProps<AuthStackParamList, 'LoginMarca'>;
 
 const MAX_INTENTOS = 5;
 const BLOQUEO_MS   = 15 * 60 * 1000;
-const KEY_INTENTOS = 'login_intentos';
-const KEY_BLOQUEO  = 'login_bloqueo_timestamp';
+const KEY_INTENTOS = 'login_marca_intentos';
+const KEY_BLOQUEO  = 'login_marca_bloqueo_timestamp';
 
 const getIntentos         = async () => parseInt((await AsyncStorage.getItem(KEY_INTENTOS)) ?? '0', 10);
 const getTimestampBloqueo = async () => parseInt((await AsyncStorage.getItem(KEY_BLOQUEO))  ?? '0', 10);
 const resetBloqueo        = async () => { await AsyncStorage.multiRemove([KEY_INTENTOS, KEY_BLOQUEO]); };
 const minutosRestantes    = (ts: number) => Math.max(0, Math.ceil((BLOQUEO_MS - (Date.now() - ts)) / 60000));
 
-export default function LoginScreen({ navigation, route }: Props) {
+export default function PLoginMarca({ navigation, route }: Props) {
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [verPass,  setVerPass]  = useState(false);
@@ -33,7 +43,7 @@ export default function LoginScreen({ navigation, route }: Props) {
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
-      Alert.alert('Campos requeridos', 'Ingresa tu correo y contraseña.');
+      Alert.alert('Campos requeridos', 'Ingresa el correo y la contraseña de la marca.');
       return;
     }
     setLoading(true);
@@ -66,13 +76,20 @@ export default function LoginScreen({ navigation, route }: Props) {
 
       await resetBloqueo();
       if (data.user && data.session) {
-        const perfil = await asegurarPerfilUsuario(data.session);
-        if (perfil.onboardingCompleto) {
-          route.params?.onLoginExitoso?.();
+        if ((data.session.user.user_metadata as any)?.tipo_cuenta !== 'marca') {
+          // Alguien intentó entrar con una cuenta de usuario por el login de marca.
+          await supabase.auth.signOut();
+          Alert.alert('Esta cuenta no es una marca', 'Usa el inicio de sesión de usuarios.');
+          return;
+        }
+
+        const marca = await asegurarPerfilMarca(data.session);
+        if (marca.estado === 'aprobada') {
+          route.params?.onLoginExitosoMarca?.();
         } else {
-          navigation.navigate('OnboardingEstilo', {
-            userId: perfil.id,
-            onComplete: route.params?.onLoginExitoso ?? (() => {}),
+          navigation.navigate('MarcaPendienteAprobacion', {
+            nombreMarca: marca.nombre,
+            estado: marca.estado,
           });
         }
       }
@@ -88,25 +105,24 @@ export default function LoginScreen({ navigation, route }: Props) {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
-          {/* Header */}
-          <View style={s.header}>
-            <Text style={s.wordmark}>styles<Text style={s.dot}>.</Text></Text>
+          <View style={s.topBar}>
+            <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
+              <Text style={s.backText}>← Volver</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Títulos */}
           <View style={s.titlesWrap}>
-            <Text style={s.eyebrow}>Bienvenido de vuelta</Text>
+            <Text style={s.eyebrow}>Panel de marcas</Text>
             <Text style={s.titulo}>Inicia sesión</Text>
-            <Text style={s.subtitulo}>Explora moda local colombiana</Text>
+            <Text style={s.subtitulo}>Gestiona tu catálogo y publicaciones</Text>
           </View>
 
-          {/* Campos */}
           <View style={s.form}>
             <View style={s.campo}>
-              <Text style={s.label}>Correo electrónico</Text>
+              <Text style={s.label}>Correo de la marca</Text>
               <TextInput
                 style={s.input}
-                placeholder="tu@correo.com"
+                placeholder="marca@correo.com"
                 placeholderTextColor={C.muted}
                 value={email}
                 onChangeText={setEmail}
@@ -136,13 +152,8 @@ export default function LoginScreen({ navigation, route }: Props) {
                 </TouchableOpacity>
               </View>
             </View>
-
-            <TouchableOpacity style={s.forgotWrap} onPress={() => navigation.navigate('ForgotPassword')}>
-              <Text style={s.forgot}>¿Olvidaste tu contraseña?</Text>
-            </TouchableOpacity>
           </View>
 
-          {/* CTA */}
           <TouchableOpacity style={[s.btnPrimary, loading && s.btnDisabled]} onPress={handleLogin} disabled={loading} activeOpacity={0.85}>
             {loading
               ? <ActivityIndicator color="#fff" />
@@ -150,17 +161,12 @@ export default function LoginScreen({ navigation, route }: Props) {
             }
           </TouchableOpacity>
 
-          {/* Footer */}
           <View style={s.footer}>
-            <Text style={s.footerText}>¿No tienes cuenta? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={s.footerLink}>Regístrate</Text>
+            <Text style={s.footerText}>¿Tu marca aún no está registrada? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('RegisterMarca')}>
+              <Text style={s.footerLink}>Regístrala</Text>
             </TouchableOpacity>
           </View>
-
-          <TouchableOpacity style={s.marcaLink} onPress={() => navigation.navigate('LoginMarca')}>
-            <Text style={s.marcaLinkText}>¿Tienes una marca de ropa? Ingresa aquí</Text>
-          </TouchableOpacity>
 
         </ScrollView>
       </KeyboardAvoidingView>
@@ -171,12 +177,12 @@ export default function LoginScreen({ navigation, route }: Props) {
 const s = StyleSheet.create({
   safe:           { flex: 1, backgroundColor: C.white },
   scroll:         { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 40 },
-  header:         { paddingTop: 32, paddingBottom: 8, alignItems: 'center' },
-  wordmark:       { fontSize: 30, fontWeight: '800', letterSpacing: 1, color: C.ink },
-  dot:            { color: C.earth },
-  titlesWrap:     { paddingTop: 32, paddingBottom: 28 },
+  topBar:         { paddingTop: 16, paddingBottom: 4 },
+  backBtn:        { paddingVertical: 8 },
+  backText:       { fontSize: 14, color: C.earth, fontWeight: '500' },
+  titlesWrap:     { paddingTop: 24, paddingBottom: 28 },
   eyebrow:        { fontSize: 12, fontWeight: '600', letterSpacing: 1.5, textTransform: 'uppercase', color: C.earth, marginBottom: 6 },
-  titulo:         { fontSize: 30, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginBottom: 6 },
+  titulo:         { fontSize: 28, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginBottom: 6 },
   subtitulo:      { fontSize: 15, color: C.muted },
   form:           { gap: 16, marginBottom: 8 },
   campo:          { gap: 6 },
@@ -185,14 +191,10 @@ const s = StyleSheet.create({
   inputRow:       { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input },
   eyeBtn:         { paddingHorizontal: 14, paddingVertical: 14 },
   eyeIcon:        { fontSize: 16 },
-  forgotWrap:     { alignItems: 'flex-end', marginTop: -4 },
-  forgot:         { fontSize: 13, color: C.earth, fontWeight: '500' },
   btnPrimary:     { backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 17, alignItems: 'center', marginTop: 24, shadowColor: C.earth, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
   btnPrimaryText: { color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
   btnDisabled:    { opacity: 0.65 },
   footer:         { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 28 },
   footerText:     { fontSize: 14, color: C.muted },
   footerLink:     { fontSize: 14, color: C.earth, fontWeight: '600' },
-  marcaLink:      { alignItems: 'center', marginTop: 20, paddingVertical: 8 },
-  marcaLinkText:  { fontSize: 13, color: C.muted, fontWeight: '500', textDecorationLine: 'underline' },
 });

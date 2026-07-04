@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { AuthStackParamList } from '../NavDeAuntenticacion';
 import { supabase } from '../../../lib/supabase';
 import { asegurarPerfilUsuario } from '../../../lib/perfil';
@@ -21,9 +22,9 @@ interface FormErrors {
 }
 
 const validarPassword = (p: string) => {
-  if (p.length < 8)           return 'Mínimo 8 caracteres';
-  if (!/[A-Z]/.test(p))       return 'Debe incluir una mayúscula';
-  if (!/[0-9]/.test(p))       return 'Debe incluir un número';
+  if (p.length < 8) return 'Mínimo 8 caracteres';
+  if (!/[A-Z]/.test(p)) return 'Debe incluir una mayúscula';
+  if (!/[0-9]/.test(p)) return 'Debe incluir un número';
 };
 const validarEmail = (e: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) ? undefined : 'Correo inválido';
@@ -43,8 +44,8 @@ const formatFecha = (nuevo: string, previo: string) => {
   if (nuevo.length < previo.length) return nuevo;
   const n = nuevo.replace(/\D/g, '');
   if (n.length <= 2) return n;
-  if (n.length <= 4) return `${n.slice(0,2)}/${n.slice(2)}`;
-  return `${n.slice(0,2)}/${n.slice(2,4)}/${n.slice(4,8)}`;
+  if (n.length <= 4) return `${n.slice(0, 2)}/${n.slice(2)}`;
+  return `${n.slice(0, 2)}/${n.slice(2, 4)}/${n.slice(4, 8)}`;
 };
 
 function InputField({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
@@ -85,7 +86,7 @@ export default function RegisterScreen({ navigation }: Props) {
     const e: FormErrors = {};
     if (!form.nombre.trim() || form.nombre.trim().length < 2) e.nombre = 'Mínimo 2 caracteres';
     const eEmail = validarEmail(form.email); if (eEmail) e.email = eEmail;
-    const ePass  = validarPassword(form.password); if (ePass) e.password = ePass;
+    const ePass = validarPassword(form.password); if (ePass) e.password = ePass;
     if (form.password !== form.confirmPassword) e.confirmPassword = 'Las contraseñas no coinciden';
     const eFecha = validarFecha(form.fechaNacimiento); if (eFecha) e.fechaNacimiento = eFecha;
     setErrors(e);
@@ -111,7 +112,7 @@ export default function RegisterScreen({ navigation }: Props) {
           // (o ya estaba confirmado): hay sesión inmediata, así que el
           // perfil en public.usuarios se crea de una vez.
           const perfil = await asegurarPerfilUsuario(data.session);
-          navigation.navigate('OnboardingEstilo', { userId: perfil.id, onComplete: () => {} });
+          navigation.navigate('OnboardingEstilo', { userId: perfil.id, onComplete: () => { } });
         } else {
           // Confirmación de email obligatoria (RF-U01): el perfil se crea
           // en el primer login exitoso, una vez haya sesión real (ver PLogin.tsx).
@@ -170,13 +171,16 @@ export default function RegisterScreen({ navigation }: Props) {
               <View style={[f.inputRow, errors.password && f.inputError]}>
                 <TextInput style={[f.input, { flex: 1, borderWidth: 0, marginBottom: 0 }]} placeholder="Mínimo 8 caracteres" placeholderTextColor={C.muted} value={form.password} onChangeText={v => set('password', v)} secureTextEntry={!verPass} autoCapitalize="none" />
                 <TouchableOpacity style={f.eyeBtn} onPress={() => setVerPass(v => !v)}>
-                  <Text>{verPass ? '🙈' : '👁️'}</Text>
+                  {verPass
+                    ? <EyeOff size={20} color={C.muted} strokeWidth={2} />
+                    : <Eye size={20} color={C.muted} strokeWidth={2} />
+                  }
                 </TouchableOpacity>
               </View>
               {form.password.length > 0 && (
                 <View style={{ marginTop: 8 }}>
                   <View style={{ flexDirection: 'row', gap: 4, marginBottom: 6 }}>
-                    {[1,2,3,4].map(i => (
+                    {[1, 2, 3, 4].map(i => (
                       <View key={i} style={{ flex: 1, height: 3, borderRadius: 2, backgroundColor: i <= fortaleza ? fortalezaColor : C.border }} />
                     ))}
                   </View>
@@ -192,7 +196,10 @@ export default function RegisterScreen({ navigation }: Props) {
               <View style={[f.inputRow, errors.confirmPassword && f.inputError]}>
                 <TextInput style={[f.input, { flex: 1, borderWidth: 0, marginBottom: 0 }]} placeholder="Repite tu contraseña" placeholderTextColor={C.muted} value={form.confirmPassword} onChangeText={v => set('confirmPassword', v)} secureTextEntry={!verConfirm} autoCapitalize="none" onSubmitEditing={handleRegister} returnKeyType="done" />
                 <TouchableOpacity style={f.eyeBtn} onPress={() => setVerConfirm(v => !v)}>
-                  <Text>{verConfirm ? '🙈' : '👁️'}</Text>
+                  {verConfirm
+                    ? <EyeOff size={20} color={C.muted} strokeWidth={2} />
+                    : <Eye size={20} color={C.muted} strokeWidth={2} />
+                  }
                 </TouchableOpacity>
               </View>
             </InputField>
@@ -223,33 +230,33 @@ export default function RegisterScreen({ navigation }: Props) {
 }
 
 const f = StyleSheet.create({
-  safe:         { flex: 1, backgroundColor: C.white },
-  scroll:       { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 48 },
-  topBar:       { paddingTop: 16, paddingBottom: 4 },
-  backBtn:      { paddingVertical: 8 },
-  backText:     { fontSize: 14, color: C.earth, fontWeight: '500' },
-  titlesWrap:   { paddingTop: 16, paddingBottom: 24 },
-  eyebrow:      { fontSize: 12, fontWeight: '600', letterSpacing: 1.5, textTransform: 'uppercase', color: C.earth, marginBottom: 6 },
-  titulo:       { fontSize: 28, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginBottom: 6 },
-  subtitulo:    { fontSize: 15, color: C.muted },
-  form:         { gap: 16, marginBottom: 8 },
-  campo:        { gap: 6 },
-  label:        { fontSize: 13, fontWeight: '500', color: C.muted, letterSpacing: 0.2 },
-  input:        { backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: C.ink },
-  inputRow:     { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, overflow: 'hidden' },
-  inputError:   { borderColor: C.error },
-  eyeBtn:       { paddingHorizontal: 14 },
-  errorText:    { fontSize: 12, color: C.error, marginTop: 2 },
-  reqRow:       { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
-  reqDot:       { width: 6, height: 6, borderRadius: 3, backgroundColor: C.border },
-  reqDotOk:     { backgroundColor: C.success },
-  reqText:      { fontSize: 12, color: C.muted },
-  reqTextOk:    { color: C.success },
-  btnPrimary:   { backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 17, alignItems: 'center', marginTop: 24, shadowColor: C.earth, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
-  btnPrimaryText:{ color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
-  btnDisabled:  { opacity: 0.65 },
-  legal:        { fontSize: 12, color: C.muted, textAlign: 'center', lineHeight: 18, marginTop: 16, paddingHorizontal: 8 },
-  footer:       { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 20 },
-  footerText:   { fontSize: 14, color: C.muted },
-  footerLink:   { fontSize: 14, color: C.earth, fontWeight: '600' },
+  safe: { flex: 1, backgroundColor: C.white },
+  scroll: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 48 },
+  topBar: { paddingTop: 16, paddingBottom: 4 },
+  backBtn: { paddingVertical: 8 },
+  backText: { fontSize: 14, color: C.earth, fontWeight: '500' },
+  titlesWrap: { paddingTop: 16, paddingBottom: 24 },
+  eyebrow: { fontSize: 12, fontWeight: '600', letterSpacing: 1.5, textTransform: 'uppercase', color: C.earth, marginBottom: 6 },
+  titulo: { fontSize: 28, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginBottom: 6 },
+  subtitulo: { fontSize: 15, color: C.muted },
+  form: { gap: 16, marginBottom: 8 },
+  campo: { gap: 6 },
+  label: { fontSize: 13, fontWeight: '500', color: C.muted, letterSpacing: 0.2 },
+  input: { backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: C.ink },
+  inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, overflow: 'hidden' },
+  inputError: { borderColor: C.error },
+  eyeBtn: { paddingHorizontal: 14 },
+  errorText: { fontSize: 12, color: C.error, marginTop: 2 },
+  reqRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
+  reqDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.border },
+  reqDotOk: { backgroundColor: C.success },
+  reqText: { fontSize: 12, color: C.muted },
+  reqTextOk: { color: C.success },
+  btnPrimary: { backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 17, alignItems: 'center', marginTop: 24, shadowColor: C.earth, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
+  btnPrimaryText: { color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
+  btnDisabled: { opacity: 0.65 },
+  legal: { fontSize: 12, color: C.muted, textAlign: 'center', lineHeight: 18, marginTop: 16, paddingHorizontal: 8 },
+  footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 20 },
+  footerText: { fontSize: 14, color: C.muted },
+  footerLink: { fontSize: 14, color: C.earth, fontWeight: '600' },
 });

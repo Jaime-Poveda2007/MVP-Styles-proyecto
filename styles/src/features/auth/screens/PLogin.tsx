@@ -8,6 +8,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { AuthStackParamList } from '../NavDeAuntenticacion';
 import { supabase } from '../../../lib/supabase';
 import { asegurarPerfilUsuario } from '../../../lib/perfil';
@@ -16,20 +17,20 @@ import { C, R } from '../../../shared/theme';
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 const MAX_INTENTOS = 5;
-const BLOQUEO_MS   = 15 * 60 * 1000;
+const BLOQUEO_MS = 15 * 60 * 1000;
 const KEY_INTENTOS = 'login_intentos';
-const KEY_BLOQUEO  = 'login_bloqueo_timestamp';
+const KEY_BLOQUEO = 'login_bloqueo_timestamp';
 
-const getIntentos         = async () => parseInt((await AsyncStorage.getItem(KEY_INTENTOS)) ?? '0', 10);
-const getTimestampBloqueo = async () => parseInt((await AsyncStorage.getItem(KEY_BLOQUEO))  ?? '0', 10);
-const resetBloqueo        = async () => { await AsyncStorage.multiRemove([KEY_INTENTOS, KEY_BLOQUEO]); };
-const minutosRestantes    = (ts: number) => Math.max(0, Math.ceil((BLOQUEO_MS - (Date.now() - ts)) / 60000));
+const getIntentos = async () => parseInt((await AsyncStorage.getItem(KEY_INTENTOS)) ?? '0', 10);
+const getTimestampBloqueo = async () => parseInt((await AsyncStorage.getItem(KEY_BLOQUEO)) ?? '0', 10);
+const resetBloqueo = async () => { await AsyncStorage.multiRemove([KEY_INTENTOS, KEY_BLOQUEO]); };
+const minutosRestantes = (ts: number) => Math.max(0, Math.ceil((BLOQUEO_MS - (Date.now() - ts)) / 60000));
 
 export default function LoginScreen({ navigation, route }: Props) {
-  const [email,    setEmail]    = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [verPass,  setVerPass]  = useState(false);
-  const [loading,  setLoading]  = useState(false);
+  const [verPass, setVerPass] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
@@ -72,7 +73,7 @@ export default function LoginScreen({ navigation, route }: Props) {
         } else {
           navigation.navigate('OnboardingEstilo', {
             userId: perfil.id,
-            onComplete: route.params?.onLoginExitoso ?? (() => {}),
+            onComplete: route.params?.onLoginExitoso ?? (() => { }),
           });
         }
       }
@@ -132,7 +133,10 @@ export default function LoginScreen({ navigation, route }: Props) {
                   onSubmitEditing={handleLogin}
                 />
                 <TouchableOpacity style={s.eyeBtn} onPress={() => setVerPass(v => !v)}>
-                  <Text style={s.eyeIcon}>{verPass ? '🙈' : '👁️'}</Text>
+                  {verPass
+                    ? <EyeOff size={20} color={C.muted} strokeWidth={2} />
+                    : <Eye size={20} color={C.muted} strokeWidth={2} />
+                  }
                 </TouchableOpacity>
               </View>
             </View>
@@ -169,30 +173,29 @@ export default function LoginScreen({ navigation, route }: Props) {
 }
 
 const s = StyleSheet.create({
-  safe:           { flex: 1, backgroundColor: C.white },
-  scroll:         { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 40 },
-  header:         { paddingTop: 32, paddingBottom: 8, alignItems: 'center' },
-  wordmark:       { fontSize: 30, fontWeight: '800', letterSpacing: 1, color: C.ink },
-  dot:            { color: C.earth },
-  titlesWrap:     { paddingTop: 32, paddingBottom: 28 },
-  eyebrow:        { fontSize: 12, fontWeight: '600', letterSpacing: 1.5, textTransform: 'uppercase', color: C.earth, marginBottom: 6 },
-  titulo:         { fontSize: 30, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginBottom: 6 },
-  subtitulo:      { fontSize: 15, color: C.muted },
-  form:           { gap: 16, marginBottom: 8 },
-  campo:          { gap: 6 },
-  label:          { fontSize: 13, fontWeight: '500', color: C.muted, letterSpacing: 0.2 },
-  input:          { backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: C.ink, marginBottom: 0 },
-  inputRow:       { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input },
-  eyeBtn:         { paddingHorizontal: 14, paddingVertical: 14 },
-  eyeIcon:        { fontSize: 16 },
-  forgotWrap:     { alignItems: 'flex-end', marginTop: -4 },
-  forgot:         { fontSize: 13, color: C.earth, fontWeight: '500' },
-  btnPrimary:     { backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 17, alignItems: 'center', marginTop: 24, shadowColor: C.earth, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
+  safe: { flex: 1, backgroundColor: C.white },
+  scroll: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 40 },
+  header: { paddingTop: 32, paddingBottom: 8, alignItems: 'center' },
+  wordmark: { fontSize: 30, fontWeight: '800', letterSpacing: 1, color: C.ink },
+  dot: { color: C.earth },
+  titlesWrap: { paddingTop: 32, paddingBottom: 28 },
+  eyebrow: { fontSize: 12, fontWeight: '600', letterSpacing: 1.5, textTransform: 'uppercase', color: C.earth, marginBottom: 6 },
+  titulo: { fontSize: 30, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginBottom: 6 },
+  subtitulo: { fontSize: 15, color: C.muted },
+  form: { gap: 16, marginBottom: 8 },
+  campo: { gap: 6 },
+  label: { fontSize: 13, fontWeight: '500', color: C.muted, letterSpacing: 0.2 },
+  input: { backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: C.ink, marginBottom: 0 },
+  inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input },
+  eyeBtn: { paddingHorizontal: 14, paddingVertical: 14 },
+  forgotWrap: { alignItems: 'flex-end', marginTop: -4 },
+  forgot: { fontSize: 13, color: C.earth, fontWeight: '500' },
+  btnPrimary: { backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 17, alignItems: 'center', marginTop: 24, shadowColor: C.earth, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
   btnPrimaryText: { color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
-  btnDisabled:    { opacity: 0.65 },
-  footer:         { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 28 },
-  footerText:     { fontSize: 14, color: C.muted },
-  footerLink:     { fontSize: 14, color: C.earth, fontWeight: '600' },
-  marcaLink:      { alignItems: 'center', marginTop: 20, paddingVertical: 8 },
-  marcaLinkText:  { fontSize: 13, color: C.muted, fontWeight: '500', textDecorationLine: 'underline' },
+  btnDisabled: { opacity: 0.65 },
+  footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 28 },
+  footerText: { fontSize: 14, color: C.muted },
+  footerLink: { fontSize: 14, color: C.earth, fontWeight: '600' },
+  marcaLink: { alignItems: 'center', marginTop: 20, paddingVertical: 8 },
+  marcaLinkText: { fontSize: 13, color: C.muted, fontWeight: '500', textDecorationLine: 'underline' },
 });

@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { AuthStackParamList } from '../../auth/NavDeAuntenticacion';
 import { registrarMarca, CATEGORIAS_MARCA, CategoriaMarca } from '../marcas.api';
 import { C, R } from '../../../shared/theme';
@@ -35,7 +36,7 @@ interface FormErrors {
 // Mismos requisitos que la contraseña de usuario (PRegistro.tsx):
 // mínimo 8 caracteres, una mayúscula y un número.
 const validarPassword = (p: string) => {
-  if (p.length < 8)     return 'Mínimo 8 caracteres';
+  if (p.length < 8) return 'Mínimo 8 caracteres';
   if (!/[A-Z]/.test(p)) return 'Debe incluir una mayúscula';
   if (!/[0-9]/.test(p)) return 'Debe incluir un número';
 };
@@ -192,7 +193,10 @@ export default function PRegistroMarca({ navigation }: Props) {
               <View style={[f.inputRow, errors.password && f.inputError]}>
                 <TextInput style={[f.input, { flex: 1, borderWidth: 0, marginBottom: 0 }]} placeholder="Mínimo 8 caracteres" placeholderTextColor={C.muted} value={form.password} onChangeText={v => set('password', v)} secureTextEntry={!verPass} autoCapitalize="none" />
                 <TouchableOpacity style={f.eyeBtn} onPress={() => setVerPass(v => !v)}>
-                  <Text>{verPass ? '🙈' : '👁️'}</Text>
+                  {verPass
+                    ? <EyeOff size={20} color={C.muted} strokeWidth={2} />
+                    : <Eye size={20} color={C.muted} strokeWidth={2} />
+                  }
                 </TouchableOpacity>
               </View>
               {form.password.length > 0 && (
@@ -242,39 +246,39 @@ export default function PRegistroMarca({ navigation }: Props) {
 }
 
 const f = StyleSheet.create({
-  safe:         { flex: 1, backgroundColor: C.white },
-  scroll:       { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 48 },
-  topBar:       { paddingTop: 16, paddingBottom: 4 },
-  backBtn:      { paddingVertical: 8 },
-  backText:     { fontSize: 14, color: C.earth, fontWeight: '500' },
-  titlesWrap:   { paddingTop: 16, paddingBottom: 24 },
-  eyebrow:      { fontSize: 12, fontWeight: '600', letterSpacing: 1.5, textTransform: 'uppercase', color: C.earth, marginBottom: 6 },
-  titulo:       { fontSize: 26, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginBottom: 6 },
-  subtitulo:    { fontSize: 15, color: C.muted },
-  form:         { gap: 16, marginBottom: 8 },
-  fila:         { flexDirection: 'row', gap: 12 },
-  campo:        { gap: 6 },
-  label:        { fontSize: 13, fontWeight: '500', color: C.muted, letterSpacing: 0.2 },
-  input:        { backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: C.ink },
-  inputRow:     { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, overflow: 'hidden' },
-  inputError:   { borderColor: C.error },
-  eyeBtn:       { paddingHorizontal: 14 },
-  errorText:    { fontSize: 12, color: C.error, marginTop: 2 },
-  reqRow:       { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
-  reqDot:       { width: 6, height: 6, borderRadius: 3, backgroundColor: C.border },
-  reqDotOk:     { backgroundColor: C.success },
-  reqText:      { fontSize: 12, color: C.muted },
-  reqTextOk:    { color: C.success },
-  chipsFila:    { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip:         { paddingHorizontal: 14, paddingVertical: 9, borderRadius: R.chip, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.surface },
-  chipActivo:   { backgroundColor: C.earth, borderColor: C.earth },
-  chipTexto:    { fontSize: 13, color: C.ink, fontWeight: '500' },
+  safe: { flex: 1, backgroundColor: C.white },
+  scroll: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 48 },
+  topBar: { paddingTop: 16, paddingBottom: 4 },
+  backBtn: { paddingVertical: 8 },
+  backText: { fontSize: 14, color: C.earth, fontWeight: '500' },
+  titlesWrap: { paddingTop: 16, paddingBottom: 24 },
+  eyebrow: { fontSize: 12, fontWeight: '600', letterSpacing: 1.5, textTransform: 'uppercase', color: C.earth, marginBottom: 6 },
+  titulo: { fontSize: 26, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginBottom: 6 },
+  subtitulo: { fontSize: 15, color: C.muted },
+  form: { gap: 16, marginBottom: 8 },
+  fila: { flexDirection: 'row', gap: 12 },
+  campo: { gap: 6 },
+  label: { fontSize: 13, fontWeight: '500', color: C.muted, letterSpacing: 0.2 },
+  input: { backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: C.ink },
+  inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, overflow: 'hidden' },
+  inputError: { borderColor: C.error },
+  eyeBtn: { paddingHorizontal: 14 },
+  errorText: { fontSize: 12, color: C.error, marginTop: 2 },
+  reqRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
+  reqDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.border },
+  reqDotOk: { backgroundColor: C.success },
+  reqText: { fontSize: 12, color: C.muted },
+  reqTextOk: { color: C.success },
+  chipsFila: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: R.chip, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.surface },
+  chipActivo: { backgroundColor: C.earth, borderColor: C.earth },
+  chipTexto: { fontSize: 13, color: C.ink, fontWeight: '500' },
   chipTextoActivo: { color: C.white },
-  btnPrimary:   { backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 17, alignItems: 'center', marginTop: 24, shadowColor: C.earth, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
+  btnPrimary: { backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 17, alignItems: 'center', marginTop: 24, shadowColor: C.earth, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
   btnPrimaryText: { color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
-  btnDisabled:  { opacity: 0.65 },
-  legal:        { fontSize: 12, color: C.muted, textAlign: 'center', lineHeight: 18, marginTop: 16, paddingHorizontal: 8 },
-  footer:       { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 20 },
-  footerText:   { fontSize: 14, color: C.muted },
-  footerLink:   { fontSize: 14, color: C.earth, fontWeight: '600' },
+  btnDisabled: { opacity: 0.65 },
+  legal: { fontSize: 12, color: C.muted, textAlign: 'center', lineHeight: 18, marginTop: 16, paddingHorizontal: 8 },
+  footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 20 },
+  footerText: { fontSize: 14, color: C.muted },
+  footerLink: { fontSize: 14, color: C.earth, fontWeight: '600' },
 });

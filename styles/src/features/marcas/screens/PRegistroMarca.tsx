@@ -218,7 +218,10 @@ export default function PRegistroMarca({ navigation }: Props) {
               <View style={[f.inputRow, errors.confirmPassword && f.inputError]}>
                 <TextInput style={[f.input, { flex: 1, borderWidth: 0, marginBottom: 0 }]} placeholder="Repite la contraseña" placeholderTextColor={C.muted} value={form.confirmPassword} onChangeText={v => set('confirmPassword', v)} secureTextEntry={!verConfirm} autoCapitalize="none" onSubmitEditing={handleRegistro} returnKeyType="done" />
                 <TouchableOpacity style={f.eyeBtn} onPress={() => setVerConfirm(v => !v)}>
-                  <Text>{verConfirm ? '🙈' : '👁️'}</Text>
+                  {verConfirm
+                    ? <EyeOff size={20} color={C.muted} strokeWidth={2} />
+                    : <Eye size={20} color={C.muted} strokeWidth={2} />
+                  }
                 </TouchableOpacity>
               </View>
             </InputField>

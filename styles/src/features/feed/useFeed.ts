@@ -64,7 +64,7 @@ export function useFeed(): UseFeedResult {
      etiquetas (
         id, pos_x, pos_y, es_manual,
         nombre_manual, marca_manual, precio_manual,
-        prenda:prendas ( id, nombre, precio, imagen_url, url_tienda, marca:marcas ( nombre ) ),
+        prenda:prendas ( id, nombre, precio, imagen_url, url_tienda, activa, marca:marcas ( nombre ) ),
         estilo:estilos ( nombre )
       )
     `;

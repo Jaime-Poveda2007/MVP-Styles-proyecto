@@ -137,7 +137,7 @@ const eliminarConfirmado = async () => {
                 {(etqSel.es_manual ? etqSel.precio_manual : etqSel.prenda?.precio) != null && (
                   <Text style={d.popupPrecio}>${(etqSel.es_manual ? etqSel.precio_manual : etqSel.prenda?.precio)?.toLocaleString('es-CO')}</Text>
                 )}
-                {!etqSel.es_manual && etqSel.prenda?.url_tienda && (
+                {!etqSel.es_manual && etqSel.prenda?.activa && etqSel.prenda?.url_tienda && (
                   <TouchableOpacity style={d.popupBtn} onPress={() => abrirTienda(etqSel.prenda?.url_tienda)}>
                     <ExternalLink size={10} color="#fff" strokeWidth={2.5} />
                     <Text style={d.popupBtnText}>Ver en tienda</Text>
@@ -196,7 +196,7 @@ const nom    = etq.es_manual ? etq.nombre_manual : etq.prenda?.nombre;
                     </View>
                     <View style={d.prendaDerecha}>
                       {precio != null && <Text style={d.prendaPrecio}>${precio.toLocaleString('es-CO')}</Text>}
-                      {!etq.es_manual && etq.prenda?.url_tienda && (
+                      {!etq.es_manual && etq.prenda?.activa && etq.prenda?.url_tienda && (
                         <TouchableOpacity style={d.verBtn} onPress={() => abrirTienda(etq.prenda?.url_tienda)}>
                           <ExternalLink size={12} color={C.earth} strokeWidth={2} />
                           <Text style={d.verBtnText}>Ver</Text>

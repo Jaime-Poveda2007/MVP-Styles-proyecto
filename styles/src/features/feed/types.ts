@@ -47,6 +47,7 @@ export interface Etiqueta {
     precio: number;
     imagen_url: string | null;
     url_tienda: string | null;
+    activa: boolean;
     marca: { nombre: string } | null;
   } | null;
 }

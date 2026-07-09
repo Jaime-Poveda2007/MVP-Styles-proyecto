@@ -63,7 +63,7 @@ export function useFeed(): UseFeedResult {
       marca:marcas!publicaciones_marca_id_fkey ( id, nombre, logo_url ),
      etiquetas (
         id, pos_x, pos_y, es_manual,
-        nombre_manual, marca_manual, precio_manual,
+        nombre_texto, marca_texto, precio_manual,
         prenda:prendas ( id, nombre, precio, imagen_url, url_tienda, activa, marca:marcas ( nombre ) ),
         estilo:estilos ( nombre )
       )

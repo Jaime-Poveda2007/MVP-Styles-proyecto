@@ -2,13 +2,14 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions, Linking, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, ExternalLink, Tag, Trash2 } from 'lucide-react-native';
+import { ChevronLeft, ExternalLink, Tag, Trash2, Search } from 'lucide-react-native';
 import { Publicacion, Etiqueta } from './types';
 import { useLikes } from './useLikes';
 import IconCorazon from '../../shared/icons/IconCorazon';
 import IconRepost from '../../shared/icons/IconRepost';
 import ImagenConCarga from '../../shared/components/ImagenConCarga';
 import { eliminarPublicacion } from './services/publicacionesService';
+import PrendasRelacionadas from '../etiquetas/components/PrendasRelacionadas';
 import { C } from '../../shared/theme';
 
 interface Props {
@@ -18,6 +19,18 @@ interface Props {
   onEliminado: () => void;
 }
 
+// Nombre/marca/precio de una etiqueta ya no dependen de es_manual: si está
+// enlazada a catálogo se usa la prenda, si no, el texto libre guardado en
+// nombre_texto/marca_texto/precio_manual — ambos casos siempre traen algo,
+// así que sirve como respaldo el uno del otro.
+function datosEtiqueta(etq: Etiqueta) {
+  return {
+    nombre: etq.prenda?.nombre ?? etq.nombre_texto ?? '',
+    marca: etq.prenda?.marca?.nombre ?? etq.marca_texto ?? null,
+    precio: etq.prenda?.precio ?? etq.precio_manual ?? null,
+  };
+}
+
 export default function PDetalle({ publicacion: pub, userId, onVolver, onEliminado }: Props) {
   // useWindowDimensions (en vez de Dimensions.get fijo al montar) para que
   // el detalle se adapte si el dispositivo rota o si la ventana cambia de
@@ -25,6 +38,9 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
   const { width } = useWindowDimensions();
 
   const [etqSel, setEtqSel] = useState<Etiqueta | null>(null);
+  // Etiqueta para la que se pidió "Ver prendas relacionadas". Si tiene
+  // valor, se muestra esa pantalla en vez del detalle normal.
+  const [relacionadaSel, setRelacionadaSel] = useState<Etiqueta | null>(null);
 
   // RF-U06: no se puede dar like a una publicación propia (de usuario o de marca)
   const esPropia = pub.usuario_id === userId || pub.marca_id === userId;
@@ -79,6 +95,19 @@ const eliminarConfirmado = async () => {
     Linking.openURL(url);
   };
 
+  if (relacionadaSel) {
+    const { nombre: nombreRel, marca: marcaRel } = datosEtiqueta(relacionadaSel);
+    return (
+      <PrendasRelacionadas
+        marca={marcaRel}
+        nombre={nombreRel}
+        etiquetaId={relacionadaSel.id}
+        userId={userId}
+        onVolver={() => setRelacionadaSel(null)}
+      />
+    );
+  }
+
   const nombre  = pub.es_de_marca ? pub.marca?.nombre   : pub.usuario?.username;
   const fotoUrl = pub.es_de_marca ? pub.marca?.logo_url : pub.usuario?.foto_url;
 
@@ -125,26 +154,33 @@ const eliminarConfirmado = async () => {
                 <Tag size={10} color="#fff" strokeWidth={2.5} />
               </TouchableOpacity>
             ))}
-            {etqSel && (
-              <View style={[d.popup, {
-                left:  etqSel.pos_x * 100 <= 60 ? `${Math.min(etqSel.pos_x * 100, 55)}%` : undefined,
-                right: etqSel.pos_x * 100 >  60 ? '8%' : undefined,
-                top:   `${Math.min(etqSel.pos_y * 100 + 5, 70)}%`,
-              }]}>
-                <Text style={d.popupNombre}>{etqSel.es_manual ? etqSel.nombre_manual : etqSel.prenda?.nombre}</Text>
-                <Text style={d.popupMarca}>{etqSel.es_manual ? etqSel.marca_manual : etqSel.prenda?.marca?.nombre}</Text>
-                {etqSel.estilo?.nombre && <Text style={d.popupEstilo}>{etqSel.estilo.nombre}</Text>}
-                {(etqSel.es_manual ? etqSel.precio_manual : etqSel.prenda?.precio) != null && (
-                  <Text style={d.popupPrecio}>${(etqSel.es_manual ? etqSel.precio_manual : etqSel.prenda?.precio)?.toLocaleString('es-CO')}</Text>
-                )}
-                {!etqSel.es_manual && etqSel.prenda?.url_tienda && (
-                  <TouchableOpacity style={d.popupBtn} onPress={() => abrirTienda(etqSel.prenda?.url_tienda)}>
-                    <ExternalLink size={10} color="#fff" strokeWidth={2.5} />
-                    <Text style={d.popupBtnText}>Ver en tienda</Text>
+            {etqSel && (() => {
+              const { nombre: nombreEtq, marca: marcaEtq, precio: precioEtq } = datosEtiqueta(etqSel);
+              return (
+                <View style={[d.popup, {
+                  left:  etqSel.pos_x * 100 <= 60 ? `${Math.min(etqSel.pos_x * 100, 55)}%` : undefined,
+                  right: etqSel.pos_x * 100 >  60 ? '8%' : undefined,
+                  top:   `${Math.min(etqSel.pos_y * 100 + 5, 70)}%`,
+                }]}>
+                  <Text style={d.popupNombre}>{nombreEtq}</Text>
+                  {marcaEtq && <Text style={d.popupMarca}>{marcaEtq}</Text>}
+                  {etqSel.estilo?.nombre && <Text style={d.popupEstilo}>{etqSel.estilo.nombre}</Text>}
+                  {precioEtq != null && (
+                    <Text style={d.popupPrecio}>${precioEtq.toLocaleString('es-CO')}</Text>
+                  )}
+                  {!etqSel.es_manual && etqSel.prenda?.activa && etqSel.prenda?.url_tienda && (
+                    <TouchableOpacity style={d.popupBtn} onPress={() => abrirTienda(etqSel.prenda?.url_tienda)}>
+                      <ExternalLink size={10} color="#fff" strokeWidth={2.5} />
+                      <Text style={d.popupBtnText}>Ver en tienda</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity style={d.popupBtnSecundario} onPress={() => setRelacionadaSel(etqSel)}>
+                    <Search size={10} color="#fff" strokeWidth={2.5} />
+                    <Text style={d.popupBtnSecundarioText}>Ver prendas relacionadas</Text>
                   </TouchableOpacity>
-                )}
-              </View>
-            )}
+                </View>
+              );
+            })()}
           </View>
 
           {/* Autor */}
@@ -182,9 +218,7 @@ const eliminarConfirmado = async () => {
             <View style={d.seccion}>
               <Text style={d.seccionTitulo}>Prendas en este look</Text>
               {pub.etiquetas.map(etq => {
-const nom    = etq.es_manual ? etq.nombre_manual : etq.prenda?.nombre;
-                const marca  = etq.es_manual ? etq.marca_manual  : etq.prenda?.marca?.nombre;
-                const precio = etq.es_manual ? etq.precio_manual : etq.prenda?.precio;
+                const { nombre: nom, marca, precio } = datosEtiqueta(etq);
                 const estilo = etq.estilo?.nombre ?? null;
                 return (
                   <View key={etq.id} style={d.prendaRow}>
@@ -193,10 +227,13 @@ const nom    = etq.es_manual ? etq.nombre_manual : etq.prenda?.nombre;
                       <Text style={d.prendaNombre} numberOfLines={1}>{nom}</Text>
                       {marca && <Text style={d.prendaMarca}>{marca}</Text>}
                       {estilo && <Text style={d.prendaEstilo}>{estilo}</Text>}
+                      <TouchableOpacity onPress={() => setRelacionadaSel(etq)}>
+                        <Text style={d.relacionadasLink}>Ver prendas relacionadas</Text>
+                      </TouchableOpacity>
                     </View>
                     <View style={d.prendaDerecha}>
                       {precio != null && <Text style={d.prendaPrecio}>${precio.toLocaleString('es-CO')}</Text>}
-                      {!etq.es_manual && etq.prenda?.url_tienda && (
+                      {!etq.es_manual && etq.prenda?.activa && etq.prenda?.url_tienda && (
                         <TouchableOpacity style={d.verBtn} onPress={() => abrirTienda(etq.prenda?.url_tienda)}>
                           <ExternalLink size={12} color={C.earth} strokeWidth={2} />
                           <Text style={d.verBtnText}>Ver</Text>
@@ -233,6 +270,9 @@ const d = StyleSheet.create({
   popupPrecio:   { fontSize: 13, fontWeight: '600', color: C.earthLight, marginTop: 2 },
   popupBtn:      { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.earth, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5, marginTop: 6, alignSelf: 'flex-start' },
   popupBtnText:  { fontSize: 11, color: '#fff', fontWeight: '600' },
+  popupBtnSecundario:     { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5, marginTop: 6, alignSelf: 'flex-start' },
+  popupBtnSecundarioText: { fontSize: 10, color: '#fff', fontWeight: '600' },
+  relacionadasLink: { fontSize: 11, color: C.earth, fontWeight: '600', marginTop: 4 },
   autorWrap:     { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 16 },
   avatar:        { width: 40, height: 40, borderRadius: 20, overflow: 'hidden' },
   avatarPH:      { width: 40, height: 40, borderRadius: 20, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },

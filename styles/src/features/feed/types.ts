@@ -37,8 +37,12 @@ export interface Etiqueta {
   pos_x: number;
   pos_y: number;
   es_manual: boolean;
-  nombre_manual: string | null;
-  marca_manual: string | null;
+  // Antes solo la etiqueta manual tenía estos dos campos. Ahora TODA
+  // etiqueta los trae (la base de datos los copia automáticamente desde
+  // el catálogo cuando corresponde), así que se pueden usar como
+  // "nombre/marca de respaldo" sin fijarse en es_manual — ver PDetalle.tsx.
+  nombre_texto: string | null;
+  marca_texto: string | null;
   precio_manual: number | null;
   estilo: { nombre: string} | null;
   prenda: {
@@ -47,6 +51,7 @@ export interface Etiqueta {
     precio: number;
     imagen_url: string | null;
     url_tienda: string | null;
+    activa: boolean;
     marca: { nombre: string } | null;
   } | null;
 }

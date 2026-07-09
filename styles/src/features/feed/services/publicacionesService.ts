@@ -90,3 +90,47 @@ export async function eliminarPublicacion(publicacionId: string): Promise<void> 
   const { error } = await supabase.from('publicaciones').delete().eq('id', publicacionId);
   if (error) throw error;
 }
+
+// Usada por la pantalla de "prendas relacionadas": al tocar un resultado
+// se abre el detalle de esa publicación con el mismo formato enriquecido
+// que usa el feed (usuario/marca, etiquetas, likes).
+export async function obtenerPublicacionPorId(
+  publicacionId: string,
+  userId: string
+): Promise<Publicacion> {
+  const SELECT = `
+    id, imagen_url, descripcion, es_de_marca, created_at,
+    usuario_id, marca_id,
+    usuario:usuarios!publicaciones_usuario_id_fkey ( id, nombre, username, foto_url ),
+    marca:marcas!publicaciones_marca_id_fkey ( id, nombre, logo_url ),
+    etiquetas (
+      id, pos_x, pos_y, es_manual,
+      nombre_texto, marca_texto, precio_manual,
+      prenda:prendas ( id, nombre, precio, imagen_url, url_tienda, activa, marca:marcas ( nombre ) ),
+      estilo:estilos ( nombre )
+    )
+  `;
+
+  const { data: p, error } = await supabase
+    .from('publicaciones')
+    .select(SELECT)
+    .eq('id', publicacionId)
+    .single();
+  if (error) throw error;
+
+  const [{ count: likesCount }, { count: repostsCount }, { data: miLike }] = await Promise.all([
+    supabase.from('likes').select('*', { count: 'exact', head: true }).eq('publicacion_id', publicacionId),
+    supabase.from('reposts').select('*', { count: 'exact', head: true }).eq('publicacion_id', publicacionId),
+    supabase.from('likes').select('id').eq('publicacion_id', publicacionId).eq('usuario_id', userId).maybeSingle(),
+  ]);
+
+  return {
+    ...(p as any),
+    usuario: Array.isArray((p as any).usuario) ? (p as any).usuario[0] ?? null : (p as any).usuario ?? null,
+    marca: Array.isArray((p as any).marca) ? (p as any).marca[0] ?? null : (p as any).marca ?? null,
+    likes_count: likesCount ?? 0,
+    reposts_count: repostsCount ?? 0,
+    yo_di_like: !!miLike,
+    etiquetas: (p as any).etiquetas ?? [],
+  } as Publicacion;
+}

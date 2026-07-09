@@ -10,7 +10,7 @@ import {
   ActivityIndicator, RefreshControl, Alert, StyleSheet, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LogOut, Plus } from 'lucide-react-native';
+import { LogOut, Plus, ImagePlus } from 'lucide-react-native';
 import { C, R } from '../../../../shared/theme';
 import { Prenda } from '../types';
 import {
@@ -21,10 +21,11 @@ import {
 interface Props {
   onCrear: () => void;
   onEditar: (prenda: Prenda) => void;
+  onCrearPublicacion: () => void;
   onCerrarSesion: () => void;
 }
 
-export default function PCatalogo({ onCrear, onEditar, onCerrarSesion }: Props) {
+export default function PCatalogo({ onCrear, onEditar, onCrearPublicacion, onCerrarSesion }: Props) {
   const [marcaId, setMarcaId] = useState<string | null>(null);
   const [prendas, setPrendas] = useState<Prenda[]>([]);
   const [activas, setActivas] = useState(0);
@@ -88,9 +89,15 @@ export default function PCatalogo({ onCrear, onEditar, onCerrarSesion }: Props) 
           <Text style={s.eyebrow}>Panel de marca</Text>
           <Text style={s.titulo}>Catálogo</Text>
         </View>
-        <TouchableOpacity style={s.logoutBtn} onPress={onCerrarSesion}>
-          <LogOut size={20} color={C.muted} />
-        </TouchableOpacity>
+        <View style={s.headerAcciones}>
+          <TouchableOpacity style={s.publicarBtn} onPress={onCrearPublicacion}>
+            <ImagePlus size={16} color="#fff" strokeWidth={2} />
+            <Text style={s.publicarBtnText}>Publicar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.logoutBtn} onPress={onCerrarSesion}>
+            <LogOut size={20} color={C.muted} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={s.contadorWrap}>
@@ -162,6 +169,9 @@ const s = StyleSheet.create({
   header:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 },
   eyebrow:      { fontSize: 12, fontWeight: '600', letterSpacing: 1.5, textTransform: 'uppercase', color: C.earth, marginBottom: 4 },
   titulo:       { fontSize: 24, fontWeight: '700', color: C.ink },
+  headerAcciones: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  publicarBtn:  { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.earth, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 9 },
+  publicarBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
   logoutBtn:    { width: 40, height: 40, borderRadius: 20, backgroundColor: C.white, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center' },
   contadorWrap: { paddingHorizontal: 20, paddingBottom: 8 },
   contadorTexto:{ fontSize: 13, color: C.muted, fontWeight: '500' },

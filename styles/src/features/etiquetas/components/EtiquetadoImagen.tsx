@@ -31,11 +31,28 @@ interface Props {
   onEliminarEtiqueta: (id: string) => void;
   onReposicionarEtiqueta: (id: string, posX: number, posY: number) => void;
   maxEtiquetas?: number;
+  /**
+   * Selector que aparece al tocar un punto nuevo de la imagen. Por
+   * defecto es SelectorTipoEtiqueta (catálogo de cualquier marca +
+   * etiqueta manual), usado por el flujo de publicación de usuario.
+   * El panel de marca (RF-M04: "solo prendas propias del catálogo")
+   * pasa aquí su propio selector restringido, sin tocar este archivo.
+   */
+  Selector?: React.ComponentType<{
+    onCerrar: () => void;
+    onSeleccionarCatalogo: (prendaId: string, prendaNombre: string, estiloId: string | null) => void;
+    onSeleccionarManual: (
+      nombreManual: string,
+      marcaManual?: string,
+      precioManual?: number,
+      estiloId?: string | null
+    ) => void;
+  }>;
 }
 
 export default function EtiquetadoImagen({
   imagenUri, etiquetas, onAgregarEtiqueta, onEliminarEtiqueta,
-  onReposicionarEtiqueta, maxEtiquetas = 8,
+  onReposicionarEtiqueta, maxEtiquetas = 8, Selector = SelectorTipoEtiqueta,
 }: Props) {
   const [tamanoImagen, setTamanoImagen] = useState({ width: 0, height: 0 });
   const [puntoPendiente, setPuntoPendiente] = useState<{ x: number; y: number } | null>(null);
@@ -174,7 +191,7 @@ function confirmarEtiquetaCatalogo(prendaId: string, prendaNombre: string, estil
 
       {/* Selector que aparece al tocar un punto nuevo */}
       {puntoPendiente && (
-        <SelectorTipoEtiqueta
+        <Selector
           onCerrar={cerrarSelector}
           onSeleccionarCatalogo={confirmarEtiquetaCatalogo}
           onSeleccionarManual={confirmarEtiquetaManual}

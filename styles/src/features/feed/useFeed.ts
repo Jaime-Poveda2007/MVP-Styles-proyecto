@@ -37,7 +37,7 @@ export function useFeed(): UseFeedResult {
     return { estilos: data?.estilos ?? [], colores: data?.colores ?? [] };
   };
 
-  const enriquecer = async (posts: any[], setLikes: Set<string>): Promise<Publicacion[]> => {
+const enriquecer = async (posts: any[], setLikes: Set<string>, setReposts: Set<string>): Promise<Publicacion[]> => {
     return Promise.all(posts.map(async (p) => {
       const [{ count: likesCount }, { count: repostsCount }] = await Promise.all([
         supabase.from('likes').select('*', { count: 'exact', head: true }).eq('publicacion_id', p.id),
@@ -85,15 +85,19 @@ export function useFeed(): UseFeedResult {
     if (errM) throw errM;
 
     const todosIds = [...(postsUsuarios ?? []), ...(postsMarcas ?? [])].map((p: any) => p.id);
-    const { data: misLikes } = todosIds.length
-      ? await supabase.from('likes').select('publicacion_id').eq('usuario_id', userId).in('publicacion_id', todosIds)
-      : { data: [] };
+    const [{ data: misLikes }, { data: misReposts }] = todosIds.length
+      ? await Promise.all([
+          supabase.from('likes').select('publicacion_id').eq('usuario_id', userId).in('publicacion_id', todosIds),
+          supabase.from('reposts').select('publicacion_id').eq('usuario_id', userId).in('publicacion_id', todosIds),
+        ])
+      : [{ data: [] }, { data: [] }];
 
     const setLikes = new Set((misLikes ?? []).map((l: any) => l.publicacion_id));
+    const setReposts = new Set((misReposts ?? []).map((r: any) => r.publicacion_id));
 
     const [usuariosE, marcasE] = await Promise.all([
-      enriquecer(postsUsuarios ?? [], setLikes),
-      enriquecer(postsMarcas ?? [], setLikes),
+      enriquecer(postsUsuarios ?? [], setLikes, setReposts),
+      enriquecer(postsMarcas ?? [], setLikes, setReposts),
     ]);
 
     // Intercalar 1:5
@@ -145,3 +149,24 @@ export function useFeed(): UseFeedResult {
 
   return { publicaciones, cargando, cargandoMas, error, hayMas, cargarPrimera, cargarMas, refrescar };
 }
+
+const enriquecer = async (posts: any[], setLikes: Set<string>, setReposts: Set<string>): Promise<Publicacion[]> => {
+    return Promise.all(posts.map(async (p) => {
+      const [{ count: likesCount }, { count: repostsCount }] = await Promise.all([
+        supabase.from('likes').select('*', { count: 'exact', head: true }).eq('publicacion_id', p.id),
+        supabase.from('reposts').select('*', { count: 'exact', head: true }).eq('publicacion_id', p.id),
+      ]);
+      return {
+        ...p,
+        usuario: Array.isArray(p.usuario) ? p.usuario[0] ?? null : p.usuario ?? null,
+        marca: Array.isArray(p.marca) ? p.marca[0] ?? null : p.marca ?? null,
+        likes_count: likesCount ?? 0,
+        reposts_count: repostsCount ?? 0,
+        yo_di_like: setLikes.has(p.id),
+        yo_reposteo: setReposts.has(p.id),
+        etiquetas: p.etiquetas ?? [],
+      } as Publicacion;
+    }));
+  };
+
+  

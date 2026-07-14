@@ -15,6 +15,7 @@ export interface Publicacion {
   likes_count: number;
   reposts_count: number;
   yo_di_like: boolean;
+  yo_reposteo: boolean;
   etiquetas: Etiqueta[];
 }
 
@@ -44,7 +45,7 @@ export interface Etiqueta {
   nombre_texto: string | null;
   marca_texto: string | null;
   precio_manual: number | null;
-  estilo: { nombre: string} | null;
+  estilo: { nombre: string } | null;
   prenda: {
     id: string;
     nombre: string;

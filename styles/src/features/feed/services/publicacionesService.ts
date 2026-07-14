@@ -118,10 +118,11 @@ export async function obtenerPublicacionPorId(
     .single();
   if (error) throw error;
 
-  const [{ count: likesCount }, { count: repostsCount }, { data: miLike }] = await Promise.all([
+const [{ count: likesCount }, { count: repostsCount }, { data: miLike }, { data: miRepost }] = await Promise.all([
     supabase.from('likes').select('*', { count: 'exact', head: true }).eq('publicacion_id', publicacionId),
     supabase.from('reposts').select('*', { count: 'exact', head: true }).eq('publicacion_id', publicacionId),
     supabase.from('likes').select('id').eq('publicacion_id', publicacionId).eq('usuario_id', userId).maybeSingle(),
+    supabase.from('reposts').select('id').eq('publicacion_id', publicacionId).eq('usuario_id', userId).maybeSingle(),
   ]);
 
   return {
@@ -131,6 +132,7 @@ export async function obtenerPublicacionPorId(
     likes_count: likesCount ?? 0,
     reposts_count: repostsCount ?? 0,
     yo_di_like: !!miLike,
+    yo_reposteo: !!miRepost,
     etiquetas: (p as any).etiquetas ?? [],
   } as Publicacion;
 }

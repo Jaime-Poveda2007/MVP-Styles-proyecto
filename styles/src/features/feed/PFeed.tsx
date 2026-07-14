@@ -10,6 +10,7 @@ import FeedGrid from './FeedGrid';
 import PDetalle from './PDetalle';
 import { Publicacion } from './types';
 import { FeedStackParamList } from './NavFeed';
+import { obtenerPublicacionPorId } from './services/publicacionesService';
 import { C } from '../../shared/theme';
 
 interface Props {
@@ -31,6 +32,27 @@ export default function PFeed({ userId, onCerrarSesion }: Props) {
     setRefrescando(true);
     await refrescar();
     setRefrescando(false);
+  };
+
+  // Antes se pasaba directamente el `item` de la lista del feed a
+  // PDetalle. Problema: cada FeedCard tiene su propia instancia de
+  // useLikes/useReposts con estado local — cuando le das like o
+  // repost desde la tarjeta, ese cambio nunca se refleja de vuelta en
+  // el arreglo `publicaciones` de useFeed. Al abrir el detalle justo
+  // después, pub.yo_reposteo/reposts_count llegaban desactualizados:
+  // el detalle no se enteraba de que ya se había reposteado, y el
+  // botón quedaba intentando insertar un repost que ya existía →
+  // error. Por eso ahora se vuelve a pedir la publicación fresca justo
+  // antes de abrir el detalle.
+  const abrirDetalle = async (item: Publicacion) => {
+    try {
+      const fresca = await obtenerPublicacionPorId(item.id, userId);
+      setDetalle(fresca);
+    } catch {
+      // Si falla la recarga (sin conexión, etc.), mejor mostrar el
+      // detalle con los datos que ya teníamos que no mostrar nada.
+      setDetalle(item);
+    }
   };
 
 if (detalle) {
@@ -73,7 +95,7 @@ if (detalle) {
         refrescando={refrescando}
         onCargarMas={cargarMas}
         onRefrescar={handleRefrescar}
-        onPressTarjeta={setDetalle}
+        onPressTarjeta={abrirDetalle}
       />
 
       {/* FAB — botón temporal de crear publicación */}

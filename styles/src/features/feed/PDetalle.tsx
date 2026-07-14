@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, ExternalLink, Tag, Trash2, Search } from 'lucide-react-native';
 import { Publicacion, Etiqueta } from './types';
 import { useLikes } from './useLikes';
+import { useReposts } from './useReposts';
 import IconCorazon from '../../shared/icons/IconCorazon';
 import IconRepost from '../../shared/icons/IconRepost';
 import ImagenConCarga from '../../shared/components/ImagenConCarga';
@@ -53,6 +54,13 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
     yoLikeInicial: pub.yo_di_like,
   });
 
+  const { reposts, yoRepostee, toggleRepost } = useReposts({
+    publicacionId: pub.id,
+    userId,
+    repostsInicial: pub.reposts_count,
+    yoReposteeInicial: pub.yo_reposteo,
+  });
+
   const onPressLike = async () => {
     if (esPropia) {
       Alert.alert('No puedes dar like', 'No puedes dar like a tu propia publicación.');
@@ -60,9 +68,17 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
     }
     await toggleLike();
   };
-  const [eliminando, setEliminando] = useState(false);
 
-const eliminarConfirmado = async () => {
+  const onPressRepost = async () => {
+    if (esPropia) {
+      Alert.alert('No puedes repostear', 'No puedes repostear tu propia publicación.');
+      return;
+    }
+    await toggleRepost();
+  };
+
+  const [eliminando, setEliminando] = useState(false);
+  const eliminarConfirmado = async () => {
     setEliminando(true);
     try {
       await eliminarPublicacion(pub.id);
@@ -108,21 +124,21 @@ const eliminarConfirmado = async () => {
     );
   }
 
-  const nombre  = pub.es_de_marca ? pub.marca?.nombre   : pub.usuario?.username;
+  const nombre = pub.es_de_marca ? pub.marca?.nombre : pub.usuario?.username;
   const fotoUrl = pub.es_de_marca ? pub.marca?.logo_url : pub.usuario?.foto_url;
 
   // Ancho máximo de tarjeta para que en tablets/pantallas grandes la imagen
   // y el contenido no se estiren a todo el ancho — se centra con un margen.
   const ANCHO_MAX_CONTENIDO = 480;
   const anchoContenido = Math.min(width, ANCHO_MAX_CONTENIDO);
-  const margenLateral  = (width - anchoContenido) / 2;
+  const margenLateral = (width - anchoContenido) / 2;
 
   return (
     <SafeAreaView style={d.safe}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={{ marginHorizontal: margenLateral }}>
 
-  <View style={d.header}>
+          <View style={d.header}>
             <TouchableOpacity style={d.backBtn} onPress={onVolver}>
               <ChevronLeft size={24} color={C.ink} strokeWidth={2} />
             </TouchableOpacity>
@@ -158,9 +174,9 @@ const eliminarConfirmado = async () => {
               const { nombre: nombreEtq, marca: marcaEtq, precio: precioEtq } = datosEtiqueta(etqSel);
               return (
                 <View style={[d.popup, {
-                  left:  etqSel.pos_x * 100 <= 60 ? `${Math.min(etqSel.pos_x * 100, 55)}%` : undefined,
-                  right: etqSel.pos_x * 100 >  60 ? '8%' : undefined,
-                  top:   `${Math.min(etqSel.pos_y * 100 + 5, 70)}%`,
+                  left: etqSel.pos_x * 100 <= 60 ? `${Math.min(etqSel.pos_x * 100, 55)}%` : undefined,
+                  right: etqSel.pos_x * 100 > 60 ? '8%' : undefined,
+                  top: `${Math.min(etqSel.pos_y * 100 + 5, 70)}%`,
                 }]}>
                   <Text style={d.popupNombre}>{nombreEtq}</Text>
                   {marcaEtq && <Text style={d.popupMarca}>{marcaEtq}</Text>}
@@ -197,20 +213,28 @@ const eliminarConfirmado = async () => {
 
           {pub.descripcion && <View style={d.seccion}><Text style={d.descripcion}>{pub.descripcion}</Text></View>}
 
-{/* Acciones */}
+          {/* Acciones */}
           <View style={d.accionesWrap}>
             <TouchableOpacity
-              style={[d.accionBtn, esPropia && d.accionBtnDeshabilitado]}
+              style={d.accionBtn}
               onPress={onPressLike}
+              disabled={esPropia}
               activeOpacity={esPropia ? 1 : 0.7}
             >
-              <IconCorazon activo={yoLike} size={22} colorInactivo={esPropia ? C.border : C.muted} />
+              <IconCorazon activo={yoLike} size={22} colorInactivo={C.muted} />
               <Text style={[d.accionCount, yoLike && { color: C.earth }]}>{likes} {likes === 1 ? 'like' : 'likes'}</Text>
             </TouchableOpacity>
-            <View style={d.accionBtn}>
-              <IconRepost size={22} colorInactivo={C.muted} />
-              <Text style={d.accionCount}>{pub.reposts_count} {pub.reposts_count === 1 ? 'repost' : 'reposts'}</Text>
-            </View>
+            <TouchableOpacity
+              style={d.accionBtn}
+              onPress={onPressRepost}
+              disabled={esPropia}
+              activeOpacity={esPropia ? 1 : 0.7}
+            >
+              <IconRepost activo={yoRepostee} size={22} colorInactivo={C.muted} />
+              <Text style={[d.accionCount, yoRepostee && { color: C.success }]}>
+                {reposts} {reposts === 1 ? 'repost' : 'reposts'}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* Prendas etiquetadas */}
@@ -253,46 +277,46 @@ const eliminarConfirmado = async () => {
 }
 
 const d = StyleSheet.create({
-  safe:          { flex: 1, backgroundColor: C.white },
-  header:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
-  backBtn:       { width: 40, height: 40, borderRadius: 20, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: C.border },
-  badge:         { backgroundColor: C.earth, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4 },
+  safe: { flex: 1, backgroundColor: C.white },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
+  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: C.border },
+  badge: { backgroundColor: C.earth, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4 },
   headerDerecha: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  badgeText:     { color: '#fff', fontSize: 11, fontWeight: '700' },
-  imagenWrap:    { position: 'relative', alignSelf: 'center' },
-  imagen:        { width: '100%', height: '100%' },
-  etqPunto:      { position: 'absolute', width: 28, height: 28, borderRadius: 14, backgroundColor: C.earth, borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center', transform: [{ translateX: -14 }, { translateY: -14 }], elevation: 4 },
-  etqPuntoActivo:{ backgroundColor: C.earthDark },
-  popup:         { position: 'absolute', backgroundColor: 'rgba(26,22,20,0.92)', borderRadius: 12, padding: 12, minWidth: 140, maxWidth: 180, gap: 3, elevation: 8 },
-  popupNombre:   { fontSize: 13, fontWeight: '700', color: '#fff' },
-  popupMarca:    { fontSize: 11, color: 'rgba(255,255,255,0.7)' },
+  badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+  imagenWrap: { position: 'relative', alignSelf: 'center' },
+  imagen: { width: '100%', height: '100%' },
+  etqPunto: { position: 'absolute', width: 28, height: 28, borderRadius: 14, backgroundColor: C.earth, borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center', transform: [{ translateX: -14 }, { translateY: -14 }], elevation: 4 },
+  etqPuntoActivo: { backgroundColor: C.earthDark },
+  popup: { position: 'absolute', backgroundColor: 'rgba(26,22,20,0.92)', borderRadius: 12, padding: 12, minWidth: 140, maxWidth: 180, gap: 3, elevation: 8 },
+  popupNombre: { fontSize: 13, fontWeight: '700', color: '#fff' },
+  popupMarca: { fontSize: 11, color: 'rgba(255,255,255,0.7)' },
   popupEstilo: { fontSize: 10, color: 'rgba(255,255,255,0.55)', marginTop: 1 },
-  popupPrecio:   { fontSize: 13, fontWeight: '600', color: C.earthLight, marginTop: 2 },
-  popupBtn:      { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.earth, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5, marginTop: 6, alignSelf: 'flex-start' },
-  popupBtnText:  { fontSize: 11, color: '#fff', fontWeight: '600' },
-  popupBtnSecundario:     { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5, marginTop: 6, alignSelf: 'flex-start' },
+  popupPrecio: { fontSize: 13, fontWeight: '600', color: C.earthLight, marginTop: 2 },
+  popupBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.earth, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5, marginTop: 6, alignSelf: 'flex-start' },
+  popupBtnText: { fontSize: 11, color: '#fff', fontWeight: '600' },
+  popupBtnSecundario: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5, marginTop: 6, alignSelf: 'flex-start' },
   popupBtnSecundarioText: { fontSize: 10, color: '#fff', fontWeight: '600' },
   relacionadasLink: { fontSize: 11, color: C.earth, fontWeight: '600', marginTop: 4 },
-  autorWrap:     { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 16 },
-  avatar:        { width: 40, height: 40, borderRadius: 20, overflow: 'hidden' },
-  avatarPH:      { width: 40, height: 40, borderRadius: 20, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
-  avatarLetra:   { fontSize: 16, fontWeight: '700', color: C.earth },
-  autorNombre:   { fontSize: 15, fontWeight: '700', color: C.ink },
-  autorSub:      { fontSize: 13, color: C.muted },
-  seccion:       { paddingHorizontal: 16, paddingBottom: 20 },
-  descripcion:   { fontSize: 15, color: C.ink, lineHeight: 22 },
-  accionesWrap:  { flexDirection: 'row', gap: 24, paddingHorizontal: 16, paddingBottom: 20, borderBottomWidth: 0.5, borderBottomColor: C.border, marginBottom: 20 },
-  accionBtn:     { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  autorWrap: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 16 },
+  avatar: { width: 40, height: 40, borderRadius: 20, overflow: 'hidden' },
+  avatarPH: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
+  avatarLetra: { fontSize: 16, fontWeight: '700', color: C.earth },
+  autorNombre: { fontSize: 15, fontWeight: '700', color: C.ink },
+  autorSub: { fontSize: 13, color: C.muted },
+  seccion: { paddingHorizontal: 16, paddingBottom: 20 },
+  descripcion: { fontSize: 15, color: C.ink, lineHeight: 22 },
+  accionesWrap: { flexDirection: 'row', gap: 24, paddingHorizontal: 16, paddingBottom: 20, borderBottomWidth: 0.5, borderBottomColor: C.border, marginBottom: 20 },
+  accionBtn: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   accionBtnDeshabilitado: { opacity: 0.5 },
-  accionCount:   { fontSize: 15, color: C.muted, fontWeight: '500' },
+  accionCount: { fontSize: 15, color: C.muted, fontWeight: '500' },
   seccionTitulo: { fontSize: 13, fontWeight: '600', color: C.muted, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 12 },
-  prendaRow:     { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
-  prendaIcono:   { width: 36, height: 36, borderRadius: 10, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
-  prendaNombre:  { fontSize: 14, fontWeight: '600', color: C.ink },
-  prendaMarca:   { fontSize: 12, color: C.muted, marginTop: 2 },
+  prendaRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
+  prendaIcono: { width: 36, height: 36, borderRadius: 10, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
+  prendaNombre: { fontSize: 14, fontWeight: '600', color: C.ink },
+  prendaMarca: { fontSize: 12, color: C.muted, marginTop: 2 },
   prendaEstilo: { fontSize: 11, color: C.earth, marginTop: 2, fontWeight: '600' },
   prendaDerecha: { alignItems: 'flex-end', gap: 4 },
-  prendaPrecio:  { fontSize: 14, fontWeight: '700', color: C.ink },
-  verBtn:        { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: C.earth, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
-  verBtnText:    { fontSize: 11, color: C.earth, fontWeight: '600' },
+  prendaPrecio: { fontSize: 14, fontWeight: '700', color: C.ink },
+  verBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: C.earth, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
+  verBtnText: { fontSize: 11, color: C.earth, fontWeight: '600' },
 });

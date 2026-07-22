@@ -12,6 +12,8 @@ import ImagenConCarga from '../../shared/components/ImagenConCarga';
 import { eliminarPublicacion } from './services/publicacionesService';
 import PrendasRelacionadas from '../etiquetas/components/PrendasRelacionadas';
 import { C } from '../../shared/theme';
+import ResumenValoracion from '../reseñas/components/ResumenValoracion';
+import PReseñasPrenda from '../reseñas/screens/PReseñasPrenda';
 
 interface Props {
   publicacion: Publicacion;
@@ -38,10 +40,21 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
   // tamaño (split-screen / web), corrigiendo la responsividad de esta pantalla.
   const { width } = useWindowDimensions();
 
+  // ── TODOS los hooks van arriba, antes de cualquier return condicional ──
+  // (regla de React: el orden/cantidad de hooks debe ser el mismo en
+  // cada render; si un useState quedara después de un "if (x) return",
+  // el render que SÍ entra al if tendría un hook menos que el que no
+  // entra, y React tira "Rendered fewer hooks than expected").
   const [etqSel, setEtqSel] = useState<Etiqueta | null>(null);
   // Etiqueta para la que se pidió "Ver prendas relacionadas". Si tiene
   // valor, se muestra esa pantalla en vez del detalle normal.
   const [relacionadaSel, setRelacionadaSel] = useState<Etiqueta | null>(null);
+  // Prenda para la que se pidió "Ver reseñas". Si tiene valor, se
+  // muestra PReseñasPrenda en vez del detalle normal.
+  const [reseñaPrendaSel, setReseñaPrendaSel] = useState<{
+    prendaId: string; nombre: string; marca: string | null;
+  } | null>(null);
+  const [eliminando, setEliminando] = useState(false);
 
   // RF-U06: no se puede dar like a una publicación propia (de usuario o de marca)
   const esPropia = pub.usuario_id === userId || pub.marca_id === userId;
@@ -77,7 +90,6 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
     await toggleRepost();
   };
 
-  const [eliminando, setEliminando] = useState(false);
   const eliminarConfirmado = async () => {
     setEliminando(true);
     try {
@@ -111,6 +123,7 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
     Linking.openURL(url);
   };
 
+  // ── A partir de acá sí pueden ir los returns condicionales ──
   if (relacionadaSel) {
     const { nombre: nombreRel, marca: marcaRel } = datosEtiqueta(relacionadaSel);
     return (
@@ -120,6 +133,18 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
         etiquetaId={relacionadaSel.id}
         userId={userId}
         onVolver={() => setRelacionadaSel(null)}
+      />
+    );
+  }
+
+  if (reseñaPrendaSel) {
+    return (
+      <PReseñasPrenda
+        prendaId={reseñaPrendaSel.prendaId}
+        nombrePrenda={reseñaPrendaSel.nombre}
+        marcaNombre={reseñaPrendaSel.marca}
+        usuarioId={userId}
+        onVolver={() => setReseñaPrendaSel(null)}
       />
     );
   }
@@ -194,6 +219,17 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
                     <Search size={10} color="#fff" strokeWidth={2.5} />
                     <Text style={d.popupBtnSecundarioText}>Ver prendas relacionadas</Text>
                   </TouchableOpacity>
+                  {etqSel.prenda?.id && (
+                    <ResumenValoracion
+                      prendaId={etqSel.prenda.id}
+                      variante="claro"
+                      onVerReseñas={() => setReseñaPrendaSel({
+                        prendaId: etqSel.prenda!.id,
+                        nombre: nombreEtq,
+                        marca: marcaEtq,
+                      })}
+                    />
+                  )}
                 </View>
               );
             })()}
@@ -251,6 +287,12 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
                       <Text style={d.prendaNombre} numberOfLines={1}>{nom}</Text>
                       {marca && <Text style={d.prendaMarca}>{marca}</Text>}
                       {estilo && <Text style={d.prendaEstilo}>{estilo}</Text>}
+                      {etq.prenda?.id && (
+                        <ResumenValoracion
+                          prendaId={etq.prenda.id}
+                          onVerReseñas={() => setReseñaPrendaSel({ prendaId: etq.prenda!.id, nombre: nom, marca })}
+                        />
+                      )}
                       <TouchableOpacity onPress={() => setRelacionadaSel(etq)}>
                         <Text style={d.relacionadasLink}>Ver prendas relacionadas</Text>
                       </TouchableOpacity>
@@ -307,7 +349,6 @@ const d = StyleSheet.create({
   descripcion: { fontSize: 15, color: C.ink, lineHeight: 22 },
   accionesWrap: { flexDirection: 'row', gap: 24, paddingHorizontal: 16, paddingBottom: 20, borderBottomWidth: 0.5, borderBottomColor: C.border, marginBottom: 20 },
   accionBtn: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  accionBtnDeshabilitado: { opacity: 0.5 },
   accionCount: { fontSize: 15, color: C.muted, fontWeight: '500' },
   seccionTitulo: { fontSize: 13, fontWeight: '600', color: C.muted, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 12 },
   prendaRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },

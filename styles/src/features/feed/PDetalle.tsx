@@ -10,6 +10,7 @@ import IconCorazon from '../../shared/icons/IconCorazon';
 import IconRepost from '../../shared/icons/IconRepost';
 import ImagenConCarga from '../../shared/components/ImagenConCarga';
 import { eliminarPublicacion } from './services/publicacionesService';
+import { registrarClicTienda } from './services/clicsTiendaService';
 import PrendasRelacionadas from '../etiquetas/components/PrendasRelacionadas';
 import { C } from '../../shared/theme';
 import ResumenValoracion from '../reseñas/components/ResumenValoracion';
@@ -20,6 +21,11 @@ interface Props {
   userId: string;
   onVolver: () => void;
   onEliminado: () => void;
+  // RF-U10: toque en nombre/foto del autor → perfil público. Opcional
+  // porque solo aplica a autores usuario (no hay perfil público de
+  // marca todavía) y porque no todos los puntos de montaje de
+  // PDetalle tienen navegación disponible.
+  onVerPerfil?: (userId: string) => void;
 }
 
 // Nombre/marca/precio de una etiqueta ya no dependen de es_manual: si está
@@ -34,7 +40,7 @@ function datosEtiqueta(etq: Etiqueta) {
   };
 }
 
-export default function PDetalle({ publicacion: pub, userId, onVolver, onEliminado }: Props) {
+export default function PDetalle({ publicacion: pub, userId, onVolver, onEliminado, onVerPerfil }: Props) {
   // useWindowDimensions (en vez de Dimensions.get fijo al montar) para que
   // el detalle se adapte si el dispositivo rota o si la ventana cambia de
   // tamaño (split-screen / web), corrigiendo la responsividad de esta pantalla.
@@ -118,9 +124,14 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
       ]
     );
   };
-  const abrirTienda = (url?: string | null) => {
+  const abrirTienda = (url?: string | null, prendaId?: string) => {
     if (!url) { Alert.alert('Sin enlace', 'Esta prenda no tiene enlace de tienda.'); return; }
     Linking.openURL(url);
+    // RF-M05: telemetría para la marca — nunca debe bloquear ni fallar
+    // visiblemente para quien está comprando.
+    if (prendaId) {
+      registrarClicTienda(prendaId, userId).catch(() => {});
+    }
   };
 
   // ── A partir de acá sí pueden ir los returns condicionales ──
@@ -145,6 +156,7 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
         marcaNombre={reseñaPrendaSel.marca}
         usuarioId={userId}
         onVolver={() => setReseñaPrendaSel(null)}
+        onVerPerfil={onVerPerfil}
       />
     );
   }
@@ -210,7 +222,7 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
                     <Text style={d.popupPrecio}>${precioEtq.toLocaleString('es-CO')}</Text>
                   )}
                   {!etqSel.es_manual && etqSel.prenda?.activa && etqSel.prenda?.url_tienda && (
-                    <TouchableOpacity style={d.popupBtn} onPress={() => abrirTienda(etqSel.prenda?.url_tienda)}>
+                    <TouchableOpacity style={d.popupBtn} onPress={() => abrirTienda(etqSel.prenda?.url_tienda, etqSel.prenda?.id)}>
                       <ExternalLink size={10} color="#fff" strokeWidth={2.5} />
                       <Text style={d.popupBtnText}>Ver en tienda</Text>
                     </TouchableOpacity>
@@ -235,8 +247,13 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
             })()}
           </View>
 
-          {/* Autor */}
-          <View style={d.autorWrap}>
+          {/* Autor — toque en nombre/foto abre el perfil público (RF-U10) */}
+          <TouchableOpacity
+            style={d.autorWrap}
+            activeOpacity={onVerPerfil && !pub.es_de_marca ? 0.7 : 1}
+            disabled={!onVerPerfil || pub.es_de_marca}
+            onPress={() => onVerPerfil?.(pub.usuario_id ?? '')}
+          >
             {fotoUrl
               ? <ImagenConCarga uri={fotoUrl} style={d.avatar} />
               : <View style={d.avatarPH}><Text style={d.avatarLetra}>{(nombre ?? '?')[0].toUpperCase()}</Text></View>
@@ -245,7 +262,7 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
               <Text style={d.autorNombre}>{nombre ?? '—'}</Text>
               {!pub.es_de_marca && pub.usuario?.nombre && <Text style={d.autorSub}>{pub.usuario.nombre}</Text>}
             </View>
-          </View>
+          </TouchableOpacity>
 
           {pub.descripcion && <View style={d.seccion}><Text style={d.descripcion}>{pub.descripcion}</Text></View>}
 
@@ -300,7 +317,7 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
                     <View style={d.prendaDerecha}>
                       {precio != null && <Text style={d.prendaPrecio}>${precio.toLocaleString('es-CO')}</Text>}
                       {!etq.es_manual && etq.prenda?.activa && etq.prenda?.url_tienda && (
-                        <TouchableOpacity style={d.verBtn} onPress={() => abrirTienda(etq.prenda?.url_tienda)}>
+                        <TouchableOpacity style={d.verBtn} onPress={() => abrirTienda(etq.prenda?.url_tienda, etq.prenda?.id)}>
                           <ExternalLink size={12} color={C.earth} strokeWidth={2} />
                           <Text style={d.verBtnText}>Ver</Text>
                         </TouchableOpacity>

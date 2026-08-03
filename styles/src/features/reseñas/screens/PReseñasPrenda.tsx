@@ -22,9 +22,10 @@ interface Props {
   marcaNombre?: string | null;
   usuarioId: string;
   onVolver: () => void;
+  onVerPerfil?: (userId: string) => void;
 }
 
-export default function PReseñasPrenda({ prendaId, nombrePrenda, marcaNombre, usuarioId, onVolver }: Props) {
+export default function PReseñasPrenda({ prendaId, nombrePrenda, marcaNombre, usuarioId, onVolver, onVerPerfil }: Props) {
   const { miReseña, promedio, total, guardando, guardar, eliminar } = useReseña({ prendaId, usuarioId });
 
   const [reseñas, setReseñas] = useState<ReseñaConAutor[]>([]);
@@ -74,7 +75,7 @@ export default function PReseñasPrenda({ prendaId, nombrePrenda, marcaNombre, u
 
         <View style={s.separador} />
 
-        <ListaReseñas reseñas={reseñas} cargando={cargandoLista} />
+        <ListaReseñas reseñas={reseñas} cargando={cargandoLista} onVerPerfil={onVerPerfil} />
       </ScrollView>
     </SafeAreaView>
   );

@@ -11,9 +11,10 @@ import { C, R } from '../../shared/theme';
 interface Props {
   userId: string;
   onVolver: () => void;
+  onVerPerfil?: (userId: string) => void;
 }
 
-export default function PMisReposts({ userId, onVolver }: Props) {
+export default function PMisReposts({ userId, onVolver, onVerPerfil }: Props) {
   const [items, setItems] = useState<RepostConOriginal[]>([]);
   const [cargando, setCargando] = useState(true);
   const [abierto, setAbierto] = useState<Publicacion | null>(null);
@@ -51,6 +52,7 @@ export default function PMisReposts({ userId, onVolver }: Props) {
         userId={userId}
         onVolver={() => setAbierto(null)}
         onEliminado={() => { setAbierto(null); cargar(); }}
+        onVerPerfil={onVerPerfil}
       />
     );
   }

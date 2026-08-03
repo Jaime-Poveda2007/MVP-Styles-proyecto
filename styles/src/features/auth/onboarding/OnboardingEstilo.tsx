@@ -52,11 +52,23 @@ const PASOS = [
   { numero: 3, eyebrow: 'Paso 3 de 3', titulo: 'Tu paleta',   subtitulo: '¿Qué colores dominan tu armario?',   opciones: COLORES, campo: 'colores'  as keyof Preferencias },
 ];
 
-interface Props { userId: string; onComplete: () => void; }
+interface Props {
+  userId: string;
+  onComplete: () => void;
+  // RF-U11: reutilizado también para "editar preferencias" desde el
+  // perfil (ver PEditarPreferencias.tsx). En modo 'edicion' se precarga
+  // la selección actual y NO se vuelve a marcar onboarding_completo.
+  preferenciasIniciales?: Preferencias;
+  modo?: 'onboarding' | 'edicion';
+}
 
-export default function OnboardingEstilo({ userId, onComplete }: Props) {
+export default function OnboardingEstilo({
+  userId, onComplete,
+  preferenciasIniciales = { estilos: [], telas: [], colores: [] },
+  modo = 'onboarding',
+}: Props) {
   const [pasoActual,    setPasoActual]    = useState(0);
-  const [preferencias,  setPreferencias]  = useState<Preferencias>({ estilos: [], telas: [], colores: [] });
+  const [preferencias,  setPreferencias]  = useState<Preferencias>(preferenciasIniciales);
   const [guardando,     setGuardando]     = useState(false);
 
   const paso            = PASOS[pasoActual];
@@ -91,13 +103,15 @@ export default function OnboardingEstilo({ userId, onComplete }: Props) {
         }, { onConflict: 'usuario_id' });
       if (errorPref) throw errorPref;
 
-      const { error: errorUsuario } = await supabase
-        .from('usuarios')
-        .update({ onboarding_completo: true })
-        .eq('id', userId);
-      if (errorUsuario) throw errorUsuario;
+      if (modo === 'onboarding') {
+        const { error: errorUsuario } = await supabase
+          .from('usuarios')
+          .update({ onboarding_completo: true })
+          .eq('id', userId);
+        if (errorUsuario) throw errorUsuario;
 
-      await supabase.auth.refreshSession();
+        await supabase.auth.refreshSession();
+      }
       onComplete();
     } catch {
       Alert.alert('Error al guardar', 'No pudimos guardar tus preferencias.', [
@@ -173,7 +187,9 @@ export default function OnboardingEstilo({ userId, onComplete }: Props) {
         >
           {guardando
             ? <ActivityIndicator color="#fff" />
-            : <Text style={o.btnPrimaryText}>{esUltimoPaso ? 'Empezar a explorar →' : 'Continuar →'}</Text>
+            : <Text style={o.btnPrimaryText}>
+                {esUltimoPaso ? (modo === 'edicion' ? 'Guardar cambios' : 'Empezar a explorar →') : 'Continuar →'}
+              </Text>
           }
         </TouchableOpacity>
       </View>

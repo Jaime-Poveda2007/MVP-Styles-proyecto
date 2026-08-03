@@ -1,10 +1,24 @@
 // src/features/Home/NavHome.tsx
+//
+// Stack exterior de la sesión de usuario: los tabs (Feed/Perfil) más
+// la pantalla de perfil público de otras personas (RF-U10), registrada
+// acá arriba para que "navigate('PerfilPublico', ...)" funcione desde
+// cualquier punto profundo de cualquiera de los dos tabs sin tener que
+// pasar el objeto `navigation` crudo a componentes de presentación
+// (FeedCard, PDetalle, ListaReseñas ya reciben solo un callback
+// `onVerPerfil`, igual que el resto de callbacks de este codebase).
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { LogOut } from 'lucide-react-native';
-import FeedNavigator from '../feed/NavFeed';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import NavTabs from './NavTabs';
+import PPerfilPublico from '../perfil/PPerfilPublico';
 import { supabase } from '../../lib/supabase';
-import { C } from '../../shared/theme';
+
+export type HomeStackParamList = {
+  Tabs: undefined;
+  PerfilPublico: { targetUserId: string };
+};
+
+const Stack = createNativeStackNavigator<HomeStackParamList>();
 
 interface Props {
   userId: string;
@@ -18,19 +32,26 @@ export default function HomeNavigator({ userId, onCerrarSesion }: Props) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <FeedNavigator userId={userId} onCerrarSesion={cerrarSesion} />
-    </View>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Tabs">
+        {({ navigation }) => (
+          <NavTabs
+            userId={userId}
+            onCerrarSesion={cerrarSesion}
+            onVerPerfil={(targetUserId) => navigation.navigate('PerfilPublico', { targetUserId })}
+          />
+        )}
+      </Stack.Screen>
+      <Stack.Screen name="PerfilPublico">
+        {({ route, navigation }) => (
+          <PPerfilPublico
+            targetUserId={route.params.targetUserId}
+            userId={userId}
+            onVolver={() => navigation.goBack()}
+            onVerPerfil={(targetUserId) => navigation.navigate('PerfilPublico', { targetUserId })}
+          />
+        )}
+      </Stack.Screen>
+    </Stack.Navigator>
   );
 }
-
-const s = StyleSheet.create({
-  logoutBtn: {
-    position: 'absolute', bottom: 32, right: 20,
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: C.white, borderWidth: 0.5,
-    borderColor: C.border, alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 }, elevation: 4,
-  },
-});

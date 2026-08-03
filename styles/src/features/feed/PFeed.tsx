@@ -12,6 +12,7 @@ import { Publicacion } from './types';
 import { FeedStackParamList } from './NavFeed';
 import { obtenerPublicacionPorId } from './services/publicacionesService';
 import { C } from '../../shared/theme';
+import BarraBusquedaHeader from '../busqueda/components/BarraBusquedaHeader';
 
 interface Props {
   userId: string;
@@ -24,7 +25,7 @@ export default function PFeed({ userId, onCerrarSesion }: Props) {
   const navigation = useNavigation<Nav>();
   const { publicaciones, cargando, cargandoMas, error, hayMas, cargarPrimera, cargarMas, refrescar } = useFeed();
   const [refrescando, setRefrescando] = useState(false);
-  const [detalle,     setDetalle]     = useState<Publicacion | null>(null);
+  const [detalle, setDetalle] = useState<Publicacion | null>(null);
 
   useEffect(() => { cargarPrimera(userId); }, [userId]);
 
@@ -34,28 +35,16 @@ export default function PFeed({ userId, onCerrarSesion }: Props) {
     setRefrescando(false);
   };
 
-  // Antes se pasaba directamente el `item` de la lista del feed a
-  // PDetalle. Problema: cada FeedCard tiene su propia instancia de
-  // useLikes/useReposts con estado local — cuando le das like o
-  // repost desde la tarjeta, ese cambio nunca se refleja de vuelta en
-  // el arreglo `publicaciones` de useFeed. Al abrir el detalle justo
-  // después, pub.yo_reposteo/reposts_count llegaban desactualizados:
-  // el detalle no se enteraba de que ya se había reposteado, y el
-  // botón quedaba intentando insertar un repost que ya existía →
-  // error. Por eso ahora se vuelve a pedir la publicación fresca justo
-  // antes de abrir el detalle.
   const abrirDetalle = async (item: Publicacion) => {
     try {
       const fresca = await obtenerPublicacionPorId(item.id, userId);
       setDetalle(fresca);
     } catch {
-      // Si falla la recarga (sin conexión, etc.), mejor mostrar el
-      // detalle con los datos que ya teníamos que no mostrar nada.
       setDetalle(item);
     }
   };
 
-if (detalle) {
+  if (detalle) {
     return (
       <PDetalle
         publicacion={detalle}
@@ -72,10 +61,15 @@ if (detalle) {
       {/* Header */}
       <View style={f.header}>
         <Text style={f.wordmark}>styles<Text style={f.dot}>.</Text></Text>
-        {/* Logout temporal — en Mes 3 pasa al tab de Perfil */}
-        <TouchableOpacity style={f.logoutBtn} onPress={onCerrarSesion}>
-          <LogOut size={18} color={C.muted} strokeWidth={2} />
-        </TouchableOpacity>
+        <View style={f.headerDerecha}>
+          <BarraBusquedaHeader
+            onBuscar={(termino) => navigation.navigate('Busqueda', { terminoInicial: termino, userId })}
+          />
+          {/* Logout temporal — en Mes 3 pasa al tab de Perfil */}
+          <TouchableOpacity style={f.logoutBtn} onPress={onCerrarSesion}>
+            <LogOut size={18} color={C.muted} strokeWidth={2} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Error no bloqueante */}
@@ -112,14 +106,15 @@ if (detalle) {
 }
 
 const f = StyleSheet.create({
-  safe:        { flex: 1, backgroundColor: C.white },
-  header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
-  wordmark:    { fontSize: 22, fontWeight: '800', letterSpacing: 0.5, color: C.ink },
-  dot:         { color: C.earth },
-  logoutBtn:   { width: 36, height: 36, borderRadius: 18, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: C.border },
+  safe: { flex: 1, backgroundColor: C.white },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
+  wordmark: { fontSize: 22, fontWeight: '800', letterSpacing: 0.5, color: C.ink },
+  dot: { color: C.earth },
+  logoutBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: C.border },
   errorBanner: { backgroundColor: '#FDECEA', marginHorizontal: 16, marginTop: 8, borderRadius: 8, padding: 10 },
-  errorText:   { fontSize: 13, color: '#C0392B', textAlign: 'center' },
-  fab:         {
+  errorText: { fontSize: 13, color: '#C0392B', textAlign: 'center' },
+  headerDerecha: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  fab: {
     position: 'absolute',
     bottom: 28,
     left: '50%',

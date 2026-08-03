@@ -3,10 +3,12 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PCrearPublicacion from './screens/PCrearPublicacion';
 import PFeed from './PFeed';
+import PBusqueda from '../busqueda/PBusqueda';
 
 export type FeedStackParamList = {
   Feed: { userId: string };
   CrearPublicacion: undefined;
+  Busqueda: { terminoInicial?: string; userId: string };
 };
 
 const Stack = createNativeStackNavigator<FeedStackParamList>();
@@ -25,6 +27,15 @@ export default function FeedNavigator({ userId, onVerPerfil }: Props) {
       <Stack.Screen name="CrearPublicacion">
         {({ navigation }) => (
           <PCrearPublicacion onPublicado={() => navigation.goBack()} />
+        )}
+      </Stack.Screen>
+      <Stack.Screen name="Busqueda">
+        {({ navigation, route }) => (
+          <PBusqueda
+            userId={userId}
+            terminoInicial={route.params?.terminoInicial}
+            onVolver={() => navigation.goBack()}
+          />
         )}
       </Stack.Screen>
     </Stack.Navigator>

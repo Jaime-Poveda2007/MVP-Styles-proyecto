@@ -15,14 +15,14 @@ const Stack = createNativeStackNavigator<FeedStackParamList>();
 
 interface Props {
   userId: string;
-  onCerrarSesion: () => void;
+  onVerPerfil: (targetUserId: string) => void;
 }
 
-export default function FeedNavigator({ userId, onCerrarSesion }: Props) {
+export default function FeedNavigator({ userId, onVerPerfil }: Props) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Feed">
-        {() => <PFeed userId={userId} onCerrarSesion={onCerrarSesion} />}
+        {() => <PFeed userId={userId} onVerPerfil={onVerPerfil} />}
       </Stack.Screen>
       <Stack.Screen name="CrearPublicacion">
         {({ navigation }) => (

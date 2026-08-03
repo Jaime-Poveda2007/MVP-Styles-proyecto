@@ -4,12 +4,14 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PCatalogo from './catalogo/screens/PCatalogo';
 import PFormPrenda from './catalogo/screens/PFormPrenda';
 import PCrearPublicacionMarca from './publicaciones/PCrearPublicacionMarca';
+import PMetricasMarca from './metricas/PMetricasMarca';
 import { Prenda } from './catalogo/types';
 
 export type MarcasStackParamList = {
   Catalogo: undefined;
   FormPrenda: { prenda?: Prenda } | undefined;
   CrearPublicacion: undefined;
+  MetricasMarca: undefined;
 };
 
 const Stack = createNativeStackNavigator<MarcasStackParamList>();
@@ -28,8 +30,14 @@ export default function NavMarcas({ marcaId, onCerrarSesion }: Props) {
             onCrear={() => navigation.navigate('FormPrenda', {})}
             onEditar={(prenda) => navigation.navigate('FormPrenda', { prenda })}
             onCrearPublicacion={() => navigation.navigate('CrearPublicacion')}
+            onVerMetricas={() => navigation.navigate('MetricasMarca')}
             onCerrarSesion={onCerrarSesion}
           />
+        )}
+      </Stack.Screen>
+      <Stack.Screen name="MetricasMarca">
+        {({ navigation }) => (
+          <PMetricasMarca marcaId={marcaId} onVolver={() => navigation.goBack()} />
         )}
       </Stack.Screen>
       <Stack.Screen name="FormPrenda">

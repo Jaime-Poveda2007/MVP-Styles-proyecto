@@ -44,9 +44,20 @@ export function useLikes({
   // Evita condiciones de carrera si el usuario toca varias veces rápido
   const enVueloRef = useRef(false);
 
+  // Sufijo único por instancia montada (no solo por publicacionId): con
+  // el tab de Perfil, React Navigation mantiene montados el tab de Feed
+  // Y el de Perfil a la vez (no se desmontan al cambiar de pestaña), así
+  // que una misma publicación puede aparecer en dos FeedCard vivos al
+  // mismo tiempo (uno en el feed, otro en el perfil). Si ambos usaran el
+  // mismo nombre de canal, Supabase reutiliza el objeto ya suscrito y el
+  // segundo .on() revienta con "cannot add callbacks ... after
+  // subscribe()". Con un id de instancia cada montaje tiene su propio
+  // canal independiente, aunque escuchen la misma publicación.
+  const instanciaIdRef = useRef(Math.random().toString(36).slice(2, 10));
+
   useEffect(() => {
     const canal = supabase
-      .channel(`likes_pub_${publicacionId}`)
+      .channel(`likes_pub_${publicacionId}_${instanciaIdRef.current}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'likes', filter: `publicacion_id=eq.${publicacionId}` },

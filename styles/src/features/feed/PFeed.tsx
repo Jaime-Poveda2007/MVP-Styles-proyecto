@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Plus, LogOut } from 'lucide-react-native';
+import { Plus } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFeed } from './useFeed';
@@ -16,12 +16,12 @@ import BarraBusquedaHeader from '../busqueda/components/BarraBusquedaHeader';
 
 interface Props {
   userId: string;
-  onCerrarSesion: () => void;
+  onVerPerfil: (targetUserId: string) => void;
 }
 
 type Nav = NativeStackNavigationProp<FeedStackParamList>;
 
-export default function PFeed({ userId, onCerrarSesion }: Props) {
+export default function PFeed({ userId, onVerPerfil }: Props) {
   const navigation = useNavigation<Nav>();
   const { publicaciones, cargando, cargandoMas, error, hayMas, cargarPrimera, cargarMas, refrescar } = useFeed();
   const [refrescando, setRefrescando] = useState(false);
@@ -51,6 +51,7 @@ export default function PFeed({ userId, onCerrarSesion }: Props) {
         userId={userId}
         onVolver={() => setDetalle(null)}
         onEliminado={() => { setDetalle(null); refrescar(); }}
+        onVerPerfil={onVerPerfil}
       />
     );
   }
@@ -90,6 +91,7 @@ export default function PFeed({ userId, onCerrarSesion }: Props) {
         onCargarMas={cargarMas}
         onRefrescar={handleRefrescar}
         onPressTarjeta={abrirDetalle}
+        onVerPerfil={onVerPerfil}
       />
 
       {/* FAB — botón temporal de crear publicación */}

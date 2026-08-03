@@ -1,7 +1,7 @@
 // src/features/feed/FeedCard.tsx
 import React from 'react';
 import {
-  View, Text, Image, TouchableOpacity,
+  View, Text, TouchableOpacity,
   StyleSheet, useWindowDimensions, Alert,
 } from 'react-native';
 import { Publicacion } from './types';
@@ -10,6 +10,7 @@ import { useReposts } from './useReposts';
 import IconCorazon from '../../shared/icons/IconCorazon';
 import IconRepost from '../../shared/icons/IconRepost';
 import ImagenConCarga from '../../shared/components/ImagenConCarga';
+import AutorInline from '../../shared/components/AutorInline';
 import { C } from '../../shared/theme';
 
 const GAP = 8;
@@ -19,9 +20,12 @@ interface Props {
   item: Publicacion;
   userId: string;
   onPress: (item: Publicacion) => void;
+  // RF-U10: toque en nombre/foto → perfil público (solo autores usuario,
+  // no hay perfil público de marca todavía).
+  onVerPerfil?: (userId: string) => void;
 }
 
-export default function FeedCard({ item, userId, onPress }: Props) {
+export default function FeedCard({ item, userId, onPress, onVerPerfil }: Props) {
   const { width } = useWindowDimensions();
   const CARD_WIDTH = (width - PADDING * 2 - GAP) / 2;
   const CARD_HEIGHT = CARD_WIDTH * 1.2; // ratio 6:5 — compacto y proporcional
@@ -81,15 +85,17 @@ export default function FeedCard({ item, userId, onPress }: Props) {
       )}
 
       <View style={s.footer}>
-        <View style={s.autorRow}>
-          {fotoUrl
-            ? <Image source={{ uri: fotoUrl }} style={s.avatar} />
-            : <View style={s.avatarPH}>
-              <Text style={s.avatarLetra}>{(nombre ?? '?')[0].toUpperCase()}</Text>
-            </View>
+        <AutorInline
+          nombre={nombre ?? null}
+          fotoUrl={fotoUrl ?? null}
+          size={18}
+          nombreEstilo={s.autorNombre}
+          onPress={
+            onVerPerfil && !item.es_de_marca
+              ? () => onVerPerfil(item.usuario_id ?? '')
+              : undefined
           }
-          <Text style={s.autorNombre} numberOfLines={1}>{nombre ?? '—'}</Text>
-        </View>
+        />
 
         <View style={s.acciones}>
           <TouchableOpacity
@@ -126,10 +132,6 @@ const s = StyleSheet.create({
   badge: { position: 'absolute', top: 6, left: 6, backgroundColor: C.earth, borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2 },
   badgeText: { color: '#fff', fontSize: 9, fontWeight: '700', letterSpacing: 0.5 },
   footer: { padding: 8, gap: 6 },
-  autorRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  avatar: { width: 18, height: 18, borderRadius: 9 },
-  avatarPH: { width: 18, height: 18, borderRadius: 9, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
-  avatarLetra: { fontSize: 9, fontWeight: '700', color: C.earth },
   autorNombre: { fontSize: 11, color: C.muted, fontWeight: '500', flex: 1 },
   acciones: { flexDirection: 'row', gap: 8 },
   accionBtn: { flexDirection: 'row', alignItems: 'center', gap: 3 },

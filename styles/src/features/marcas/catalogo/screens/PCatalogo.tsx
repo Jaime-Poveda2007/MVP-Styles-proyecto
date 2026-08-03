@@ -10,7 +10,7 @@ import {
   ActivityIndicator, RefreshControl, Alert, StyleSheet, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LogOut, Plus, ImagePlus } from 'lucide-react-native';
+import { LogOut, Plus, ImagePlus, BarChart3 } from 'lucide-react-native';
 import { C, R } from '../../../../shared/theme';
 import { Prenda } from '../types';
 import {
@@ -22,10 +22,11 @@ interface Props {
   onCrear: () => void;
   onEditar: (prenda: Prenda) => void;
   onCrearPublicacion: () => void;
+  onVerMetricas: () => void;
   onCerrarSesion: () => void;
 }
 
-export default function PCatalogo({ onCrear, onEditar, onCrearPublicacion, onCerrarSesion }: Props) {
+export default function PCatalogo({ onCrear, onEditar, onCrearPublicacion, onVerMetricas, onCerrarSesion }: Props) {
   const [marcaId, setMarcaId] = useState<string | null>(null);
   const [prendas, setPrendas] = useState<Prenda[]>([]);
   const [activas, setActivas] = useState(0);
@@ -93,6 +94,9 @@ export default function PCatalogo({ onCrear, onEditar, onCrearPublicacion, onCer
           <TouchableOpacity style={s.publicarBtn} onPress={onCrearPublicacion}>
             <ImagePlus size={16} color="#fff" strokeWidth={2} />
             <Text style={s.publicarBtnText}>Publicar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.logoutBtn} onPress={onVerMetricas}>
+            <BarChart3 size={20} color={C.muted} />
           </TouchableOpacity>
           <TouchableOpacity style={s.logoutBtn} onPress={onCerrarSesion}>
             <LogOut size={20} color={C.muted} />

@@ -36,9 +36,15 @@ export function useReposts({
   const [toggling, setToggling] = useState(false);
   const enVueloRef = useRef(false);
 
+  // Ver el comentario equivalente en useLikes.ts: con el tab de Perfil,
+  // una misma publicación puede tener dos FeedCard montados a la vez
+  // (feed + perfil, que React Navigation no desmonta entre pestañas).
+  // El sufijo de instancia evita que ambos peleen por el mismo canal.
+  const instanciaIdRef = useRef(Math.random().toString(36).slice(2, 10));
+
   useEffect(() => {
     const canal = supabase
-      .channel(`reposts_pub_${publicacionId}`)
+      .channel(`reposts_pub_${publicacionId}_${instanciaIdRef.current}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'reposts', filter: `publicacion_id=eq.${publicacionId}` },

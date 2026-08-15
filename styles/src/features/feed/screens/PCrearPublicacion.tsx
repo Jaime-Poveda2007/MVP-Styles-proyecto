@@ -16,6 +16,7 @@ import {
     crearEtiquetaManual,
 } from '../../etiquetas/etiquetas.api';
 import { mostrarAlerta } from '../../../lib/alerta';
+import { conTimeout } from '../../../lib/conTimeout';
 
 interface Props {
     onPublicado: () => void;
@@ -63,8 +64,16 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
         }
         setCargando(true);
         try {
-            const uriFinal = await comprimirSiEsNecesario(imagenUri);
-            const url = await subirImagen(uriFinal);
+            const uriFinal = await conTimeout(
+                comprimirSiEsNecesario(imagenUri),
+                20000,
+                'La imagen tardó demasiado en procesarse. Intenta con otra foto.'
+            );
+            const url = await conTimeout(
+                subirImagen(uriFinal),
+                20000,
+                'La subida tardó demasiado. Revisa tu conexión e intenta de nuevo.'
+            );
             const publicacionId = await crearPublicacion(url, descripcion);
 
             // Guardar las etiquetas pendientes en Supabase, una por una.
@@ -105,6 +114,7 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
                 setEtiquetas([]);
                 onPublicado();
             } catch (e: any) {
+                console.error('Error al publicar:', e);
                 mostrarAlerta('Error al publicar', e.message ?? 'Algo salió mal.');
             } finally {
                 setCargando(false);

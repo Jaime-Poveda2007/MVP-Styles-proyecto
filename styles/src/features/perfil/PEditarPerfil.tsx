@@ -13,6 +13,7 @@ import {
   comprimirFotoDePerfil, subirFotoDePerfil, validarUsername, validarBiografia,
 } from './perfil.api';
 import { mostrarAlerta } from '../../lib/alerta';
+import { conTimeout } from '../../lib/conTimeout';
 
 interface Props {
   userId: string;
@@ -71,14 +72,23 @@ export default function PEditarPerfil({ userId, onGuardado, onCancelar }: Props)
     try {
       let fotoUrl: string | undefined;
       if (fotoUri) {
-        const comprimida = await comprimirFotoDePerfil(fotoUri);
-        fotoUrl = await subirFotoDePerfil(comprimida, userId);
+        const comprimida = await conTimeout(
+          comprimirFotoDePerfil(fotoUri),
+          20000,
+          'La imagen tardó demasiado en procesarse. Intenta con otra foto.'
+        );
+        fotoUrl = await conTimeout(
+          subirFotoDePerfil(comprimida, userId),
+          20000,
+          'La subida tardó demasiado. Revisa tu conexión e intenta de nuevo.'
+        );
       }
       // Una sola escritura atómica — si el username ya está en uso, no
       // queda nombre/biografía a medio guardar (ver perfil.api.ts).
       await actualizarPerfil(userId, { nombre, username, biografia, fotoUrl });
       onGuardado();
     } catch (e: any) {
+      console.error('Error al guardar perfil:', e);
       mostrarAlerta('Error al guardar', e.message ?? 'Algo salió mal.');
     } finally {
       setGuardando(false);

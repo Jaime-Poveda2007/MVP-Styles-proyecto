@@ -21,6 +21,7 @@ import EtiquetadoImagen, { EtiquetaPendiente } from '../../etiquetas/components/
 import { crearEtiquetaCatalogo } from '../../etiquetas/etiquetas.api';
 import SelectorPrendaPropia from './SelectorPrendaPropia';
 import { mostrarAlerta } from '../../../lib/alerta';
+import { conTimeout } from '../../../lib/conTimeout';
 
 interface Props {
   marcaId: string;
@@ -59,8 +60,16 @@ export default function PCrearPublicacionMarca({ marcaId, onPublicado, onCancela
     }
     setCargando(true);
     try {
-      const uriFinal = await comprimirSiEsNecesario(imagenUri);
-      const url = await subirImagen(uriFinal);
+      const uriFinal = await conTimeout(
+        comprimirSiEsNecesario(imagenUri),
+        20000,
+        'La imagen tardó demasiado en procesarse. Intenta con otra foto.'
+      );
+      const url = await conTimeout(
+        subirImagen(uriFinal),
+        20000,
+        'La subida tardó demasiado. Revisa tu conexión e intenta de nuevo.'
+      );
       const publicacionId = await crearPublicacionMarca(marcaId, url, descripcion);
 
       // Todas las etiquetas de este flujo vienen de SelectorPrendaPropia
@@ -87,6 +96,7 @@ export default function PCrearPublicacionMarca({ marcaId, onPublicado, onCancela
       setEtiquetas([]);
       onPublicado();
     } catch (e: any) {
+      console.error('Error al publicar:', e);
       mostrarAlerta('Error al publicar', e.message ?? 'Algo salió mal.');
     } finally {
       setCargando(false);

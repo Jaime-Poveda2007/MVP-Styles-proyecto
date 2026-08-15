@@ -18,7 +18,7 @@ export async function seleccionarDeGaleria(): Promise<string | null> {
   if (!permiso.granted) throw new Error('Necesitamos permiso para acceder a tu galería.');
   const resultado = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: 'images',
-    quality: 1,
+    quality: 0.8,
   });
   if (resultado.canceled) return null;
   return resultado.assets[0].uri;
@@ -28,7 +28,7 @@ export async function tomarFoto(): Promise<string | null> {
   if (!permiso.granted) throw new Error('Necesitamos permiso para usar la cámara.');
   const resultado = await ImagePicker.launchCameraAsync({
     mediaTypes: 'images',
-    quality: 1,
+    quality: 0.8,
   });
   if (resultado.canceled) return null;
   return resultado.assets[0].uri;

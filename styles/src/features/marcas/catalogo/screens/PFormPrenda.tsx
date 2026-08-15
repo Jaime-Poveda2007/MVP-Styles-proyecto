@@ -16,6 +16,7 @@ import {
   validarUrlTienda, validarPrecio,
 } from '../services/prendasService';
 import { mostrarAlerta } from '../../../../lib/alerta';
+import { conTimeout } from '../../../../lib/conTimeout';
 
 interface Props {
   marcaId: string;
@@ -71,8 +72,16 @@ export default function PFormPrenda({ marcaId, prenda, onGuardado, onCancelar }:
     try {
       let imagenUrl: string | undefined;
       if (imagenUri) {
-        const comprimida = await comprimirImagenPrenda(imagenUri);
-        imagenUrl = await subirImagenPrenda(comprimida, marcaId);
+        const comprimida = await conTimeout(
+          comprimirImagenPrenda(imagenUri),
+          20000,
+          'La imagen tardó demasiado en procesarse. Intenta con otra foto.'
+        );
+        imagenUrl = await conTimeout(
+          subirImagenPrenda(comprimida, marcaId),
+          20000,
+          'La subida tardó demasiado. Revisa tu conexión e intenta de nuevo.'
+        );
       }
 
       const datos = {
@@ -91,6 +100,7 @@ export default function PFormPrenda({ marcaId, prenda, onGuardado, onCancelar }:
       }
       onGuardado();
     } catch (e: any) {
+      console.error('Error al guardar prenda:', e);
       mostrarAlerta('Error al guardar', e.message ?? 'Algo salió mal.');
     } finally {
       setGuardando(false);

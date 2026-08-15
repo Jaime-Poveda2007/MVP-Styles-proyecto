@@ -18,7 +18,7 @@ export const LIMITE_PRENDAS_ACTIVAS = 200;
 export async function seleccionarImagenDeGaleria(): Promise<string | null> {
   const permiso = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permiso.granted) throw new Error('Necesitamos permiso para acceder a tu galería.');
-  const resultado = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 1 });
+  const resultado = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 0.8 });
   if (resultado.canceled) return null;
   return resultado.assets[0].uri;
 }
@@ -26,7 +26,7 @@ export async function seleccionarImagenDeGaleria(): Promise<string | null> {
 export async function tomarFotoPrenda(): Promise<string | null> {
   const permiso = await ImagePicker.requestCameraPermissionsAsync();
   if (!permiso.granted) throw new Error('Necesitamos permiso para usar la cámara.');
-  const resultado = await ImagePicker.launchCameraAsync({ mediaTypes: 'images', quality: 1 });
+  const resultado = await ImagePicker.launchCameraAsync({ mediaTypes: 'images', quality: 0.8 });
   if (resultado.canceled) return null;
   return resultado.assets[0].uri;
 }

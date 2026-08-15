@@ -27,7 +27,7 @@ export default function ResumenValoracion({ prendaId, onVerReseñas, variante = 
 
   return (
     <TouchableOpacity style={s.fila} onPress={onVerReseñas} activeOpacity={0.7}>
-      <Star size={12} color={esClaro ? '#fff' : C.earth} fill={esClaro ? '#fff' : C.earth} strokeWidth={0} />
+      <Star size={12} color={esClaro ? C.white : C.earth} fill={esClaro ? C.white : C.earth} strokeWidth={0} />
       <Text style={[s.texto, esClaro && s.textoClaro]}>
         {promedio != null ? promedio.toFixed(1) : 'Sin reseñas'}{total > 0 ? ` (${total})` : ''}
       </Text>
@@ -39,5 +39,5 @@ export default function ResumenValoracion({ prendaId, onVerReseñas, variante = 
 const s = StyleSheet.create({
   fila:       { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
   texto:      { fontSize: 12, color: C.muted, fontWeight: '600' },
-  textoClaro: { color: '#fff' },
+  textoClaro: { color: C.white },
 });

@@ -10,6 +10,8 @@ import { ResultadoPublicacion, ResultadoUsuario, ResultadoMarca, TabBusqueda } f
 import TabsResultados from './components/TabsResultados';
 import PDetalle from '../feed/PDetalle';
 import { Publicacion } from '../feed/types';
+import EstadoError from '../../shared/components/EstadoError';
+import { mostrarAlerta } from '../../lib/alerta';
 
 interface Props {
   userId: string;
@@ -22,6 +24,7 @@ export default function PBusqueda({ userId, terminoInicial, onVolver }: Props) {
   const [tab, setTab] = useState<TabBusqueda>('publicaciones');
   const [cargando, setCargando] = useState(false);
   const [huboBusqueda, setHuboBusqueda] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [publicaciones, setPublicaciones] = useState<ResultadoPublicacion[]>([]);
   const [usuarios, setUsuarios] = useState<ResultadoUsuario[]>([]);
@@ -29,32 +32,36 @@ export default function PBusqueda({ userId, terminoInicial, onVolver }: Props) {
 
   const [detalle, setDetalle] = useState<Publicacion | null>(null);
 
+  const ejecutarBusqueda = async (t: string) => {
+    setCargando(true);
+    setError(null);
+    try {
+      const [pubs, usrs, mrcs] = await Promise.all([
+        buscarPublicaciones(t),
+        buscarUsuarios(t),
+        buscarMarcas(t),
+      ]);
+      setPublicaciones(pubs);
+      setUsuarios(usrs);
+      setMarcas(mrcs);
+      setHuboBusqueda(true);
+    } catch (e: any) {
+      setError(e.message ?? 'No se pudo completar la búsqueda.');
+    } finally {
+      setCargando(false);
+    }
+  };
+
   useEffect(() => {
     if (termino.trim().length < 2) {
       setPublicaciones([]);
       setUsuarios([]);
       setMarcas([]);
       setHuboBusqueda(false);
+      setError(null);
       return;
     }
-    setCargando(true);
-    const timeout = setTimeout(async () => {
-      try {
-        const [pubs, usrs, mrcs] = await Promise.all([
-          buscarPublicaciones(termino),
-          buscarUsuarios(termino),
-          buscarMarcas(termino),
-        ]);
-        setPublicaciones(pubs);
-        setUsuarios(usrs);
-        setMarcas(mrcs);
-        setHuboBusqueda(true);
-      } catch (e) {
-        console.error('Error en búsqueda:', e);
-      } finally {
-        setCargando(false);
-      }
-    }, 300);
+    const timeout = setTimeout(() => ejecutarBusqueda(termino), 300);
     return () => clearTimeout(timeout);
   }, [termino]);
 
@@ -62,8 +69,12 @@ export default function PBusqueda({ userId, terminoInicial, onVolver }: Props) {
     try {
       const fresca = await obtenerPublicacionPorId(resultado.id, userId);
       setDetalle(fresca);
-    } catch {
-      // Sin conexión / error: no navegamos a un detalle roto.
+    } catch (e) {
+      // Sin conexión / error: no navegamos a un detalle roto, pero sí
+      // avisamos — antes esto fallaba en silencio y el tap parecía no
+      // hacer nada.
+      console.warn('No se pudo abrir la publicación desde la búsqueda:', e);
+      mostrarAlerta('Error', 'No se pudo abrir esta publicación. Intenta de nuevo.');
     }
   };
 
@@ -98,6 +109,10 @@ export default function PBusqueda({ userId, terminoInicial, onVolver }: Props) {
           {cargando && <ActivityIndicator size="small" color={C.earth} />}
         </View>
       </View>
+
+      {error && !cargando && (
+        <EstadoError mensaje={error} onReintentar={() => ejecutarBusqueda(termino)} />
+      )}
 
       <TabsResultados
         tab={tab}

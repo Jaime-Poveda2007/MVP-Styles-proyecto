@@ -1,11 +1,12 @@
 // src/features/auth/screens/PRecuperarPassword.tsx
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthStackParamList } from '../NavDeAuntenticacion';
 import { supabase } from '../../../lib/supabase';
 import { C, R } from '../../../shared/theme';
+import { mostrarAlerta } from '../../../lib/alerta';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
@@ -15,11 +16,11 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
   const [enviado, setEnviado] = useState(false);
 
   const handleEnviar = async () => {
-    if (!email.trim()) { Alert.alert('Campo requerido', 'Ingresa tu correo electrónico.'); return; }
+    if (!email.trim()) { mostrarAlerta('Campo requerido', 'Ingresa tu correo electrónico.'); return; }
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase());
     setLoading(false);
-    if (error) { Alert.alert('Error', error.message); return; }
+    if (error) { mostrarAlerta('Error', error.message); return; }
     setEnviado(true);
   };
 
@@ -74,7 +75,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
         </View>
 
         <TouchableOpacity style={[p.btnPrimary, loading && p.btnDisabled]} onPress={handleEnviar} disabled={loading} activeOpacity={0.85}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={p.btnPrimaryText}>Enviar enlace</Text>}
+          {loading ? <ActivityIndicator color={C.white} /> : <Text style={p.btnPrimaryText}>Enviar enlace</Text>}
         </TouchableOpacity>
 
       </View>
@@ -97,6 +98,6 @@ const p = StyleSheet.create({
   label:          { fontSize: 13, fontWeight: '500', color: C.muted },
   input:          { backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: C.ink },
   btnPrimary:     { backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 17, alignItems: 'center', marginTop: 24, shadowColor: C.earth, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
-  btnPrimaryText: { color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
+  btnPrimaryText: { color: C.white, fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
   btnDisabled:    { opacity: 0.65 },
 });

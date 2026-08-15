@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Estilo } from '../hooks/useEstilos';
+import { C } from '../../../shared/theme';
 
 interface Props {
   estilos: Estilo[];
@@ -51,20 +52,20 @@ export default function SelectorEstilo({
 
 const styles = StyleSheet.create({
   contenedor: { marginTop: 12 },
-  label: { fontSize: 14, fontWeight: '500', marginBottom: 8, color: '#111827' },
+  label: { fontSize: 14, fontWeight: '500', marginBottom: 8, color: C.ink },
   fila: { flexDirection: 'row', gap: 8, paddingBottom: 4 },
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    backgroundColor: '#f9fafb',
+    borderColor: C.border,
+    backgroundColor: C.surface,
   },
   chipActivo: {
-    backgroundColor: '#111827',
-    borderColor: '#111827',
+    backgroundColor: C.earth,
+    borderColor: C.earth,
   },
-  chipTexto: { fontSize: 13, color: '#374151' },
-  chipTextoActivo: { color: '#ffffff', fontWeight: '500' },
+  chipTexto: { fontSize: 13, color: C.muted },
+  chipTextoActivo: { color: C.white, fontWeight: '500' },
 });

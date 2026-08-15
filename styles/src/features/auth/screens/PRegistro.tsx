@@ -1,9 +1,6 @@
 // src/features/auth/screens/PRegistro.tsx
 import React, { useState } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity, ScrollView,
-  KeyboardAvoidingView, Platform, ActivityIndicator, Alert, StyleSheet,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Eye, EyeOff } from 'lucide-react-native';
@@ -11,6 +8,7 @@ import { AuthStackParamList } from '../NavDeAuntenticacion';
 import { supabase } from '../../../lib/supabase';
 import { asegurarPerfilUsuario } from '../../../lib/perfil';
 import { C, R } from '../../../shared/theme';
+import { mostrarAlerta } from '../../../lib/alerta';
 
 interface FormData {
   nombre: string; email: string; password: string;
@@ -120,7 +118,7 @@ export default function RegisterScreen({ navigation }: Props) {
         }
       }
     } catch (err: any) {
-      Alert.alert('Error al registrarse', err.message ?? 'Ocurrió un error inesperado.');
+      mostrarAlerta('Error al registrarse', err.message ?? 'Ocurrió un error inesperado.');
     } finally { setLoading(false); }
   };
 
@@ -206,7 +204,7 @@ export default function RegisterScreen({ navigation }: Props) {
           </View>
 
           <TouchableOpacity style={[f.btnPrimary, loading && f.btnDisabled]} onPress={handleRegister} disabled={loading} activeOpacity={0.85}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={f.btnPrimaryText}>Crear cuenta</Text>}
+            {loading ? <ActivityIndicator color={C.white} /> : <Text style={f.btnPrimaryText}>Crear cuenta</Text>}
           </TouchableOpacity>
 
           <Text style={f.legal}>
@@ -253,7 +251,7 @@ const f = StyleSheet.create({
   reqText: { fontSize: 12, color: C.muted },
   reqTextOk: { color: C.success },
   btnPrimary: { backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 17, alignItems: 'center', marginTop: 24, shadowColor: C.earth, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
-  btnPrimaryText: { color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
+  btnPrimaryText: { color: C.white, fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
   btnDisabled: { opacity: 0.65 },
   legal: { fontSize: 12, color: C.muted, textAlign: 'center', lineHeight: 18, marginTop: 16, paddingHorizontal: 8 },
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 20 },

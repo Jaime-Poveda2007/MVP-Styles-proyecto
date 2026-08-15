@@ -1,12 +1,15 @@
 // src/features/perfil/PMisReposts.tsx
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { View, Text, FlatList, Image, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Repeat2, Trash2 } from 'lucide-react-native';
 import { listarMisReposts, eliminarRepost, RepostConOriginal } from './reposts.api';
 import PDetalle from '../feed/PDetalle';
 import { Publicacion } from '../feed/types';
+import EstadoVacio from '../../shared/components/EstadoVacio';
+import EstadoError from '../../shared/components/EstadoError';
 import { C, R } from '../../shared/theme';
+import { mostrarAlerta } from '../../lib/alerta';
 
 interface Props {
   userId: string;
@@ -17,15 +20,17 @@ interface Props {
 export default function PMisReposts({ userId, onVolver, onVerPerfil }: Props) {
   const [items, setItems] = useState<RepostConOriginal[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [abierto, setAbierto] = useState<Publicacion | null>(null);
   const [quitando, setQuitando] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
+    setError(null);
     try {
       const data = await listarMisReposts(userId);
       setItems(data);
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'No se pudieron cargar tus reposts.');
+      setError(e.message ?? 'No se pudieron cargar tus reposts.');
     } finally {
       setCargando(false);
     }
@@ -39,7 +44,7 @@ export default function PMisReposts({ userId, onVolver, onVerPerfil }: Props) {
       await eliminarRepost(repostId);
       setItems(prev => prev.filter(i => i.repostId !== repostId));
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'No se pudo deshacer el repost.');
+      mostrarAlerta('Error', e.message ?? 'No se pudo deshacer el repost.');
     } finally {
       setQuitando(null);
     }
@@ -67,6 +72,10 @@ export default function PMisReposts({ userId, onVolver, onVerPerfil }: Props) {
         <View style={{ width: 36 }} />
       </View>
 
+      {error && !cargando && (
+        <EstadoError mensaje={error} onReintentar={cargar} />
+      )}
+
       {cargando ? (
         <View style={s.centro}><ActivityIndicator color={C.earth} /></View>
       ) : (
@@ -75,10 +84,9 @@ export default function PMisReposts({ userId, onVolver, onVerPerfil }: Props) {
           keyExtractor={(i) => i.repostId}
           contentContainerStyle={s.lista}
           ListEmptyComponent={
-            <View style={s.centro}>
-              <Repeat2 size={22} color={C.muted} strokeWidth={2} />
-              <Text style={s.vacioTexto}>Todavía no has reposteado ninguna publicación.</Text>
-            </View>
+            error ? null : (
+              <EstadoVacio icon={Repeat2} texto="Todavía no has reposteado ninguna publicación." />
+            )
           }
           renderItem={({ item }) => {
             const pub = item.publicacion;
@@ -124,7 +132,6 @@ const s = StyleSheet.create({
   backBtn:       { width: 36, height: 36, borderRadius: 18, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' },
   titulo:        { fontSize: 16, fontWeight: '700', color: C.ink },
   centro:        { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60, gap: 10, paddingHorizontal: 32 },
-  vacioTexto:    { fontSize: 13, color: C.muted, textAlign: 'center', lineHeight: 19 },
   lista:         { padding: 16, gap: 4 },
   fila:          { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: C.border },
   thumb:         { width: 56, height: 56, borderRadius: R.input, backgroundColor: C.earthLight },

@@ -228,7 +228,7 @@ export default function SelectorTipoEtiqueta({
               onPress={confirmar}
               disabled={!nombreValido}
             >
-              <Check size={16} color="#fff" strokeWidth={2.5} />
+              <Check size={16} color={C.white} strokeWidth={2.5} />
               <Text style={s.confirmarText}>Confirmar etiqueta</Text>
             </Pressable>
           </View>
@@ -269,5 +269,5 @@ const s = StyleSheet.create({
   inputPrecio:         { flex: 1, paddingHorizontal: 8, paddingVertical: 12, fontSize: 14, color: C.ink },
   confirmarBtn:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 14, marginTop: 4 },
   confirmarBtnDisabled:{ opacity: 0.4 },
-  confirmarText:       { fontSize: 15, fontWeight: '700', color: '#fff' },
+  confirmarText:       { fontSize: 15, fontWeight: '700', color: C.white },
 });

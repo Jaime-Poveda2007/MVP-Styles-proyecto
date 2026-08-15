@@ -1,6 +1,6 @@
 // src/features/feed/PDetalle.tsx
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions, Linking, Alert, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, ExternalLink, Tag, Trash2, Search } from 'lucide-react-native';
 import { Publicacion, Etiqueta } from './types';
@@ -15,6 +15,7 @@ import PrendasRelacionadas from '../etiquetas/components/PrendasRelacionadas';
 import { C } from '../../shared/theme';
 import ResumenValoracion from '../reseñas/components/ResumenValoracion';
 import PReseñasPrenda from '../reseñas/screens/PReseñasPrenda';
+import { mostrarAlerta, confirmarAccion } from '../../lib/alerta';
 
 interface Props {
   publicacion: Publicacion;
@@ -82,7 +83,7 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
 
   const onPressLike = async () => {
     if (esPropia) {
-      Alert.alert('No puedes dar like', 'No puedes dar like a tu propia publicación.');
+      mostrarAlerta('No puedes dar like', 'No puedes dar like a tu propia publicación.');
       return;
     }
     await toggleLike();
@@ -90,7 +91,7 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
 
   const onPressRepost = async () => {
     if (esPropia) {
-      Alert.alert('No puedes repostear', 'No puedes repostear tu propia publicación.');
+      mostrarAlerta('No puedes repostear', 'No puedes repostear tu propia publicación.');
       return;
     }
     await toggleRepost();
@@ -102,30 +103,20 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
       await eliminarPublicacion(pub.id);
       onEliminado();
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'No se pudo eliminar la publicación.');
+      mostrarAlerta('Error', e.message ?? 'No se pudo eliminar la publicación.');
       setEliminando(false);
     }
   };
 
   const handleEliminar = () => {
-    if (Platform.OS === 'web') {
-      // Alert.alert con varios botones no funciona en RN Web — usamos el confirm nativo del navegador
-      if (window.confirm('¿Seguro que quieres eliminar esta publicación? Esta acción no se puede deshacer.')) {
-        eliminarConfirmado();
-      }
-      return;
-    }
-    Alert.alert(
+    confirmarAccion(
       'Eliminar publicación',
       '¿Seguro que quieres eliminarla? Esta acción no se puede deshacer.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Eliminar', style: 'destructive', onPress: eliminarConfirmado },
-      ]
+      eliminarConfirmado,
     );
   };
   const abrirTienda = (url?: string | null, prendaId?: string) => {
-    if (!url) { Alert.alert('Sin enlace', 'Esta prenda no tiene enlace de tienda.'); return; }
+    if (!url) { mostrarAlerta('Sin enlace', 'Esta prenda no tiene enlace de tienda.'); return; }
     Linking.openURL(url);
     // RF-M05: telemetría para la marca — nunca debe bloquear ni fallar
     // visiblemente para quien está comprando.
@@ -204,7 +195,7 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
                 style={[d.etqPunto, { left: `${etq.pos_x * 100}%`, top: `${etq.pos_y * 100}%` }, etqSel?.id === etq.id && d.etqPuntoActivo]}
                 onPress={() => setEtqSel(prev => prev?.id === etq.id ? null : etq)}
               >
-                <Tag size={10} color="#fff" strokeWidth={2.5} />
+                <Tag size={10} color={C.white} strokeWidth={2.5} />
               </TouchableOpacity>
             ))}
             {etqSel && (() => {
@@ -222,13 +213,21 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
                     <Text style={d.popupPrecio}>${precioEtq.toLocaleString('es-CO')}</Text>
                   )}
                   {!etqSel.es_manual && etqSel.prenda?.activa && etqSel.prenda?.url_tienda && (
-                    <TouchableOpacity style={d.popupBtn} onPress={() => abrirTienda(etqSel.prenda?.url_tienda, etqSel.prenda?.id)}>
-                      <ExternalLink size={10} color="#fff" strokeWidth={2.5} />
+                    <TouchableOpacity
+                      style={d.popupBtn}
+                      onPress={() => abrirTienda(etqSel.prenda?.url_tienda, etqSel.prenda?.id)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <ExternalLink size={10} color={C.white} strokeWidth={2.5} />
                       <Text style={d.popupBtnText}>Ver en tienda</Text>
                     </TouchableOpacity>
                   )}
-                  <TouchableOpacity style={d.popupBtnSecundario} onPress={() => setRelacionadaSel(etqSel)}>
-                    <Search size={10} color="#fff" strokeWidth={2.5} />
+                  <TouchableOpacity
+                    style={d.popupBtnSecundario}
+                    onPress={() => setRelacionadaSel(etqSel)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Search size={10} color={C.white} strokeWidth={2.5} />
                     <Text style={d.popupBtnSecundarioText}>Ver prendas relacionadas</Text>
                   </TouchableOpacity>
                   {etqSel.prenda?.id && (
@@ -273,6 +272,7 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
               onPress={onPressLike}
               disabled={esPropia}
               activeOpacity={esPropia ? 1 : 0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <IconCorazon activo={yoLike} size={22} colorInactivo={C.muted} />
               <Text style={[d.accionCount, yoLike && { color: C.earth }]}>{likes} {likes === 1 ? 'like' : 'likes'}</Text>
@@ -282,6 +282,7 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
               onPress={onPressRepost}
               disabled={esPropia}
               activeOpacity={esPropia ? 1 : 0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <IconRepost activo={yoRepostee} size={22} colorInactivo={C.muted} />
               <Text style={[d.accionCount, yoRepostee && { color: C.success }]}>
@@ -310,14 +311,21 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
                           onVerReseñas={() => setReseñaPrendaSel({ prendaId: etq.prenda!.id, nombre: nom, marca })}
                         />
                       )}
-                      <TouchableOpacity onPress={() => setRelacionadaSel(etq)}>
+                      <TouchableOpacity
+                        onPress={() => setRelacionadaSel(etq)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
                         <Text style={d.relacionadasLink}>Ver prendas relacionadas</Text>
                       </TouchableOpacity>
                     </View>
                     <View style={d.prendaDerecha}>
                       {precio != null && <Text style={d.prendaPrecio}>${precio.toLocaleString('es-CO')}</Text>}
                       {!etq.es_manual && etq.prenda?.activa && etq.prenda?.url_tienda && (
-                        <TouchableOpacity style={d.verBtn} onPress={() => abrirTienda(etq.prenda?.url_tienda, etq.prenda?.id)}>
+                        <TouchableOpacity
+                          style={d.verBtn}
+                          onPress={() => abrirTienda(etq.prenda?.url_tienda, etq.prenda?.id)}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
                           <ExternalLink size={12} color={C.earth} strokeWidth={2} />
                           <Text style={d.verBtnText}>Ver</Text>
                         </TouchableOpacity>
@@ -339,22 +347,22 @@ const d = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.white },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: C.border },
-  badge: { backgroundColor: C.earth, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4 },
+  badge: { backgroundColor: C.earthDark, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4 },
   headerDerecha: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+  badgeText: { color: C.white, fontSize: 11, fontWeight: '700' },
   imagenWrap: { position: 'relative', alignSelf: 'center' },
   imagen: { width: '100%', height: '100%' },
-  etqPunto: { position: 'absolute', width: 28, height: 28, borderRadius: 14, backgroundColor: C.earth, borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center', transform: [{ translateX: -14 }, { translateY: -14 }], elevation: 4 },
+  etqPunto: { position: 'absolute', width: 28, height: 28, borderRadius: 14, backgroundColor: C.earth, borderWidth: 2, borderColor: C.white, alignItems: 'center', justifyContent: 'center', transform: [{ translateX: -14 }, { translateY: -14 }], elevation: 4 },
   etqPuntoActivo: { backgroundColor: C.earthDark },
   popup: { position: 'absolute', backgroundColor: 'rgba(26,22,20,0.92)', borderRadius: 12, padding: 12, minWidth: 140, maxWidth: 180, gap: 3, elevation: 8 },
-  popupNombre: { fontSize: 13, fontWeight: '700', color: '#fff' },
+  popupNombre: { fontSize: 13, fontWeight: '700', color: C.white },
   popupMarca: { fontSize: 11, color: 'rgba(255,255,255,0.7)' },
   popupEstilo: { fontSize: 10, color: 'rgba(255,255,255,0.55)', marginTop: 1 },
   popupPrecio: { fontSize: 13, fontWeight: '600', color: C.earthLight, marginTop: 2 },
   popupBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.earth, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5, marginTop: 6, alignSelf: 'flex-start' },
-  popupBtnText: { fontSize: 11, color: '#fff', fontWeight: '600' },
+  popupBtnText: { fontSize: 11, color: C.white, fontWeight: '600' },
   popupBtnSecundario: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5, marginTop: 6, alignSelf: 'flex-start' },
-  popupBtnSecundarioText: { fontSize: 10, color: '#fff', fontWeight: '600' },
+  popupBtnSecundarioText: { fontSize: 10, color: C.white, fontWeight: '600' },
   relacionadasLink: { fontSize: 11, color: C.earth, fontWeight: '600', marginTop: 4 },
   autorWrap: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 16 },
   avatar: { width: 40, height: 40, borderRadius: 20, overflow: 'hidden' },

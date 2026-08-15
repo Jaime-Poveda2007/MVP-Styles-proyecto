@@ -5,10 +5,7 @@
 // reactivar, y muestra el contador contra el límite de 200 activas.
 
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  View, Text, Image, FlatList, TouchableOpacity,
-  ActivityIndicator, RefreshControl, Alert, StyleSheet, Switch,
-} from 'react-native';
+import { View, Text, Image, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, StyleSheet, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LogOut, Plus, ImagePlus, BarChart3 } from 'lucide-react-native';
 import { C, R } from '../../../../shared/theme';
@@ -17,6 +14,9 @@ import {
   obtenerMarcaId, listarPrendasDeLaMarca, contarPrendasActivas,
   desactivarPrenda, reactivarPrenda, LIMITE_PRENDAS_ACTIVAS,
 } from '../services/prendasService';
+import EstadoVacio from '../../../../shared/components/EstadoVacio';
+import EstadoError from '../../../../shared/components/EstadoError';
+import { mostrarAlerta } from '../../../../lib/alerta';
 
 interface Props {
   onCrear: () => void;
@@ -31,10 +31,12 @@ export default function PCatalogo({ onCrear, onEditar, onCrearPublicacion, onVer
   const [prendas, setPrendas] = useState<Prenda[]>([]);
   const [activas, setActivas] = useState(0);
   const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [refrescando, setRefrescando] = useState(false);
   const [cambiandoId, setCambiandoId] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
+    setError(null);
     try {
       const id = await obtenerMarcaId();
       setMarcaId(id);
@@ -45,7 +47,7 @@ export default function PCatalogo({ onCrear, onEditar, onCrearPublicacion, onVer
       setPrendas(lista);
       setActivas(conteo);
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'No se pudo cargar el catálogo.');
+      setError(e.message ?? 'No se pudo cargar el catálogo.');
     } finally {
       setCargando(false);
       setRefrescando(false);
@@ -67,7 +69,7 @@ export default function PCatalogo({ onCrear, onEditar, onCrearPublicacion, onVer
       }
       await cargar();
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'No se pudo actualizar la prenda.');
+      mostrarAlerta('Error', e.message ?? 'No se pudo actualizar la prenda.');
     } finally {
       setCambiandoId(null);
     }
@@ -92,7 +94,7 @@ export default function PCatalogo({ onCrear, onEditar, onCrearPublicacion, onVer
         </View>
         <View style={s.headerAcciones}>
           <TouchableOpacity style={s.publicarBtn} onPress={onCrearPublicacion}>
-            <ImagePlus size={16} color="#fff" strokeWidth={2} />
+            <ImagePlus size={16} color={C.white} strokeWidth={2} />
             <Text style={s.publicarBtnText}>Publicar</Text>
           </TouchableOpacity>
           <TouchableOpacity style={s.logoutBtn} onPress={onVerMetricas}>
@@ -110,15 +112,17 @@ export default function PCatalogo({ onCrear, onEditar, onCrearPublicacion, onVer
         </Text>
       </View>
 
+      {error && <EstadoError mensaje={error} onReintentar={cargar} />}
+
       <FlatList
         data={prendas}
         keyExtractor={(item) => item.id}
         contentContainerStyle={s.lista}
         refreshControl={<RefreshControl refreshing={refrescando} onRefresh={onRefresh} tintColor={C.earth} />}
         ListEmptyComponent={
-          <View style={s.vacio}>
-            <Text style={s.vacioTexto}>Aún no has agregado prendas a tu catálogo.</Text>
-          </View>
+          error ? null : (
+            <EstadoVacio texto="Aún no has agregado prendas a tu catálogo." />
+          )
         }
         renderItem={({ item }) => (
           <TouchableOpacity style={s.card} activeOpacity={0.8} onPress={() => onEditar(item)}>
@@ -139,7 +143,7 @@ export default function PCatalogo({ onCrear, onEditar, onCrearPublicacion, onVer
                     value={item.activa}
                     onValueChange={() => alternarActiva(item)}
                     trackColor={{ false: C.border, true: C.earthLight }}
-                    thumbColor={item.activa ? C.earth : '#fff'}
+                    thumbColor={item.activa ? C.earth : C.white}
                   />
                 )
               }
@@ -153,14 +157,14 @@ export default function PCatalogo({ onCrear, onEditar, onCrearPublicacion, onVer
         style={[s.fab, alcanzoLimite && s.fabDisabled]}
         onPress={() => {
           if (alcanzoLimite) {
-            Alert.alert('Límite alcanzado', `Ya tienes ${LIMITE_PRENDAS_ACTIVAS} prendas activas. Desactiva alguna para agregar otra.`);
+            mostrarAlerta('Límite alcanzado', `Ya tienes ${LIMITE_PRENDAS_ACTIVAS} prendas activas. Desactiva alguna para agregar otra.`);
             return;
           }
           onCrear();
         }}
         activeOpacity={0.85}
       >
-        <Plus size={22} color="#fff" />
+        <Plus size={22} color={C.white} />
         <Text style={s.fabText}>Nueva prenda</Text>
       </TouchableOpacity>
     </SafeAreaView>
@@ -172,17 +176,15 @@ const s = StyleSheet.create({
   centrado:     { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 },
   eyebrow:      { fontSize: 12, fontWeight: '600', letterSpacing: 1.5, textTransform: 'uppercase', color: C.earth, marginBottom: 4 },
-  titulo:       { fontSize: 24, fontWeight: '700', color: C.ink },
+  titulo:       { fontSize: 24, fontWeight: '700', color: C.ink, letterSpacing: -0.5 },
   headerAcciones: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   publicarBtn:  { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.earth, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 9 },
-  publicarBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  publicarBtnText: { color: C.white, fontSize: 13, fontWeight: '600' },
   logoutBtn:    { width: 40, height: 40, borderRadius: 20, backgroundColor: C.white, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center' },
   contadorWrap: { paddingHorizontal: 20, paddingBottom: 8 },
   contadorTexto:{ fontSize: 13, color: C.muted, fontWeight: '500' },
   contadorTextoLimite: { color: C.error, fontWeight: '700' },
   lista:        { paddingHorizontal: 20, paddingBottom: 100, gap: 12 },
-  vacio:        { paddingTop: 60, alignItems: 'center' },
-  vacioTexto:   { color: C.muted, fontSize: 14, textAlign: 'center' },
   card:         { flexDirection: 'row', backgroundColor: C.white, borderRadius: R.card, padding: 10, gap: 12, borderWidth: 1, borderColor: C.border, alignItems: 'center' },
   imagen:       { width: 64, height: 64, borderRadius: R.input, backgroundColor: C.earthLight },
   imagenPlaceholder: { alignItems: 'center', justifyContent: 'center' },
@@ -194,5 +196,5 @@ const s = StyleSheet.create({
   switchLabel:  { fontSize: 10, color: C.muted },
   fab:          { position: 'absolute', bottom: 24, right: 20, left: 20, backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, shadowColor: C.earth, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
   fabDisabled:  { opacity: 0.6 },
-  fabText:      { color: '#fff', fontSize: 15, fontWeight: '700' },
+  fabText:      { color: C.white, fontSize: 15, fontWeight: '700' },
 });

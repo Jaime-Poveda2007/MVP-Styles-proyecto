@@ -2,10 +2,11 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
-  StyleSheet, ActivityIndicator, Alert,
+  StyleSheet, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../../lib/supabase';
+import { mostrarBotones } from '../../../lib/alerta';
 import { C, R } from '../../../shared/theme';
 
 interface Opcion     { id: string; label: string; emoji: string; }
@@ -114,9 +115,9 @@ export default function OnboardingEstilo({
       }
       onComplete();
     } catch {
-      Alert.alert('Error al guardar', 'No pudimos guardar tus preferencias.', [
-        { text: 'Reintentar', onPress: guardarYCompletar },
-        { text: 'Continuar',  onPress: onComplete },
+      mostrarBotones('Error al guardar', 'No pudimos guardar tus preferencias.', [
+        { texto: 'Continuar igual', variante: 'secundario', onPress: onComplete },
+        { texto: 'Reintentar', variante: 'primario', onPress: guardarYCompletar },
       ]);
     } finally {
       setGuardando(false);
@@ -166,7 +167,7 @@ export default function OnboardingEstilo({
             >
               <Text style={o.chipEmoji}>{opcion.emoji}</Text>
               <Text style={[o.chipLabel, sel && o.chipLabelSel]}>{opcion.label}</Text>
-              {sel && <View style={o.checkDot}><Text style={{ fontSize: 9, color: '#fff' }}>✓</Text></View>}
+              {sel && <View style={o.checkDot}><Text style={{ fontSize: 9, color: C.white }}>✓</Text></View>}
             </TouchableOpacity>
           );
         })}
@@ -186,7 +187,7 @@ export default function OnboardingEstilo({
           activeOpacity={0.85}
         >
           {guardando
-            ? <ActivityIndicator color="#fff" />
+            ? <ActivityIndicator color={C.white} />
             : <Text style={o.btnPrimaryText}>
                 {esUltimoPaso ? (modo === 'edicion' ? 'Guardar cambios' : 'Empezar a explorar →') : 'Continuar →'}
               </Text>
@@ -222,6 +223,6 @@ const o = StyleSheet.create({
   footer:       { padding: 20, paddingBottom: 32, borderTopWidth: 0.5, borderTopColor: C.border, gap: 10 },
   contadorText: { fontSize: 13, color: C.earth, fontWeight: '600', textAlign: 'center' },
   btnPrimary:   { backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 17, alignItems: 'center', shadowColor: C.earth, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
-  btnPrimaryText:{ color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
+  btnPrimaryText:{ color: C.white, fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
   btnDisabled:  { opacity: 0.65 },
 });

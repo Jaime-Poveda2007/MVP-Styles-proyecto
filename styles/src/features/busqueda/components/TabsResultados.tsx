@@ -6,6 +6,7 @@
 import React from 'react';
 import { View, Text, Pressable, FlatList, StyleSheet } from 'react-native';
 import { C } from '../../../shared/theme';
+import EstadoVacio from '../../../shared/components/EstadoVacio';
 import { TabBusqueda, ResultadoPublicacion, ResultadoUsuario, ResultadoMarca } from '../busqueda.types';
 import ResultadoPublicacionRow from './ResultadoPublicacionRow';
 import ResultadoUsuarioRow from './ResultadoUsuarioRow';
@@ -60,15 +61,11 @@ export default function TabsResultados({
       </View>
 
       {!huboBusqueda && (
-        <View style={s.vacio}>
-          <Text style={s.vacioTexto}>Escribe al menos 2 caracteres para buscar.</Text>
-        </View>
+        <EstadoVacio texto="Escribe al menos 2 caracteres para buscar." />
       )}
 
       {huboBusqueda && !cargando && contadores[tab] === 0 && (
-        <View style={s.vacio}>
-          <Text style={s.vacioTexto}>Sin resultados en {TABS.find(t => t.id === tab)?.label.toLowerCase()}.</Text>
-        </View>
+        <EstadoVacio texto={`Sin resultados en ${TABS.find(t => t.id === tab)?.label.toLowerCase()}.`} />
       )}
 
       {huboBusqueda && tab === 'publicaciones' && (
@@ -114,6 +111,4 @@ const s = StyleSheet.create({
   chipTexto: { fontSize: 13, color: C.ink, fontWeight: '500' },
   chipTextoActivo: { color: C.white, fontWeight: '600' },
   lista: { paddingHorizontal: 16, paddingBottom: 24 },
-  vacio: { paddingTop: 48, alignItems: 'center', paddingHorizontal: 32 },
-  vacioTexto: { fontSize: 13, color: C.muted, textAlign: 'center', lineHeight: 19 },
 });

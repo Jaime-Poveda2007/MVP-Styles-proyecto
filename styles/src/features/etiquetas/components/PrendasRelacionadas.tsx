@@ -8,10 +8,7 @@
 //   2) Más de la misma marca     -> misma marca, nombre relacionado
 //   3) Prendas similares         -> mismo tipo de prenda, otra marca
 import React, { useEffect, useState } from 'react';
-import {
-  View, Text, Pressable, Image, FlatList,
-  ActivityIndicator, StyleSheet, Alert,
-} from 'react-native';
+import { View, Text, Pressable, Image, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Tag } from 'lucide-react-native';
 import { buscarPrendasRelacionadas, PrendaRelacionada } from '../etiquetas.api';
@@ -19,6 +16,7 @@ import { obtenerPublicacionPorId } from '../../feed/services/publicacionesServic
 import { Publicacion } from '../../feed/types';
 import PDetalle from '../../feed/PDetalle';
 import { C, R } from '../../../shared/theme';
+import { mostrarAlerta } from '../../../lib/alerta';
 
 interface Props {
   marca: string | null;
@@ -60,7 +58,7 @@ export default function PrendasRelacionadas({ marca, nombre, etiquetaId, userId,
       const pub = await obtenerPublicacionPorId(publicacionId, userId);
       setPublicacionAbierta(pub);
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'No se pudo abrir esta publicación.');
+      mostrarAlerta('Error', e.message ?? 'No se pudo abrir esta publicación.');
     } finally {
       setAbriendo(null);
     }

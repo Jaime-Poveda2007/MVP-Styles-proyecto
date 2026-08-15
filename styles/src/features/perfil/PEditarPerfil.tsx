@@ -4,10 +4,7 @@
 // perfil propio. Mismo patrón visual que PFormPrenda.tsx (selector de
 // imagen galería/cámara + inputs con validación inline).
 import React, { useEffect, useState } from 'react';
-import {
-  View, Text, TextInput, Image, TouchableOpacity,
-  ScrollView, ActivityIndicator, Alert, StyleSheet,
-} from 'react-native';
+import { View, Text, TextInput, Image, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { C, R } from '../../shared/theme';
 import {
@@ -15,6 +12,7 @@ import {
   seleccionarFotoDePerfil, tomarFotoDePerfil,
   comprimirFotoDePerfil, subirFotoDePerfil, validarUsername, validarBiografia,
 } from './perfil.api';
+import { mostrarAlerta } from '../../lib/alerta';
 
 interface Props {
   userId: string;
@@ -42,7 +40,7 @@ export default function PEditarPerfil({ userId, onGuardado, onCancelar }: Props)
         setBiografia(perfil.biografia ?? '');
         setFotoActualUrl(perfil.foto_url);
       })
-      .catch((e: any) => Alert.alert('Error', e.message ?? 'No se pudo cargar tu perfil.'))
+      .catch((e: any) => mostrarAlerta('Error', e.message ?? 'No se pudo cargar tu perfil.'))
       .finally(() => setCargando(false));
   }, [userId]);
 
@@ -50,13 +48,13 @@ export default function PEditarPerfil({ userId, onGuardado, onCancelar }: Props)
     try {
       const uri = await seleccionarFotoDePerfil();
       if (uri) setFotoUri(uri);
-    } catch (e: any) { Alert.alert('Error', e.message); }
+    } catch (e: any) { mostrarAlerta('Error', e.message); }
   };
   const usarCamara = async () => {
     try {
       const uri = await tomarFotoDePerfil();
       if (uri) setFotoUri(uri);
-    } catch (e: any) { Alert.alert('Error', e.message); }
+    } catch (e: any) { mostrarAlerta('Error', e.message); }
   };
 
   const validar = () => {
@@ -81,7 +79,7 @@ export default function PEditarPerfil({ userId, onGuardado, onCancelar }: Props)
       await actualizarPerfil(userId, { nombre, username, biografia, fotoUrl });
       onGuardado();
     } catch (e: any) {
-      Alert.alert('Error al guardar', e.message ?? 'Algo salió mal.');
+      mostrarAlerta('Error al guardar', e.message ?? 'Algo salió mal.');
     } finally {
       setGuardando(false);
     }
@@ -178,7 +176,7 @@ const s = StyleSheet.create({
   scroll:       { padding: 20, gap: 14, paddingBottom: 48, alignItems: 'stretch' },
   topBar:       { paddingBottom: 4 },
   backText:     { fontSize: 14, color: C.earth, fontWeight: '500' },
-  titulo:       { fontSize: 22, fontWeight: '700', color: C.ink, marginBottom: 4 },
+  titulo:       { fontSize: 24, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginBottom: 4 },
   avatar:       { width: 100, height: 100, borderRadius: 50, backgroundColor: C.earthLight, alignSelf: 'center' },
   avatarVacio:  { alignItems: 'center', justifyContent: 'center' },
   fila:         { flexDirection: 'row', gap: 12 },

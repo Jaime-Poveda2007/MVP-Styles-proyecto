@@ -6,7 +6,7 @@
 // ver los reposts propios (PMisReposts.tsx, antes huérfano) y cerrar
 // sesión (se mueve acá desde el botón temporal de PFeed.tsx).
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LogOut, Settings, Repeat2, Sparkles } from 'lucide-react-native';
 import ImagenConCarga from '../../shared/components/ImagenConCarga';
@@ -15,6 +15,7 @@ import PDetalle from '../feed/PDetalle';
 import { Publicacion } from '../feed/types';
 import { obtenerPerfilPropio, listarPublicacionesDeUsuario, PerfilUsuario } from './perfil.api';
 import { obtenerPublicacionPorId } from '../feed/services/publicacionesService';
+import EstadoError from '../../shared/components/EstadoError';
 import { C, R } from '../../shared/theme';
 
 const PAGE_SIZE = 10;
@@ -34,6 +35,7 @@ export default function PPerfil({
   const [perfil, setPerfil] = useState<PerfilUsuario | null>(null);
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [cargandoMas, setCargandoMas] = useState(false);
   const [refrescando, setRefrescando] = useState(false);
   const [hayMas, setHayMas] = useState(true);
@@ -47,6 +49,7 @@ export default function PPerfil({
   const cargandoMasRef = useRef(false);
 
   const cargar = useCallback(async () => {
+    setError(null);
     try {
       const [datosPerfil, primerasPublicaciones] = await Promise.all([
         obtenerPerfilPropio(userId),
@@ -56,7 +59,7 @@ export default function PPerfil({
       setPublicaciones(primerasPublicaciones);
       setHayMas(primerasPublicaciones.length >= PAGE_SIZE);
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'No se pudo cargar tu perfil.');
+      setError(e.message ?? 'No se pudo cargar tu perfil.');
     } finally {
       setCargando(false);
       setRefrescando(false);
@@ -86,7 +89,8 @@ export default function PPerfil({
   const abrirDetalle = async (item: Publicacion) => {
     try {
       setDetalle(await obtenerPublicacionPorId(item.id, userId));
-    } catch {
+    } catch (e) {
+      console.warn('No se pudo refrescar la publicación antes de abrirla:', e);
       setDetalle(item);
     }
   };
@@ -103,10 +107,20 @@ export default function PPerfil({
     );
   }
 
-  if (cargando || !perfil) {
+  if (cargando) {
     return (
       <SafeAreaView style={s.safe}>
         <View style={s.centrado}><ActivityIndicator color={C.earth} /></View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!perfil) {
+    return (
+      <SafeAreaView style={s.safe}>
+        <View style={s.centrado}>
+          <EstadoError mensaje={error ?? 'No se pudo cargar tu perfil.'} onReintentar={cargar} />
+        </View>
       </SafeAreaView>
     );
   }
@@ -163,7 +177,7 @@ const s = StyleSheet.create({
   avatar:      { width: 84, height: 84, borderRadius: 42, marginBottom: 8 },
   avatarPH:    { alignItems: 'center', justifyContent: 'center', backgroundColor: C.earthLight },
   avatarLetra: { fontSize: 30, fontWeight: '700', color: C.earth },
-  username:    { fontSize: 17, fontWeight: '700', color: C.ink },
+  username:    { fontSize: 16, fontWeight: '700', color: C.ink },
   nombre:      { fontSize: 13, color: C.muted },
   bio:         { fontSize: 13, color: C.ink, textAlign: 'center', marginTop: 6, lineHeight: 18, paddingHorizontal: 8 },
   accionesFila:{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14 },

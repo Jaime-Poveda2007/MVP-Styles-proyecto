@@ -145,7 +145,7 @@ function confirmarEtiquetaCatalogo(prendaId: string, prendaNombre: string, estil
               ]}
             >
               <View style={s.pinPendientePulse} />
-              <Tag size={12} color="#fff" strokeWidth={2.5} />
+              <Tag size={12} color={C.white} strokeWidth={2.5} />
             </View>
           )}
 
@@ -162,7 +162,7 @@ function confirmarEtiquetaCatalogo(prendaId: string, prendaNombre: string, estil
                 },
               ]}
             >
-              <Tag size={12} color="#fff" strokeWidth={2.5} />
+              <Tag size={12} color={C.white} strokeWidth={2.5} />
             </Pressable>
           ))}
         </Pressable>
@@ -251,11 +251,11 @@ function confirmarEtiquetaCatalogo(prendaId: string, prendaNombre: string, estil
 const s = StyleSheet.create({
   imagenContainer:    { borderRadius: R.card, overflow: 'hidden', backgroundColor: C.earthLight },
   imagen:             { width: '100%', aspectRatio: 1 },
-  pin:                { position: 'absolute', width: 28, height: 28, borderRadius: 14, backgroundColor: C.earth, borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 4 },
-  pinPendiente:       { position: 'absolute', width: 28, height: 28, borderRadius: 14, backgroundColor: C.earthDark, borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 6 },
+  pin:                { position: 'absolute', width: 28, height: 28, borderRadius: 14, backgroundColor: C.earth, borderWidth: 2, borderColor: C.white, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 4 },
+  pinPendiente:       { position: 'absolute', width: 28, height: 28, borderRadius: 14, backgroundColor: C.earthDark, borderWidth: 2, borderColor: C.white, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 6 },
   pinPendientePulse:  { position: 'absolute', width: 40, height: 40, borderRadius: 20, backgroundColor: C.earth, opacity: 0.25 },
   hintBadge:          { position: 'absolute', bottom: 12, left: 12, right: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(26,22,20,0.7)', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 12 },
-  hintText:           { fontSize: 12, color: '#fff', fontWeight: '500' },
+  hintText:           { fontSize: 12, color: C.white, fontWeight: '500' },
   contadorRow:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 },
   contadorPill:       { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.earthLight, borderRadius: 20, paddingVertical: 5, paddingHorizontal: 12 },
   contadorText:       { fontSize: 12, fontWeight: '600', color: C.earthDark },

@@ -10,10 +10,7 @@
 //    en catálogos de otras marcas ni permite etiqueta manual)
 
 import React, { useState } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, Alert, ActivityIndicator, ScrollView,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { C, R } from '../../../shared/theme';
 import {
@@ -23,6 +20,7 @@ import {
 import EtiquetadoImagen, { EtiquetaPendiente } from '../../etiquetas/components/EtiquetadoImagen';
 import { crearEtiquetaCatalogo } from '../../etiquetas/etiquetas.api';
 import SelectorPrendaPropia from './SelectorPrendaPropia';
+import { mostrarAlerta } from '../../../lib/alerta';
 
 interface Props {
   marcaId: string;
@@ -40,13 +38,13 @@ export default function PCrearPublicacionMarca({ marcaId, onPublicado, onCancela
     try {
       const uri = await seleccionarDeGaleria();
       if (uri) setImagenUri(uri);
-    } catch (e: any) { Alert.alert('Error', e.message); }
+    } catch (e: any) { mostrarAlerta('Error', e.message); }
   };
   const usarCamara = async () => {
     try {
       const uri = await tomarFoto();
       if (uri) setImagenUri(uri);
-    } catch (e: any) { Alert.alert('Error', e.message); }
+    } catch (e: any) { mostrarAlerta('Error', e.message); }
   };
 
   const agregarEtiqueta = (etiqueta: EtiquetaPendiente) => setEtiquetas(prev => [...prev, etiqueta]);
@@ -56,7 +54,7 @@ export default function PCrearPublicacionMarca({ marcaId, onPublicado, onCancela
 
   const publicar = async () => {
     if (!imagenUri) {
-      Alert.alert('Falta imagen', 'Selecciona o toma una foto para la publicación.');
+      mostrarAlerta('Falta imagen', 'Selecciona o toma una foto para la publicación.');
       return;
     }
     setCargando(true);
@@ -89,7 +87,7 @@ export default function PCrearPublicacionMarca({ marcaId, onPublicado, onCancela
       setEtiquetas([]);
       onPublicado();
     } catch (e: any) {
-      Alert.alert('Error al publicar', e.message ?? 'Algo salió mal.');
+      mostrarAlerta('Error al publicar', e.message ?? 'Algo salió mal.');
     } finally {
       setCargando(false);
     }
@@ -161,7 +159,7 @@ const s = StyleSheet.create({
   container:       { padding: 20, gap: 12, flexGrow: 1 },
   encabezado:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   cancelar:        { fontSize: 14, color: C.earth, fontWeight: '500' },
-  titulo:          { fontSize: 22, fontWeight: '700', color: C.ink, marginTop: 4 },
+  titulo:          { fontSize: 24, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginTop: 4 },
   subtitulo:       { fontSize: 13, color: C.muted, marginBottom: 4 },
   placeholder:     { width: '100%', height: 280, borderRadius: R.card, backgroundColor: C.earthLight, justifyContent: 'center', alignItems: 'center' },
   fila:            { flexDirection: 'row', gap: 12 },

@@ -5,10 +5,12 @@
 // el filtro es un toggle binario semana/mes, así que tarjetas
 // numéricas + una lista por prenda son suficientes para el MVP.
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Tag, ExternalLink } from 'lucide-react-native';
 import ImagenConCarga from '../../../shared/components/ImagenConCarga';
+import EstadoVacio from '../../../shared/components/EstadoVacio';
+import EstadoError from '../../../shared/components/EstadoError';
 import { C, R } from '../../../shared/theme';
 import {
   obtenerMetricasPorPrenda, obtenerTotalesPublicaciones,
@@ -25,9 +27,11 @@ export default function PMetricasMarca({ marcaId, onVolver }: Props) {
   const [metricas, setMetricas] = useState<MetricaPrenda[]>([]);
   const [totales, setTotales] = useState<TotalesMarca>({ likes: 0, reposts: 0 });
   const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [refrescando, setRefrescando] = useState(false);
 
   const cargar = useCallback(async () => {
+    setError(null);
     try {
       const [porPrenda, totalesMarca] = await Promise.all([
         obtenerMetricasPorPrenda(marcaId, rango),
@@ -36,7 +40,7 @@ export default function PMetricasMarca({ marcaId, onVolver }: Props) {
       setMetricas(porPrenda);
       setTotales(totalesMarca);
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'No se pudieron cargar las métricas.');
+      setError(e.message ?? 'No se pudieron cargar las métricas.');
     } finally {
       setCargando(false);
       setRefrescando(false);
@@ -77,6 +81,8 @@ export default function PMetricasMarca({ marcaId, onVolver }: Props) {
         })}
       </View>
 
+      {error && !cargando && <EstadoError mensaje={error} onReintentar={cargar} />}
+
       {cargando ? (
         <View style={s.centrado}><ActivityIndicator color={C.earth} /></View>
       ) : (
@@ -98,9 +104,9 @@ export default function PMetricasMarca({ marcaId, onVolver }: Props) {
             </View>
           }
           ListEmptyComponent={
-            <View style={s.vacio}>
-              <Text style={s.vacioTexto}>Aún no tienes prendas en tu catálogo.</Text>
-            </View>
+            error ? null : (
+              <EstadoVacio texto="Aún no tienes prendas en tu catálogo." />
+            )
           }
           renderItem={({ item }) => (
             <View style={s.card}>
@@ -147,8 +153,6 @@ const s = StyleSheet.create({
   totalCard:    { flex: 1, backgroundColor: C.white, borderRadius: R.card, borderWidth: 1, borderColor: C.border, paddingVertical: 16, alignItems: 'center', gap: 2 },
   totalNumero:  { fontSize: 24, fontWeight: '800', color: C.earth },
   totalLabel:   { fontSize: 12, color: C.muted, fontWeight: '500' },
-  vacio:        { paddingTop: 40, alignItems: 'center' },
-  vacioTexto:   { color: C.muted, fontSize: 14, textAlign: 'center' },
   card:         { flexDirection: 'row', backgroundColor: C.white, borderRadius: R.card, padding: 10, gap: 12, borderWidth: 1, borderColor: C.border, alignItems: 'center' },
   imagen:       { width: 56, height: 56, borderRadius: R.input, backgroundColor: C.earthLight },
   imagenPlaceholder: { alignItems: 'center', justifyContent: 'center' },

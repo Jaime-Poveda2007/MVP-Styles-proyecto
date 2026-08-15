@@ -15,6 +15,7 @@ import ListaReseñas from '../components/ListaReseñas';
 import { useReseña } from '../useReseña';
 import { listarReseñas, ReseñaConAutor } from '../reseñas.api';
 import { C } from '../../../shared/theme';
+import EstadoError from '../../../shared/components/EstadoError';
 
 interface Props {
   prendaId: string;
@@ -30,15 +31,19 @@ export default function PReseñasPrenda({ prendaId, nombrePrenda, marcaNombre, u
 
   const [reseñas, setReseñas] = useState<ReseñaConAutor[]>([]);
   const [cargandoLista, setCargandoLista] = useState(true);
+  const [errorLista, setErrorLista] = useState<string | null>(null);
 
   // Se recarga cada vez que "total" cambia (alguien publicó/editó/borró,
   // ya sea uno mismo o vía Realtime desde useReseña), así la lista
   // siempre queda sincronizada con el promedio que se ve arriba.
   const recargarLista = useCallback(async () => {
     setCargandoLista(true);
+    setErrorLista(null);
     try {
       const data = await listarReseñas(prendaId);
       setReseñas(data);
+    } catch (e: any) {
+      setErrorLista(e.message ?? 'No se pudieron cargar las reseñas.');
     } finally {
       setCargandoLista(false);
     }
@@ -75,6 +80,9 @@ export default function PReseñasPrenda({ prendaId, nombrePrenda, marcaNombre, u
 
         <View style={s.separador} />
 
+        {errorLista && !cargandoLista && (
+          <EstadoError mensaje={errorLista} onReintentar={recargarLista} />
+        )}
         <ListaReseñas reseñas={reseñas} cargando={cargandoLista} onVerPerfil={onVerPerfil} />
       </ScrollView>
     </SafeAreaView>

@@ -1,11 +1,12 @@
 // src/features/auth/screens/PEmailConfirmacion.tsx
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthStackParamList } from '../NavDeAuntenticacion';
 import { supabase } from '../../../lib/supabase';
 import { C, R } from '../../../shared/theme';
+import { mostrarAlerta } from '../../../lib/alerta';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'EmailConfirmation'>;
 
@@ -19,8 +20,8 @@ export default function EmailConfirmationScreen({ route, navigation }: Props) {
     const { error } = await supabase.auth.resend({ type: 'signup', email });
     setLoading(false);
     error
-      ? Alert.alert('Error', error.message)
-      : Alert.alert('Correo enviado', 'Revisa tu bandeja de entrada.');
+      ? mostrarAlerta('Error', error.message)
+      : mostrarAlerta('Correo enviado', 'Revisa tu bandeja de entrada.');
   };
 
   return (
@@ -48,7 +49,7 @@ export default function EmailConfirmationScreen({ route, navigation }: Props) {
           disabled={loading || !email}
           activeOpacity={0.85}
         >
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={e.btnPrimaryText}>Reenviar correo</Text>}
+          {loading ? <ActivityIndicator color={C.white} /> : <Text style={e.btnPrimaryText}>Reenviar correo</Text>}
         </TouchableOpacity>
 
         <TouchableOpacity style={e.btnGhost} onPress={() => navigation.navigate('Login')}>
@@ -71,7 +72,7 @@ const e = StyleSheet.create({
   email:          { fontSize: 15, fontWeight: '600', color: C.ink, textAlign: 'center', marginBottom: 12 },
   hint:           { fontSize: 14, color: C.muted, textAlign: 'center', lineHeight: 20, marginBottom: 40 },
   btnPrimary:     { backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 17, paddingHorizontal: 32, alignItems: 'center', width: '100%', shadowColor: C.earth, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
-  btnPrimaryText: { color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
+  btnPrimaryText: { color: C.white, fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
   btnDisabled:    { opacity: 0.5 },
   btnGhost:       { marginTop: 20, paddingVertical: 12 },
   btnGhostText:   { fontSize: 14, color: C.earth, fontWeight: '500' },

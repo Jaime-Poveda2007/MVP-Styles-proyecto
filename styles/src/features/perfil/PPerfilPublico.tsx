@@ -5,7 +5,7 @@
 // sin botones de edición, sin acceso a preferencias ni cierre de
 // sesión ajenos.
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
 import ImagenConCarga from '../../shared/components/ImagenConCarga';
@@ -14,6 +14,7 @@ import PDetalle from '../feed/PDetalle';
 import { Publicacion } from '../feed/types';
 import { obtenerPerfilPublico, listarPublicacionesDeUsuario, PerfilUsuario } from './perfil.api';
 import { obtenerPublicacionPorId } from '../feed/services/publicacionesService';
+import EstadoError from '../../shared/components/EstadoError';
 import { C } from '../../shared/theme';
 
 const PAGE_SIZE = 10;
@@ -29,6 +30,7 @@ export default function PPerfilPublico({ targetUserId, userId, onVolver, onVerPe
   const [perfil, setPerfil] = useState<PerfilUsuario | null>(null);
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [cargandoMas, setCargandoMas] = useState(false);
   const [hayMas, setHayMas] = useState(true);
   const [detalle, setDetalle] = useState<Publicacion | null>(null);
@@ -38,6 +40,7 @@ export default function PPerfilPublico({ targetUserId, userId, onVolver, onVerPe
 
   const cargar = useCallback(async () => {
     setCargando(true);
+    setError(null);
     try {
       const [datosPerfil, primerasPublicaciones] = await Promise.all([
         obtenerPerfilPublico(targetUserId),
@@ -47,7 +50,7 @@ export default function PPerfilPublico({ targetUserId, userId, onVolver, onVerPe
       setPublicaciones(primerasPublicaciones);
       setHayMas(primerasPublicaciones.length >= PAGE_SIZE);
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'No se pudo cargar este perfil.');
+      setError(e.message ?? 'No se pudo cargar este perfil.');
     } finally {
       setCargando(false);
     }
@@ -74,7 +77,8 @@ export default function PPerfilPublico({ targetUserId, userId, onVolver, onVerPe
   const abrirDetalle = async (item: Publicacion) => {
     try {
       setDetalle(await obtenerPublicacionPorId(item.id, userId));
-    } catch {
+    } catch (e) {
+      console.warn('No se pudo refrescar la publicación antes de abrirla:', e);
       setDetalle(item);
     }
   };
@@ -101,8 +105,12 @@ export default function PPerfilPublico({ targetUserId, userId, onVolver, onVerPe
         <View style={{ width: 36 }} />
       </View>
 
-      {cargando || !perfil ? (
+      {cargando ? (
         <View style={s.centrado}><ActivityIndicator color={C.earth} /></View>
+      ) : !perfil ? (
+        <View style={s.centrado}>
+          <EstadoError mensaje={error ?? 'No se pudo cargar este perfil.'} onReintentar={cargar} />
+        </View>
       ) : (
         <>
           <View style={s.header}>
@@ -143,7 +151,7 @@ const s = StyleSheet.create({
   avatar:      { width: 84, height: 84, borderRadius: 42, marginBottom: 8 },
   avatarPH:    { alignItems: 'center', justifyContent: 'center', backgroundColor: C.earthLight },
   avatarLetra: { fontSize: 30, fontWeight: '700', color: C.earth },
-  username:    { fontSize: 17, fontWeight: '700', color: C.ink },
+  username:    { fontSize: 16, fontWeight: '700', color: C.ink },
   nombre:      { fontSize: 13, color: C.muted },
   bio:         { fontSize: 13, color: C.ink, textAlign: 'center', marginTop: 6, lineHeight: 18, paddingHorizontal: 8 },
 });

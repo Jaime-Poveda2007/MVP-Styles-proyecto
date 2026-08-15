@@ -11,6 +11,7 @@ import { asegurarPerfilMarca, esCuentaDeMarca, EstadoMarca } from './src/lib/mar
 import AuthNavigator from './src/features/auth/NavDeAuntenticacion';
 import HomeScreen from './src/features/Home/NavHome';
 import NavMarcas from './src/features/marcas/NavMarcas';
+import AlertaHost from './src/shared/components/AlertaHost';
 
 type RootStackParamList = {
   Auth: undefined;
@@ -81,12 +82,14 @@ export default function App() {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator />
+        <AlertaHost />
       </View>
     );
   }
 
   return (
     <SafeAreaProvider>
+      <AlertaHost />
       <NavigationContainer>
         <RootStack.Navigator screenOptions={{ headerShown: false }}>
           {estado === 'listo' ? (

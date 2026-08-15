@@ -1,9 +1,6 @@
 // src/features/feed/FeedCard.tsx
 import React from 'react';
-import {
-  View, Text, TouchableOpacity,
-  StyleSheet, useWindowDimensions, Alert,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
 import { Publicacion } from './types';
 import { useLikes } from './useLikes';
 import { useReposts } from './useReposts';
@@ -12,6 +9,7 @@ import IconRepost from '../../shared/icons/IconRepost';
 import ImagenConCarga from '../../shared/components/ImagenConCarga';
 import AutorInline from '../../shared/components/AutorInline';
 import { C } from '../../shared/theme';
+import { mostrarAlerta } from '../../lib/alerta';
 
 const GAP = 8;
 const PADDING = 12;
@@ -50,7 +48,7 @@ export default function FeedCard({ item, userId, onPress, onVerPerfil }: Props) 
 
   const onPressLike = async () => {
     if (esPropia) {
-      Alert.alert('No puedes dar like', 'No puedes dar like a tu propia publicación.');
+      mostrarAlerta('No puedes dar like', 'No puedes dar like a tu propia publicación.');
       return;
     }
     await toggleLike();
@@ -58,7 +56,7 @@ export default function FeedCard({ item, userId, onPress, onVerPerfil }: Props) 
 
   const onPressRepost = async () => {
     if (esPropia) {
-      Alert.alert('No puedes repostear', 'No puedes repostear tu propia publicación.');
+      mostrarAlerta('No puedes repostear', 'No puedes repostear tu propia publicación.');
       return;
     }
     await toggleRepost();
@@ -103,6 +101,7 @@ export default function FeedCard({ item, userId, onPress, onVerPerfil }: Props) 
             onPress={onPressLike}
             disabled={esPropia}
             activeOpacity={esPropia ? 1 : 0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <IconCorazon activo={yoLike} size={14} colorInactivo={C.muted} />
             {likes > 0 && (
@@ -115,6 +114,7 @@ export default function FeedCard({ item, userId, onPress, onVerPerfil }: Props) 
             onPress={onPressRepost}
             disabled={esPropia}
             activeOpacity={esPropia ? 1 : 0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <IconRepost activo={yoRepostee} size={14} colorInactivo={C.muted} />
             {reposts > 0 && (
@@ -129,8 +129,8 @@ export default function FeedCard({ item, userId, onPress, onVerPerfil }: Props) 
 
 const s = StyleSheet.create({
   card: { backgroundColor: C.white, borderRadius: 14, overflow: 'hidden', borderWidth: 0.5, borderColor: C.border },
-  badge: { position: 'absolute', top: 6, left: 6, backgroundColor: C.earth, borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2 },
-  badgeText: { color: '#fff', fontSize: 9, fontWeight: '700', letterSpacing: 0.5 },
+  badge: { position: 'absolute', top: 6, left: 6, backgroundColor: C.earthDark, borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2 },
+  badgeText: { color: C.white, fontSize: 9, fontWeight: '700', letterSpacing: 0.5 },
   footer: { padding: 8, gap: 6 },
   autorNombre: { fontSize: 11, color: C.muted, fontWeight: '500', flex: 1 },
   acciones: { flexDirection: 'row', gap: 8 },

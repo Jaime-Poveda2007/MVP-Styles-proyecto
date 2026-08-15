@@ -8,6 +8,7 @@ import React from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import EstrellasSelector from './EstrellasSelector';
 import AutorInline from '../../../shared/components/AutorInline';
+import EstadoVacio from '../../../shared/components/EstadoVacio';
 import { ReseñaConAutor } from '../reseñas.api';
 import { C } from '../../../shared/theme';
 
@@ -26,7 +27,7 @@ export default function ListaReseñas({ reseñas, cargando, onVerPerfil }: Props
   if (cargando) return <ActivityIndicator color={C.earth} style={{ marginTop: 16 }} />;
 
   if (reseñas.length === 0) {
-    return <Text style={s.vacioTexto}>Todavía no hay reseñas para esta prenda.</Text>;
+    return <EstadoVacio texto="Todavía no hay reseñas para esta prenda." />;
   }
 
   return (
@@ -55,7 +56,6 @@ export default function ListaReseñas({ reseñas, cargando, onVerPerfil }: Props
 
 const s = StyleSheet.create({
   lista:        { gap: 18 },
-  vacioTexto:   { fontSize: 13, color: C.muted, textAlign: 'center', paddingVertical: 24 },
   fila:         { flexDirection: 'row', gap: 10, borderBottomWidth: 0.5, borderBottomColor: C.border, paddingBottom: 14 },
   filaHeader:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   username:     { fontSize: 13, fontWeight: '600', color: C.ink },

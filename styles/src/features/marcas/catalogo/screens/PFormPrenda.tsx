@@ -6,10 +6,7 @@
 // según si se recibe una `prenda` por parámetro.
 
 import React, { useState } from 'react';
-import {
-  View, Text, TextInput, Image, TouchableOpacity, Pressable,
-  ScrollView, ActivityIndicator, Alert, StyleSheet,
-} from 'react-native';
+import { View, Text, TextInput, Image, TouchableOpacity, Pressable, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { C, R } from '../../../../shared/theme';
 import { Prenda, CategoriaPrenda, CATEGORIAS_PRENDA } from '../types';
@@ -18,6 +15,7 @@ import {
   subirImagenPrenda, crearPrenda, actualizarPrenda,
   validarUrlTienda, validarPrecio,
 } from '../services/prendasService';
+import { mostrarAlerta } from '../../../../lib/alerta';
 
 interface Props {
   marcaId: string;
@@ -47,13 +45,13 @@ export default function PFormPrenda({ marcaId, prenda, onGuardado, onCancelar }:
     try {
       const uri = await seleccionarImagenDeGaleria();
       if (uri) setImagenUri(uri);
-    } catch (e: any) { Alert.alert('Error', e.message); }
+    } catch (e: any) { mostrarAlerta('Error', e.message); }
   };
   const usarCamara = async () => {
     try {
       const uri = await tomarFotoPrenda();
       if (uri) setImagenUri(uri);
-    } catch (e: any) { Alert.alert('Error', e.message); }
+    } catch (e: any) { mostrarAlerta('Error', e.message); }
   };
 
   const validar = () => {
@@ -93,7 +91,7 @@ export default function PFormPrenda({ marcaId, prenda, onGuardado, onCancelar }:
       }
       onGuardado();
     } catch (e: any) {
-      Alert.alert('Error al guardar', e.message ?? 'Algo salió mal.');
+      mostrarAlerta('Error al guardar', e.message ?? 'Algo salió mal.');
     } finally {
       setGuardando(false);
     }
@@ -211,7 +209,7 @@ const s = StyleSheet.create({
   scroll:       { padding: 20, gap: 14, paddingBottom: 48 },
   topBar:       { paddingBottom: 4 },
   backText:     { fontSize: 14, color: C.earth, fontWeight: '500' },
-  titulo:       { fontSize: 22, fontWeight: '700', color: C.ink, marginBottom: 4 },
+  titulo:       { fontSize: 24, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginBottom: 4 },
   preview:      { width: '100%', height: 220, borderRadius: R.card, backgroundColor: C.earthLight },
   previewVacio: { alignItems: 'center', justifyContent: 'center' },
   fila:         { flexDirection: 'row', gap: 12 },

@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
-import {
-    View, Text, TextInput, Image, TouchableOpacity,
-    StyleSheet, Alert, ActivityIndicator, ScrollView,
-} from 'react-native';
+import { View, Text, TextInput, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { C, R } from '../../../shared/theme';
 import {
     seleccionarDeGaleria,
@@ -18,6 +15,7 @@ import {
     crearEtiquetaCatalogo,
     crearEtiquetaManual,
 } from '../../etiquetas/etiquetas.api';
+import { mostrarAlerta } from '../../../lib/alerta';
 
 interface Props {
     onPublicado: () => void;
@@ -33,7 +31,7 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
             const uri = await seleccionarDeGaleria();
             if (uri) setImagenUri(uri);
         } catch (e: any) {
-            Alert.alert('Error', e.message);
+            mostrarAlerta('Error', e.message);
         }
     };
     const usarCamara = async () => {
@@ -41,7 +39,7 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
             const uri = await tomarFoto();
             if (uri) setImagenUri(uri);
         } catch (e: any) {
-            Alert.alert('Error', e.message);
+            mostrarAlerta('Error', e.message);
         }
     };
 
@@ -60,7 +58,7 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
 
     const publicar = async () => {
         if (!imagenUri) {
-            Alert.alert('Falta imagen', 'Selecciona o toma una foto del outfit.');
+            mostrarAlerta('Falta imagen', 'Selecciona o toma una foto del outfit.');
             return;
         }
         setCargando(true);
@@ -107,7 +105,7 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
                 setEtiquetas([]);
                 onPublicado();
             } catch (e: any) {
-                Alert.alert('Error al publicar', e.message ?? 'Algo salió mal.');
+                mostrarAlerta('Error al publicar', e.message ?? 'Algo salió mal.');
             } finally {
                 setCargando(false);
             }

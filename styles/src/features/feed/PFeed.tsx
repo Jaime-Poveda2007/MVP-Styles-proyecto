@@ -13,6 +13,7 @@ import { FeedStackParamList } from './NavFeed';
 import { obtenerPublicacionPorId } from './services/publicacionesService';
 import { C } from '../../shared/theme';
 import BarraBusquedaHeader from '../busqueda/components/BarraBusquedaHeader';
+import EstadoError from '../../shared/components/EstadoError';
 
 interface Props {
   userId: string;
@@ -39,7 +40,10 @@ export default function PFeed({ userId, onVerPerfil }: Props) {
     try {
       const fresca = await obtenerPublicacionPorId(item.id, userId);
       setDetalle(fresca);
-    } catch {
+    } catch (e) {
+      // No se pudo refrescar (ej. sin conexión) — se abre igual con los
+      // datos que ya se tenían del feed en vez de bloquear la navegación.
+      console.warn('No se pudo refrescar la publicación antes de abrirla:', e);
       setDetalle(item);
     }
   };
@@ -71,9 +75,7 @@ export default function PFeed({ userId, onVerPerfil }: Props) {
 
       {/* Error no bloqueante */}
       {error && !cargando && (
-        <View style={f.errorBanner}>
-          <Text style={f.errorText}>{error}</Text>
-        </View>
+        <EstadoError mensaje={error} onReintentar={() => cargarPrimera(userId)} />
       )}
 
       {/* Grid */}
@@ -96,7 +98,7 @@ export default function PFeed({ userId, onVerPerfil }: Props) {
         onPress={() => navigation.navigate('CrearPublicacion')}
         activeOpacity={0.85}
       >
-        <Plus size={24} color="#fff" strokeWidth={2.5} />
+        <Plus size={24} color={C.white} strokeWidth={2.5} />
       </TouchableOpacity>
 
     </SafeAreaView>
@@ -108,8 +110,6 @@ const f = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
   wordmark: { fontSize: 22, fontWeight: '800', letterSpacing: 0.5, color: C.ink },
   dot: { color: C.earth },
-  errorBanner: { backgroundColor: '#FDECEA', marginHorizontal: 16, marginTop: 8, borderRadius: 8, padding: 10 },
-  errorText: { fontSize: 13, color: '#C0392B', textAlign: 'center' },
   headerDerecha: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   fab: {
     position: 'absolute',

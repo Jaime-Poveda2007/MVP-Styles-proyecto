@@ -5,11 +5,12 @@
 // dentro de PReseñasPrenda.tsx y ambos comparten el mismo hook (un
 // solo canal de Realtime para esa prenda).
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { Trash2 } from 'lucide-react-native';
 import EstrellasSelector from './EstrellasSelector';
 import { Reseña } from '../reseñas.api';
 import { C, R } from '../../../shared/theme';
+import { mostrarAlerta, confirmarAccion } from '../../../lib/alerta';
 
 interface Props {
   miReseña: Reseña | null;
@@ -29,18 +30,15 @@ export default function FormularioReseña({ miReseña, guardando, onGuardar, onE
 
   const guardar = async () => {
     if (estrellas < 1) {
-      Alert.alert('Falta la valoración', 'Selecciona de 1 a 5 estrellas antes de publicar.');
+      mostrarAlerta('Falta la valoración', 'Selecciona de 1 a 5 estrellas antes de publicar.');
       return;
     }
     const ok = await onGuardar(estrellas, comentario);
-    if (!ok) Alert.alert('Error', 'No se pudo guardar tu reseña.');
+    if (!ok) mostrarAlerta('Error', 'No se pudo guardar tu reseña.');
   };
 
   const confirmarEliminar = () => {
-    Alert.alert('Eliminar reseña', '¿Seguro que quieres eliminar tu reseña?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: onEliminar },
-    ]);
+    confirmarAccion('Eliminar reseña', '¿Seguro que quieres eliminar tu reseña?', onEliminar);
   };
 
   return (
@@ -62,7 +60,7 @@ export default function FormularioReseña({ miReseña, guardando, onGuardar, onE
       <View style={s.acciones}>
         <TouchableOpacity style={[s.btnPrimario, guardando && { opacity: 0.6 }]} onPress={guardar} disabled={guardando}>
           {guardando
-            ? <ActivityIndicator color="#fff" />
+            ? <ActivityIndicator color={C.white} />
             : <Text style={s.btnPrimarioTexto}>{miReseña ? 'Guardar cambios' : 'Publicar reseña'}</Text>
           }
         </TouchableOpacity>
@@ -83,6 +81,6 @@ const s = StyleSheet.create({
   contador:         { alignSelf: 'flex-end', color: C.muted, fontSize: 11 },
   acciones:         { flexDirection: 'row', gap: 10, alignItems: 'center' },
   btnPrimario:      { flex: 1, backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 13, alignItems: 'center' },
-  btnPrimarioTexto: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  btnPrimarioTexto: { color: C.white, fontWeight: '700', fontSize: 14 },
   btnEliminar:      { width: 44, height: 44, borderRadius: R.btn, borderWidth: 1, borderColor: C.error, alignItems: 'center', justifyContent: 'center' },
 });

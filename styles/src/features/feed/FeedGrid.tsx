@@ -2,12 +2,13 @@
 import React, { useCallback } from 'react';
 import {
   FlatList, View, ActivityIndicator,
-  StyleSheet, RefreshControl, Text,
+  StyleSheet, RefreshControl, Text, Platform,
 } from 'react-native';
 import { Publicacion } from './types';
 import FeedCard from './FeedCard';
 import EsqueletoFeed from './EsqueletoFeed';
 import { C } from '../../shared/theme';
+import PullToRefreshWeb from '../../shared/components/PullToRefreshWeb';
 
 const GAP     = 8;
 const PADDING  = 12;
@@ -41,7 +42,7 @@ export default function FeedGrid({
     return <EsqueletoFeed />;
   }
 
-  return (
+  const lista = (
     <FlatList
       data={publicaciones}
       keyExtractor={keyExtractor}
@@ -64,13 +65,16 @@ export default function FeedGrid({
           <Text style={g.emptySub}>Publica tu primer outfit o sigue marcas locales</Text>
         </View>
       }
+      // En web, el pull-to-refresh lo maneja PullToRefreshWeb, no RefreshControl
       refreshControl={
-        <RefreshControl
-          refreshing={refrescando}
-          onRefresh={onRefrescar}
-          tintColor={C.earth}
-          colors={[C.earth]}
-        />
+        Platform.OS === 'web' ? undefined : (
+          <RefreshControl
+            refreshing={refrescando}
+            onRefresh={onRefrescar}
+            tintColor={C.earth}
+            colors={[C.earth]}
+          />
+        )
       }
       removeClippedSubviews
       maxToRenderPerBatch={6}
@@ -78,6 +82,16 @@ export default function FeedGrid({
       initialNumToRender={6}
     />
   );
+
+  if (Platform.OS === 'web') {
+    return (
+      <PullToRefreshWeb onRefresh={onRefrescar}>
+        {lista}
+      </PullToRefreshWeb>
+    );
+  }
+
+  return lista;
 }
 
 const g = StyleSheet.create({

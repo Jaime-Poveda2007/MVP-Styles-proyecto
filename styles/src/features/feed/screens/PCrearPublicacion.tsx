@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { C, R } from '../../../shared/theme';
 import {
@@ -8,22 +8,28 @@ import {
     subirImagen,
     crearPublicacion,
 } from '../services/publicacionesService';
+
 import EtiquetadoImagen, {
-    EtiquetaPendiente,
+    EtiquetaPendiente, EtiquetadoImagenHandle
 } from '../../etiquetas/components/EtiquetadoImagen';
+
 import {
     crearEtiquetaCatalogo,
     crearEtiquetaManual,
 } from '../../etiquetas/etiquetas.api';
+
 import { mostrarAlerta } from '../../../lib/alerta';
 import { conTimeout } from '../../../lib/conTimeout';
-import AjustarImagen from '../components/AjustarImagen';
+
 
 interface Props {
     onPublicado: () => void;
 }
 export default function PCrearPublicacion({ onPublicado }: Props) {
     const [imagenUri, setImagenUri] = useState<string | null>(null);
+    const [imagenWidth, setImagenWidth] = useState(0);
+    const [imagenHeight, setImagenHeight] = useState(0);
+    const etiquetadoRef = useRef<EtiquetadoImagenHandle>(null);
     const [descripcion, setDescripcion] = useState('');
     const [cargando, setCargando] = useState(false);
     const [etiquetas, setEtiquetas] = useState<EtiquetaPendiente[]>([]);
@@ -32,7 +38,7 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
     const elegirDeGaleria = async () => {
         try {
             const img = await seleccionarDeGaleria();
-            if (img) setAjustando(img);
+            if (img) { setImagenUri(img.uri); setImagenWidth(img.width); setImagenHeight(img.height); }
         } catch (e: any) {
             mostrarAlerta('Error', e.message);
         }
@@ -40,7 +46,7 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
     const usarCamara = async () => {
         try {
             const img = await tomarFoto();
-            if (img) setAjustando(img);
+            if (img) { setImagenUri(img.uri); setImagenWidth(img.width); setImagenHeight(img.height); }
         } catch (e: any) {
             mostrarAlerta('Error', e.message);
         }
@@ -66,47 +72,36 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
         }
         setCargando(true);
         try {
-            const uriFinal = await conTimeout(
-                comprimirSiEsNecesario(imagenUri),
+            const { uri, etiquetas: etiquetasFinales } = await conTimeout(
+                etiquetadoRef.current!.procesarParaPublicar(),
                 20000,
                 'La imagen tardó demasiado en procesarse. Intenta con otra foto.'
             );
             const url = await conTimeout(
-                subirImagen(uriFinal),
+                subirImagen(uri),
                 20000,
                 'La subida tardó demasiado. Revisa tu conexión e intenta de nuevo.'
             );
             const publicacionId = await crearPublicacion(url, descripcion);
 
-            // Guardar las etiquetas pendientes en Supabase, una por una.
-            // Si alguna falla, se avisa pero la publicación ya quedó creada.
-            for (const etq of etiquetas) {
+            for (const etq of etiquetasFinales) {
                 if (
-                    typeof etq.posX !== 'number' ||
-                    typeof etq.posY !== 'number' ||
-                    Number.isNaN(etq.posX) ||
-                    Number.isNaN(etq.posY)
+                    typeof etq.posX !== 'number' || typeof etq.posY !== 'number' ||
+                    Number.isNaN(etq.posX) || Number.isNaN(etq.posY)
                 ) {
                     console.error('Etiqueta con posición inválida, se omite:', etq);
                     continue;
                 }
                 if (etq.esManual) {
                     await crearEtiquetaManual({
-                        publicacionId,
-                        posX: etq.posX,
-                        posY: etq.posY,
-                        nombreManual: etq.nombreManual!,
-                        marcaManual: etq.marcaManual,
-                        precioManual: etq.precioManual,
-                        estiloId: etq.estiloId,
+                        publicacionId, posX: etq.posX, posY: etq.posY,
+                        nombreManual: etq.nombreManual!, marcaManual: etq.marcaManual,
+                        precioManual: etq.precioManual, estiloId: etq.estiloId,
                     });
                 } else {
                     await crearEtiquetaCatalogo({
-                        publicacionId,
-                        posX: etq.posX,
-                        posY: etq.posY,
-                        prendaId: etq.prendaId!,
-                        estiloId: etq.estiloId,
+                        publicacionId, posX: etq.posX, posY: etq.posY,
+                        prendaId: etq.prendaId!, estiloId: etq.estiloId,
                     });
                 }
             }
@@ -122,17 +117,7 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
             setCargando(false);
         }
     };
-    if (ajustando) {
-        return (
-            <AjustarImagen
-                imagenUri={ajustando.uri}
-                imagenWidth={ajustando.width}
-                imagenHeight={ajustando.height}
-                onListo={(uriRecortada) => { setImagenUri(uriRecortada); setAjustando(null); }}
-                onCancelar={() => setAjustando(null)}
-            />
-        );
-    }
+
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <TouchableOpacity onPress={onPublicado}>
@@ -141,7 +126,10 @@ export default function PCrearPublicacion({ onPublicado }: Props) {
             <Text style={styles.titulo}>Nueva publicación</Text>
             {imagenUri ? (
                 <EtiquetadoImagen
+                    ref={etiquetadoRef}
                     imagenUri={imagenUri}
+                    imagenWidth={imagenWidth}
+                    imagenHeight={imagenHeight}
                     etiquetas={etiquetas}
                     onAgregarEtiqueta={agregarEtiqueta}
                     onEliminarEtiqueta={eliminarEtiqueta}

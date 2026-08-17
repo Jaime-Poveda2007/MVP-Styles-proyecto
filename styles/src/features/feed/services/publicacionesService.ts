@@ -13,25 +13,28 @@ async function obtenerUsuarioId(): Promise<string> {
   if (error || !data) throw new Error('No se encontró el perfil del usuario.');
   return data.id;
 }
-export async function seleccionarDeGaleria(): Promise<string | null> {
+export async function seleccionarDeGaleria(): Promise<{ uri: string; width: number; height: number } | null> {
   const permiso = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permiso.granted) throw new Error('Necesitamos permiso para acceder a tu galería.');
   const resultado = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: 'images',
-    quality: 0.8,
+    quality: 1,
   });
   if (resultado.canceled) return null;
-  return resultado.assets[0].uri;
+  const a = resultado.assets[0];
+  return { uri: a.uri, width: a.width, height: a.height };
 }
-export async function tomarFoto(): Promise<string | null> {
+
+export async function tomarFoto(): Promise<{ uri: string; width: number; height: number } | null> {
   const permiso = await ImagePicker.requestCameraPermissionsAsync();
   if (!permiso.granted) throw new Error('Necesitamos permiso para usar la cámara.');
   const resultado = await ImagePicker.launchCameraAsync({
     mediaTypes: 'images',
-    quality: 0.8,
+    quality: 1,
   });
   if (resultado.canceled) return null;
-  return resultado.assets[0].uri;
+  const a = resultado.assets[0];
+  return { uri: a.uri, width: a.width, height: a.height };
 }
 // Siempre comprime a 1080px / 70% — seguro y sin medir tamaño
 export async function comprimirSiEsNecesario(uri: string): Promise<string> {

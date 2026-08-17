@@ -10,8 +10,8 @@ import EsqueletoFeed from './EsqueletoFeed';
 import { C } from '../../shared/theme';
 import PullToRefreshWeb from '../../shared/components/PullToRefreshWeb';
 
-const GAP     = 8;
-const PADDING  = 12;
+const GAP = 8;
+const PADDING = 12;
 
 interface Props {
   publicaciones: Publicacion[];
@@ -68,12 +68,7 @@ export default function FeedGrid({
       // En web, el pull-to-refresh lo maneja PullToRefreshWeb, no RefreshControl
       refreshControl={
         Platform.OS === 'web' ? undefined : (
-          <RefreshControl
-            refreshing={refrescando}
-            onRefresh={onRefrescar}
-            tintColor={C.earth}
-            colors={[C.earth]}
-          />
+          <RefreshControl refreshing={refrescando} onRefresh={onRefrescar} tintColor={C.earth} colors={[C.earth]} />
         )
       }
       removeClippedSubviews
@@ -83,23 +78,17 @@ export default function FeedGrid({
     />
   );
 
-  if (Platform.OS === 'web') {
-    return (
-      <PullToRefreshWeb onRefresh={onRefrescar}>
-        {lista}
-      </PullToRefreshWeb>
-    );
-  }
-
-  return lista;
+return Platform.OS === 'web'
+    ? <PullToRefreshWeb onRefresh={onRefrescar}>{lista}</PullToRefreshWeb>
+    : lista;
 }
 
 const g = StyleSheet.create({
-  content:     { paddingHorizontal: PADDING, paddingTop: 10, paddingBottom: 20 },
-  row:         { justifyContent: 'space-between', marginBottom: GAP },
-  footerLoader:{ paddingVertical: 20, alignItems: 'center' },
-  empty:       { flex: 1, alignItems: 'center', paddingTop: 80, gap: 12 },
-  emptyIcon:   { fontSize: 48 },
+  content: { paddingHorizontal: PADDING, paddingTop: 10, paddingBottom: 20 },
+  row: { justifyContent: 'space-between', marginBottom: GAP },
+  footerLoader: { paddingVertical: 20, alignItems: 'center' },
+  empty: { flex: 1, alignItems: 'center', paddingTop: 80, gap: 12 },
+  emptyIcon: { fontSize: 48 },
   emptyTitulo: { fontSize: 18, fontWeight: '700', color: C.ink },
-  emptySub:    { fontSize: 14, color: C.muted, textAlign: 'center', paddingHorizontal: 32, lineHeight: 20 },
+  emptySub: { fontSize: 14, color: C.muted, textAlign: 'center', paddingHorizontal: 32, lineHeight: 20 },
 });

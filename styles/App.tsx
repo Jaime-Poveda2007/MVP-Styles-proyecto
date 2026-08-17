@@ -12,6 +12,7 @@ import AuthNavigator from './src/features/auth/NavDeAuntenticacion';
 import HomeScreen from './src/features/Home/NavHome';
 import NavMarcas from './src/features/marcas/NavMarcas';
 import AlertaHost from './src/shared/components/AlertaHost';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 type RootStackParamList = {
   Auth: undefined;
@@ -88,58 +89,60 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <AlertaHost />
-      <NavigationContainer>
-        <RootStack.Navigator screenOptions={{ headerShown: false }}>
-          {estado === 'listo' ? (
-            <RootStack.Screen name="Home">
-                      {() => (
-          <HomeScreen
-            userId={userId ?? ''}
-            onCerrarSesion={() => setEstado('sin-sesion')}
-          />
-        )}
-            </RootStack.Screen>
-          ) : estado === 'marca-lista' ? (
-            <RootStack.Screen name="HomeMarca">
-              {() => (
-                <NavMarcas
-                  marcaId={marcaId ?? ''}
-                  onCerrarSesion={async () => {
-                    await supabase.auth.signOut();
-                    setEstado('sin-sesion');
-                  }}
-                />
-              )}
-            </RootStack.Screen>
-          ) : (
-            <RootStack.Screen name="Auth">
-              {() => (
-                <AuthNavigator
-                  initialRoute={
-                    estado === 'onboarding-pendiente' ? 'OnboardingEstilo' :
-                    estado === 'marca-bloqueada' ? 'MarcaPendienteAprobacion' :
-                    'Login'
-                  }
-                  onboardingParams={
-                    estado === 'onboarding-pendiente' && userId
-                      ? { userId, onComplete: () => setEstado('listo') }
-                      : undefined
-                  }
-                  marcaPendienteParams={
-                    estado === 'marca-bloqueada' && marcaBloqueada
-                      ? marcaBloqueada
-                      : undefined
-                  }
-                  onLoginExitoso={() => setEstado('listo')}
-                  onLoginExitosoMarca={() => setEstado('marca-lista')}
-                />
-              )}
-            </RootStack.Screen>
-          )}
-        </RootStack.Navigator>
-      </NavigationContainer>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <AlertaHost />
+          <RootStack.Navigator screenOptions={{ headerShown: false }}>
+            {estado === 'listo' ? (
+              <RootStack.Screen name="Home">
+                {() => (
+                  <HomeScreen
+                    userId={userId ?? ''}
+                    onCerrarSesion={() => setEstado('sin-sesion')}
+                  />
+                )}
+              </RootStack.Screen>
+            ) : estado === 'marca-lista' ? (
+              <RootStack.Screen name="HomeMarca">
+                {() => (
+                  <NavMarcas
+                    marcaId={marcaId ?? ''}
+                    onCerrarSesion={async () => {
+                      await supabase.auth.signOut();
+                      setEstado('sin-sesion');
+                    }}
+                  />
+                )}
+              </RootStack.Screen>
+            ) : (
+              <RootStack.Screen name="Auth">
+                {() => (
+                  <AuthNavigator
+                    initialRoute={
+                      estado === 'onboarding-pendiente' ? 'OnboardingEstilo' :
+                        estado === 'marca-bloqueada' ? 'MarcaPendienteAprobacion' :
+                          'Login'
+                    }
+                    onboardingParams={
+                      estado === 'onboarding-pendiente' && userId
+                        ? { userId, onComplete: () => setEstado('listo') }
+                        : undefined
+                    }
+                    marcaPendienteParams={
+                      estado === 'marca-bloqueada' && marcaBloqueada
+                        ? marcaBloqueada
+                        : undefined
+                    }
+                    onLoginExitoso={() => setEstado('listo')}
+                    onLoginExitosoMarca={() => setEstado('marca-lista')}
+                  />
+                )}
+              </RootStack.Screen>
+            )}
+          </RootStack.Navigator>
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

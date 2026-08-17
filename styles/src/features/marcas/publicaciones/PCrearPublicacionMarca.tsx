@@ -22,6 +22,7 @@ import { crearEtiquetaCatalogo } from '../../etiquetas/etiquetas.api';
 import SelectorPrendaPropia from './SelectorPrendaPropia';
 import { mostrarAlerta } from '../../../lib/alerta';
 import { conTimeout } from '../../../lib/conTimeout';
+import AjustarImagen from '../../feed/components/AjustarImagen';
 
 interface Props {
   marcaId: string;
@@ -34,18 +35,23 @@ export default function PCrearPublicacionMarca({ marcaId, onPublicado, onCancela
   const [descripcion, setDescripcion] = useState('');
   const [cargando, setCargando] = useState(false);
   const [etiquetas, setEtiquetas] = useState<EtiquetaPendiente[]>([]);
+  const [ajustando, setAjustando] = useState<{ uri: string; width: number; height: number } | null>(null);
 
   const elegirDeGaleria = async () => {
     try {
-      const uri = await seleccionarDeGaleria();
-      if (uri) setImagenUri(uri);
-    } catch (e: any) { mostrarAlerta('Error', e.message); }
+      const img = await seleccionarDeGaleria();
+      if (img) setAjustando(img);
+    } catch (e: any) {
+      mostrarAlerta('Error', e.message);
+    }
   };
   const usarCamara = async () => {
     try {
-      const uri = await tomarFoto();
-      if (uri) setImagenUri(uri);
-    } catch (e: any) { mostrarAlerta('Error', e.message); }
+      const img = await tomarFoto();
+      if (img) setAjustando(img);
+    } catch (e: any) {
+      mostrarAlerta('Error', e.message);
+    }
   };
 
   const agregarEtiqueta = (etiqueta: EtiquetaPendiente) => setEtiquetas(prev => [...prev, etiqueta]);
@@ -102,7 +108,17 @@ export default function PCrearPublicacionMarca({ marcaId, onPublicado, onCancela
       setCargando(false);
     }
   };
-
+  if (ajustando) {
+    return (
+      <AjustarImagen
+        imagenUri={ajustando.uri}
+        imagenWidth={ajustando.width}
+        imagenHeight={ajustando.height}
+        onListo={(uriRecortada) => { setImagenUri(uriRecortada); setAjustando(null); }}
+        onCancelar={() => setAjustando(null)}
+      />
+    );
+  }
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.surface }}>
       <ScrollView contentContainerStyle={s.container}>
@@ -166,17 +182,17 @@ export default function PCrearPublicacionMarca({ marcaId, onPublicado, onCancela
 }
 
 const s = StyleSheet.create({
-  container:       { padding: 20, gap: 12, flexGrow: 1 },
-  encabezado:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  cancelar:        { fontSize: 14, color: C.earth, fontWeight: '500' },
-  titulo:          { fontSize: 24, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginTop: 4 },
-  subtitulo:       { fontSize: 13, color: C.muted, marginBottom: 4 },
-  placeholder:     { width: '100%', height: 280, borderRadius: R.card, backgroundColor: C.earthLight, justifyContent: 'center', alignItems: 'center' },
-  fila:            { flexDirection: 'row', gap: 12 },
+  container: { padding: 20, gap: 12, flexGrow: 1 },
+  encabezado: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  cancelar: { fontSize: 14, color: C.earth, fontWeight: '500' },
+  titulo: { fontSize: 24, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginTop: 4 },
+  subtitulo: { fontSize: 13, color: C.muted, marginBottom: 4 },
+  placeholder: { width: '100%', height: 280, borderRadius: R.card, backgroundColor: C.earthLight, justifyContent: 'center', alignItems: 'center' },
+  fila: { flexDirection: 'row', gap: 12 },
   botonSecundario: { flex: 1, borderWidth: 1, borderColor: C.border, borderRadius: R.btn, paddingVertical: 12, alignItems: 'center' },
   textoSecundario: { color: C.ink, fontWeight: '500' },
-  input:           { backgroundColor: C.white, borderWidth: 1, borderColor: C.border, borderRadius: R.input, padding: 12, minHeight: 80, textAlignVertical: 'top', color: C.ink },
-  contador:        { alignSelf: 'flex-end', color: C.muted, fontSize: 12 },
-  botonPrincipal:  { backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
-  textoPrincipal:  { color: C.white, fontWeight: '600', fontSize: 16 },
+  input: { backgroundColor: C.white, borderWidth: 1, borderColor: C.border, borderRadius: R.input, padding: 12, minHeight: 80, textAlignVertical: 'top', color: C.ink },
+  contador: { alignSelf: 'flex-end', color: C.muted, fontSize: 12 },
+  botonPrincipal: { backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
+  textoPrincipal: { color: C.white, fontWeight: '600', fontSize: 16 },
 });

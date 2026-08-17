@@ -9,20 +9,20 @@
 //    ofrece las prendas activas del catálogo de esta marca (no busca
 //    en catálogos de otras marcas ni permite etiqueta manual)
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { C, R } from '../../../shared/theme';
 import {
-  seleccionarDeGaleria, tomarFoto, comprimirSiEsNecesario, subirImagen,
+  seleccionarDeGaleria, tomarFoto, subirImagen,
   crearPublicacionMarca,
 } from './publicacionesMarcaService';
-import EtiquetadoImagen, { EtiquetaPendiente } from '../../etiquetas/components/EtiquetadoImagen';
+import EtiquetadoImagen, { EtiquetaPendiente, EtiquetadoImagenHandle } from '../../etiquetas/components/EtiquetadoImagen';
 import { crearEtiquetaCatalogo } from '../../etiquetas/etiquetas.api';
 import SelectorPrendaPropia from './SelectorPrendaPropia';
 import { mostrarAlerta } from '../../../lib/alerta';
 import { conTimeout } from '../../../lib/conTimeout';
-import AjustarImagen from '../../feed/components/AjustarImagen';
+
 
 interface Props {
   marcaId: string;
@@ -32,15 +32,16 @@ interface Props {
 
 export default function PCrearPublicacionMarca({ marcaId, onPublicado, onCancelar }: Props) {
   const [imagenUri, setImagenUri] = useState<string | null>(null);
+  const [imagenWidth, setImagenWidth] = useState(0);
+  const [imagenHeight, setImagenHeight] = useState(0);
+  const etiquetadoRef = useRef<EtiquetadoImagenHandle>(null);
   const [descripcion, setDescripcion] = useState('');
   const [cargando, setCargando] = useState(false);
   const [etiquetas, setEtiquetas] = useState<EtiquetaPendiente[]>([]);
-  const [ajustando, setAjustando] = useState<{ uri: string; width: number; height: number } | null>(null);
-
   const elegirDeGaleria = async () => {
     try {
       const img = await seleccionarDeGaleria();
-      if (img) setAjustando(img);
+      if (img) { setImagenUri(img.uri); setImagenWidth(img.width); setImagenHeight(img.height); }
     } catch (e: any) {
       mostrarAlerta('Error', e.message);
     }
@@ -48,7 +49,7 @@ export default function PCrearPublicacionMarca({ marcaId, onPublicado, onCancela
   const usarCamara = async () => {
     try {
       const img = await tomarFoto();
-      if (img) setAjustando(img);
+      if (img) { setImagenUri(img.uri); setImagenWidth(img.width); setImagenHeight(img.height); }
     } catch (e: any) {
       mostrarAlerta('Error', e.message);
     }
@@ -61,39 +62,34 @@ export default function PCrearPublicacionMarca({ marcaId, onPublicado, onCancela
 
   const publicar = async () => {
     if (!imagenUri) {
-      mostrarAlerta('Falta imagen', 'Selecciona o toma una foto para la publicación.');
+      mostrarAlerta('Falta imagen', 'Selecciona o toma una foto del outfit.');
       return;
     }
     setCargando(true);
     try {
-      const uriFinal = await conTimeout(
-        comprimirSiEsNecesario(imagenUri),
+      const { uri, etiquetas: etiquetasFinales } = await conTimeout(
+        etiquetadoRef.current!.procesarParaPublicar(),
         20000,
         'La imagen tardó demasiado en procesarse. Intenta con otra foto.'
       );
       const url = await conTimeout(
-        subirImagen(uriFinal),
+        subirImagen(uri),
         20000,
         'La subida tardó demasiado. Revisa tu conexión e intenta de nuevo.'
       );
       const publicacionId = await crearPublicacionMarca(marcaId, url, descripcion);
 
-      // Todas las etiquetas de este flujo vienen de SelectorPrendaPropia
-      // (siempre esManual=false, siempre con prendaId del catálogo propio).
-      for (const etq of etiquetas) {
+      for (const etq of etiquetasFinales) {
         if (
           typeof etq.posX !== 'number' || typeof etq.posY !== 'number' ||
-          Number.isNaN(etq.posX) || Number.isNaN(etq.posY) || !etq.prendaId
+          Number.isNaN(etq.posX) || Number.isNaN(etq.posY)
         ) {
-          console.error('Etiqueta con datos inválidos, se omite:', etq);
+          console.error('Etiqueta con posición inválida, se omite:', etq);
           continue;
         }
         await crearEtiquetaCatalogo({
-          publicacionId,
-          posX: etq.posX,
-          posY: etq.posY,
-          prendaId: etq.prendaId,
-          estiloId: etq.estiloId,
+          publicacionId, posX: etq.posX, posY: etq.posY,
+          prendaId: etq.prendaId!, estiloId: etq.estiloId,
         });
       }
 
@@ -108,17 +104,7 @@ export default function PCrearPublicacionMarca({ marcaId, onPublicado, onCancela
       setCargando(false);
     }
   };
-  if (ajustando) {
-    return (
-      <AjustarImagen
-        imagenUri={ajustando.uri}
-        imagenWidth={ajustando.width}
-        imagenHeight={ajustando.height}
-        onListo={(uriRecortada) => { setImagenUri(uriRecortada); setAjustando(null); }}
-        onCancelar={() => setAjustando(null)}
-      />
-    );
-  }
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.surface }}>
       <ScrollView contentContainerStyle={s.container}>
@@ -133,7 +119,10 @@ export default function PCrearPublicacionMarca({ marcaId, onPublicado, onCancela
 
         {imagenUri ? (
           <EtiquetadoImagen
+            ref={etiquetadoRef}
             imagenUri={imagenUri}
+            imagenWidth={imagenWidth}
+            imagenHeight={imagenHeight}
             etiquetas={etiquetas}
             onAgregarEtiqueta={agregarEtiqueta}
             onEliminarEtiqueta={eliminarEtiqueta}

@@ -25,6 +25,7 @@ interface UseLikesParams {
   esPropia: boolean;
   likesInicial: number;
   yoLikeInicial: boolean;
+  esDeMarca?: boolean;
 }
 
 interface UseLikesResultado {
@@ -35,8 +36,9 @@ interface UseLikesResultado {
 }
 
 export function useLikes({
-  publicacionId, userId, esPropia, likesInicial, yoLikeInicial,
+  publicacionId, userId, esPropia, likesInicial, yoLikeInicial, esDeMarca = false,
 }: UseLikesParams): UseLikesResultado {
+  const columnaActor = esDeMarca ? 'marca_id' : 'usuario_id';
   const [likes, setLikes] = useState(likesInicial);
   const [yoLike, setYoLike] = useState(yoLikeInicial);
   const [toggling, setToggling] = useState(false);
@@ -62,8 +64,8 @@ export function useLikes({
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'likes', filter: `publicacion_id=eq.${publicacionId}` },
         (payload) => {
-          const filaUsuarioId = (payload.new as { usuario_id: string }).usuario_id;
-          if (filaUsuarioId === userId) return; // ya lo contamos de forma optimista
+          const filaActorId = (payload.new as any)[columnaActor];
+          if (filaActorId === userId) return; // ya lo contamos de forma optimista
           setLikes(prev => prev + 1);
         }
       )
@@ -71,8 +73,8 @@ export function useLikes({
         'postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'likes', filter: `publicacion_id=eq.${publicacionId}` },
         (payload) => {
-          const filaUsuarioId = (payload.old as { usuario_id: string })?.usuario_id;
-          if (filaUsuarioId === userId) return;
+          const filaActorId = (payload.old as any)?.[columnaActor];
+          if (filaActorId === userId) return;
           setLikes(prev => Math.max(0, prev - 1));
         }
       )
@@ -81,7 +83,7 @@ export function useLikes({
     return () => {
       supabase.removeChannel(canal);
     };
-  }, [publicacionId, userId]);
+  }, [publicacionId, userId, columnaActor]);
 
   const toggleLike = useCallback(async (): Promise<boolean> => {
     if (esPropia || enVueloRef.current) return false;
@@ -94,8 +96,8 @@ export function useLikes({
 
     try {
       const { error } = nuevoEstado
-        ? await supabase.from('likes').insert({ usuario_id: userId, publicacion_id: publicacionId })
-        : await supabase.from('likes').delete().eq('usuario_id', userId).eq('publicacion_id', publicacionId);
+        ? await supabase.from('likes').insert({ [columnaActor]: userId, publicacion_id: publicacionId })
+        : await supabase.from('likes').delete().eq(columnaActor, userId).eq('publicacion_id', publicacionId);
 
       if (error) throw error;
       return true;
@@ -108,7 +110,7 @@ export function useLikes({
       enVueloRef.current = false;
       setToggling(false);
     }
-  }, [esPropia, yoLike, userId, publicacionId]);
+  }, [esPropia, yoLike, userId, publicacionId, columnaActor]);
 
   return { likes, yoLike, toggling, toggleLike };
 }

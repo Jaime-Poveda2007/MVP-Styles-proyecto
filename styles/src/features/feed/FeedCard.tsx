@@ -21,9 +21,10 @@ interface Props {
   // RF-U10: toque en nombre/foto → perfil público (solo autores usuario,
   // no hay perfil público de marca todavía).
   onVerPerfil?: (userId: string) => void;
+  esDeMarca?: boolean;
 }
 
-export default function FeedCard({ item, userId, onPress, onVerPerfil }: Props) {
+export default function FeedCard({ item, userId, onPress, onVerPerfil, esDeMarca = false }: Props) {
   const { width } = useWindowDimensions();
   const CARD_WIDTH = (width - PADDING * 2 - GAP) / 2;
   const CARD_HEIGHT = CARD_WIDTH * 1.2; // ratio 6:5 — compacto y proporcional
@@ -37,6 +38,7 @@ export default function FeedCard({ item, userId, onPress, onVerPerfil }: Props) 
     esPropia,
     likesInicial: item.likes_count,
     yoLikeInicial: item.yo_di_like,
+    esDeMarca,
   });
 
   const { reposts, yoRepostee, toggleRepost } = useReposts({
@@ -44,6 +46,7 @@ export default function FeedCard({ item, userId, onPress, onVerPerfil }: Props) 
     userId,
     repostsInicial: item.reposts_count,
     yoReposteeInicial: item.yo_reposteo,
+    esDeMarca,
   });
 
   const onPressLike = async () => {

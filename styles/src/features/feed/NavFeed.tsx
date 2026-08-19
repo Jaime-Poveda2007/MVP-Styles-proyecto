@@ -16,13 +16,14 @@ const Stack = createNativeStackNavigator<FeedStackParamList>();
 interface Props {
   userId: string;
   onVerPerfil: (targetUserId: string) => void;
+  esDeMarca?: boolean;
 }
 
-export default function FeedNavigator({ userId, onVerPerfil }: Props) {
+export default function FeedNavigator({ userId, onVerPerfil, esDeMarca = false }: Props) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Feed">
-        {() => <PFeed userId={userId} onVerPerfil={onVerPerfil} />}
+        {() => <PFeed userId={userId} onVerPerfil={onVerPerfil} esDeMarca={esDeMarca} />}
       </Stack.Screen>
       <Stack.Screen name="CrearPublicacion">
         {({ navigation }) => (
@@ -35,6 +36,7 @@ export default function FeedNavigator({ userId, onVerPerfil }: Props) {
             userId={userId}
             terminoInicial={route.params?.terminoInicial}
             onVolver={() => navigation.goBack()}
+            esDeMarca={esDeMarca}
           />
         )}
       </Stack.Screen>

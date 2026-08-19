@@ -12,7 +12,7 @@ interface UseFeedResult {
   cargandoMas: boolean;
   error: string | null;
   hayMas: boolean;
-  cargarPrimera: (userId: string) => Promise<void>;
+  cargarPrimera: (userId: string, esDeMarca?: boolean) => Promise<void>;
   cargarMas: () => Promise<void>;
   refrescar: () => Promise<void>;
 }
@@ -25,6 +25,7 @@ export function useFeed(): UseFeedResult {
   const [hayMas, setHayMas] = useState(true);
 
   const userIdRef = useRef<string>('');
+  const esDeMarcaRef = useRef<boolean>(false);
   const offsetRef = useRef<number>(0);
   const preferenciasRef = useRef<{ estilos: string[]; colores: string[] }>({ estilos: [], colores: [] });
 
@@ -50,12 +51,13 @@ const enriquecer = async (posts: any[], setLikes: Set<string>, setReposts: Set<s
         likes_count: likesCount ?? 0,
         reposts_count: repostsCount ?? 0,
         yo_di_like: setLikes.has(p.id),
+        yo_reposteo: setReposts.has(p.id),
         etiquetas: p.etiquetas ?? [],
       } as Publicacion;
     }));
   };
 
-  const fetchPagina = async (userId: string, offset: number): Promise<Publicacion[]> => {
+  const fetchPagina = async (userId: string, offset: number, esDeMarca: boolean): Promise<Publicacion[]> => {
     const SELECT = `
       id, imagen_url, descripcion, es_de_marca, created_at,
       usuario_id, marca_id,
@@ -85,10 +87,11 @@ const enriquecer = async (posts: any[], setLikes: Set<string>, setReposts: Set<s
     if (errM) throw errM;
 
     const todosIds = [...(postsUsuarios ?? []), ...(postsMarcas ?? [])].map((p: any) => p.id);
+    const columnaActor = esDeMarca ? 'marca_id' : 'usuario_id';
     const [{ data: misLikes }, { data: misReposts }] = todosIds.length
       ? await Promise.all([
-          supabase.from('likes').select('publicacion_id').eq('usuario_id', userId).in('publicacion_id', todosIds),
-          supabase.from('reposts').select('publicacion_id').eq('usuario_id', userId).in('publicacion_id', todosIds),
+          supabase.from('likes').select('publicacion_id').eq(columnaActor, userId).in('publicacion_id', todosIds),
+          supabase.from('reposts').select('publicacion_id').eq(columnaActor, userId).in('publicacion_id', todosIds),
         ])
       : [{ data: [] }, { data: [] }];
 
@@ -110,14 +113,17 @@ const enriquecer = async (posts: any[], setLikes: Set<string>, setReposts: Set<s
     return resultado;
   };
 
-  const cargarPrimera = useCallback(async (userId: string) => {
+  const cargarPrimera = useCallback(async (userId: string, esDeMarca: boolean = false) => {
     setCargando(true);
     setError(null);
     try {
       userIdRef.current = userId;
+      esDeMarcaRef.current = esDeMarca;
       offsetRef.current = 0;
-      preferenciasRef.current = await obtenerPreferencias(userId);
-      const pagina = await fetchPagina(userId, 0);
+      preferenciasRef.current = esDeMarca
+        ? { estilos: [], colores: [] }
+        : await obtenerPreferencias(userId);
+      const pagina = await fetchPagina(userId, 0, esDeMarca);
       setPublicaciones(pagina);
       setHayMas(pagina.length >= PAGE_SIZE);
       offsetRef.current = PAGE_SIZE;
@@ -132,7 +138,7 @@ const enriquecer = async (posts: any[], setLikes: Set<string>, setReposts: Set<s
     if (cargandoMas || !hayMas) return;
     setCargandoMas(true);
     try {
-      const pagina = await fetchPagina(userIdRef.current, offsetRef.current);
+      const pagina = await fetchPagina(userIdRef.current, offsetRef.current, esDeMarcaRef.current);
       setPublicaciones(prev => [...prev, ...pagina]);
       setHayMas(pagina.length >= PAGE_SIZE);
       offsetRef.current += PAGE_SIZE;
@@ -144,29 +150,10 @@ const enriquecer = async (posts: any[], setLikes: Set<string>, setReposts: Set<s
   }, [cargandoMas, hayMas]);
 
   const refrescar = useCallback(async () => {
-    await cargarPrimera(userIdRef.current);
+    await cargarPrimera(userIdRef.current, esDeMarcaRef.current);
   }, [cargarPrimera]);
 
   return { publicaciones, cargando, cargandoMas, error, hayMas, cargarPrimera, cargarMas, refrescar };
 }
-
-const enriquecer = async (posts: any[], setLikes: Set<string>, setReposts: Set<string>): Promise<Publicacion[]> => {
-    return Promise.all(posts.map(async (p) => {
-      const [{ count: likesCount }, { count: repostsCount }] = await Promise.all([
-        supabase.from('likes').select('*', { count: 'exact', head: true }).eq('publicacion_id', p.id),
-        supabase.from('reposts').select('*', { count: 'exact', head: true }).eq('publicacion_id', p.id),
-      ]);
-      return {
-        ...p,
-        usuario: Array.isArray(p.usuario) ? p.usuario[0] ?? null : p.usuario ?? null,
-        marca: Array.isArray(p.marca) ? p.marca[0] ?? null : p.marca ?? null,
-        likes_count: likesCount ?? 0,
-        reposts_count: repostsCount ?? 0,
-        yo_di_like: setLikes.has(p.id),
-        yo_reposteo: setReposts.has(p.id),
-        etiquetas: p.etiquetas ?? [],
-      } as Publicacion;
-    }));
-  };
 
   

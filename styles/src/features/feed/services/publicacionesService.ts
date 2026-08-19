@@ -99,7 +99,8 @@ export async function eliminarPublicacion(publicacionId: string): Promise<void> 
 // que usa el feed (usuario/marca, etiquetas, likes).
 export async function obtenerPublicacionPorId(
   publicacionId: string,
-  userId: string
+  userId: string,
+  esDeMarca: boolean = false
 ): Promise<Publicacion> {
   const SELECT = `
     id, imagen_url, descripcion, es_de_marca, created_at,
@@ -121,11 +122,12 @@ export async function obtenerPublicacionPorId(
     .single();
   if (error) throw error;
 
-const [{ count: likesCount }, { count: repostsCount }, { data: miLike }, { data: miRepost }] = await Promise.all([
+  const columnaActor = esDeMarca ? 'marca_id' : 'usuario_id';
+  const [{ count: likesCount }, { count: repostsCount }, { data: miLike }, { data: miRepost }] = await Promise.all([
     supabase.from('likes').select('*', { count: 'exact', head: true }).eq('publicacion_id', publicacionId),
     supabase.from('reposts').select('*', { count: 'exact', head: true }).eq('publicacion_id', publicacionId),
-    supabase.from('likes').select('id').eq('publicacion_id', publicacionId).eq('usuario_id', userId).maybeSingle(),
-    supabase.from('reposts').select('id').eq('publicacion_id', publicacionId).eq('usuario_id', userId).maybeSingle(),
+    supabase.from('likes').select('id').eq('publicacion_id', publicacionId).eq(columnaActor, userId).maybeSingle(),
+    supabase.from('reposts').select('id').eq('publicacion_id', publicacionId).eq(columnaActor, userId).maybeSingle(),
   ]);
 
   return {

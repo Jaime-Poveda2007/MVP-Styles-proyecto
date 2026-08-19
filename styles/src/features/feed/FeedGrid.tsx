@@ -24,19 +24,20 @@ interface Props {
   onRefrescar: () => void;
   onPressTarjeta: (item: Publicacion) => void;
   onVerPerfil?: (userId: string) => void;
+  esDeMarca?: boolean;
 }
 
 export default function FeedGrid({
   publicaciones, userId, cargando, cargandoMas,
-  hayMas, refrescando, onCargarMas, onRefrescar, onPressTarjeta, onVerPerfil,
+  hayMas, refrescando, onCargarMas, onRefrescar, onPressTarjeta, onVerPerfil, esDeMarca = false,
 }: Props) {
 
   const keyExtractor = useCallback((item: Publicacion) => item.id, []);
 
   const renderItem = useCallback(({ item }: { item: Publicacion }) => (
     // Sin marginLeft/Right manual — columnWrapperStyle maneja el espacio
-    <FeedCard item={item} userId={userId} onPress={onPressTarjeta} onVerPerfil={onVerPerfil} />
-  ), [userId, onPressTarjeta, onVerPerfil]);
+    <FeedCard item={item} userId={userId} onPress={onPressTarjeta} onVerPerfil={onVerPerfil} esDeMarca={esDeMarca} />
+  ), [userId, onPressTarjeta, onVerPerfil, esDeMarca]);
 
   if (cargando) {
     return <EsqueletoFeed />;

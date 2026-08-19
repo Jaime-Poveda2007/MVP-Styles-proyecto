@@ -27,6 +27,7 @@ interface Props {
   // marca todavía) y porque no todos los puntos de montaje de
   // PDetalle tienen navegación disponible.
   onVerPerfil?: (userId: string) => void;
+  esDeMarca?: boolean;
 }
 
 // Nombre/marca/precio de una etiqueta ya no dependen de es_manual: si está
@@ -41,7 +42,7 @@ function datosEtiqueta(etq: Etiqueta) {
   };
 }
 
-export default function PDetalle({ publicacion: pub, userId, onVolver, onEliminado, onVerPerfil }: Props) {
+export default function PDetalle({ publicacion: pub, userId, onVolver, onEliminado, onVerPerfil, esDeMarca = false }: Props) {
   // useWindowDimensions (en vez de Dimensions.get fijo al montar) para que
   // el detalle se adapte si el dispositivo rota o si la ventana cambia de
   // tamaño (split-screen / web), corrigiendo la responsividad de esta pantalla.
@@ -72,6 +73,7 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
     esPropia,
     likesInicial: pub.likes_count,
     yoLikeInicial: pub.yo_di_like,
+    esDeMarca,
   });
 
   const { reposts, yoRepostee, toggleRepost } = useReposts({
@@ -79,6 +81,7 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
     userId,
     repostsInicial: pub.reposts_count,
     yoReposteeInicial: pub.yo_reposteo,
+    esDeMarca,
   });
 
   const onPressLike = async () => {

@@ -18,17 +18,18 @@ import EstadoError from '../../shared/components/EstadoError';
 interface Props {
   userId: string;
   onVerPerfil: (targetUserId: string) => void;
+  esDeMarca?: boolean;
 }
 
 type Nav = NativeStackNavigationProp<FeedStackParamList>;
 
-export default function PFeed({ userId, onVerPerfil }: Props) {
+export default function PFeed({ userId, onVerPerfil, esDeMarca = false }: Props) {
   const navigation = useNavigation<Nav>();
   const { publicaciones, cargando, cargandoMas, error, hayMas, cargarPrimera, cargarMas, refrescar } = useFeed();
   const [refrescando, setRefrescando] = useState(false);
   const [detalle, setDetalle] = useState<Publicacion | null>(null);
 
-  useEffect(() => { cargarPrimera(userId); }, [userId]);
+  useEffect(() => { cargarPrimera(userId, esDeMarca); }, [userId, esDeMarca]);
 
   const handleRefrescar = async () => {
     setRefrescando(true);
@@ -38,7 +39,7 @@ export default function PFeed({ userId, onVerPerfil }: Props) {
 
   const abrirDetalle = async (item: Publicacion) => {
     try {
-      const fresca = await obtenerPublicacionPorId(item.id, userId);
+      const fresca = await obtenerPublicacionPorId(item.id, userId, esDeMarca);
       setDetalle(fresca);
     } catch (e) {
       // No se pudo refrescar (ej. sin conexión) — se abre igual con los
@@ -56,6 +57,7 @@ export default function PFeed({ userId, onVerPerfil }: Props) {
         onVolver={() => setDetalle(null)}
         onEliminado={() => { setDetalle(null); refrescar(); }}
         onVerPerfil={onVerPerfil}
+        esDeMarca={esDeMarca}
       />
     );
   }
@@ -75,7 +77,7 @@ export default function PFeed({ userId, onVerPerfil }: Props) {
 
       {/* Error no bloqueante */}
       {error && !cargando && (
-        <EstadoError mensaje={error} onReintentar={() => cargarPrimera(userId)} />
+        <EstadoError mensaje={error} onReintentar={() => cargarPrimera(userId, esDeMarca)} />
       )}
 
       {/* Grid */}
@@ -90,16 +92,20 @@ export default function PFeed({ userId, onVerPerfil }: Props) {
         onRefrescar={handleRefrescar}
         onPressTarjeta={abrirDetalle}
         onVerPerfil={onVerPerfil}
+        esDeMarca={esDeMarca}
       />
 
-      {/* FAB — botón temporal de crear publicación */}
-      <TouchableOpacity
-        style={f.fab}
-        onPress={() => navigation.navigate('CrearPublicacion')}
-        activeOpacity={0.85}
-      >
-        <Plus size={24} color={C.white} strokeWidth={2.5} />
-      </TouchableOpacity>
+      {/* FAB — botón temporal de crear publicación (la marca publica desde
+          su propio flujo en el panel, no desde el feed general) */}
+      {!esDeMarca && (
+        <TouchableOpacity
+          style={f.fab}
+          onPress={() => navigation.navigate('CrearPublicacion')}
+          activeOpacity={0.85}
+        >
+          <Plus size={24} color={C.white} strokeWidth={2.5} />
+        </TouchableOpacity>
+      )}
 
     </SafeAreaView>
   );

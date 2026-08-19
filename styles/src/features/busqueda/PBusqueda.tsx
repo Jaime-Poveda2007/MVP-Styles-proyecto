@@ -17,9 +17,10 @@ interface Props {
   userId: string;
   terminoInicial?: string;
   onVolver: () => void;
+  esDeMarca?: boolean;
 }
 
-export default function PBusqueda({ userId, terminoInicial, onVolver }: Props) {
+export default function PBusqueda({ userId, terminoInicial, onVolver, esDeMarca = false }: Props) {
   const [termino, setTermino] = useState(terminoInicial ?? '');
   const [tab, setTab] = useState<TabBusqueda>('publicaciones');
   const [cargando, setCargando] = useState(false);
@@ -67,7 +68,7 @@ export default function PBusqueda({ userId, terminoInicial, onVolver }: Props) {
 
   const abrirPublicacion = async (resultado: ResultadoPublicacion) => {
     try {
-      const fresca = await obtenerPublicacionPorId(resultado.id, userId);
+      const fresca = await obtenerPublicacionPorId(resultado.id, userId, esDeMarca);
       setDetalle(fresca);
     } catch (e) {
       // Sin conexión / error: no navegamos a un detalle roto, pero sí
@@ -85,6 +86,7 @@ export default function PBusqueda({ userId, terminoInicial, onVolver }: Props) {
         userId={userId}
         onVolver={() => setDetalle(null)}
         onEliminado={() => setDetalle(null)}
+        esDeMarca={esDeMarca}
       />
     );
   }

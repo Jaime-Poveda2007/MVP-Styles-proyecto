@@ -19,6 +19,7 @@ interface UseRepostsParams {
   userId: string;
   repostsInicial: number;
   yoReposteeInicial: boolean;
+  esDeMarca?: boolean;
 }
 
 interface UseRepostsResultado {
@@ -29,8 +30,9 @@ interface UseRepostsResultado {
 }
 
 export function useReposts({
-  publicacionId, userId, repostsInicial, yoReposteeInicial,
+  publicacionId, userId, repostsInicial, yoReposteeInicial, esDeMarca = false,
 }: UseRepostsParams): UseRepostsResultado {
+  const columnaActor = esDeMarca ? 'marca_id' : 'usuario_id';
   const [reposts, setReposts] = useState(repostsInicial);
   const [yoRepostee, setYoRepostee] = useState(yoReposteeInicial);
   const [toggling, setToggling] = useState(false);
@@ -49,8 +51,8 @@ export function useReposts({
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'reposts', filter: `publicacion_id=eq.${publicacionId}` },
         (payload) => {
-          const filaUsuarioId = (payload.new as { usuario_id: string }).usuario_id;
-          if (filaUsuarioId === userId) return; // ya contado de forma optimista
+          const filaActorId = (payload.new as any)[columnaActor];
+          if (filaActorId === userId) return; // ya contado de forma optimista
           setReposts(prev => prev + 1);
         }
       )
@@ -58,15 +60,15 @@ export function useReposts({
         'postgres_changes',
         { event: 'DELETE', schema: 'public', table: 'reposts', filter: `publicacion_id=eq.${publicacionId}` },
         (payload) => {
-          const filaUsuarioId = (payload.old as { usuario_id: string })?.usuario_id;
-          if (filaUsuarioId === userId) return;
+          const filaActorId = (payload.old as any)?.[columnaActor];
+          if (filaActorId === userId) return;
           setReposts(prev => Math.max(0, prev - 1));
         }
       )
       .subscribe();
 
     return () => { supabase.removeChannel(canal); };
-  }, [publicacionId, userId]);
+  }, [publicacionId, userId, columnaActor]);
 
   const toggleRepost = useCallback(async (): Promise<boolean> => {
     if (enVueloRef.current) return false;
@@ -81,7 +83,7 @@ export function useReposts({
       if (nuevoEstado) {
         const { error } = await supabase
           .from('reposts')
-          .insert({ usuario_id: userId, publicacion_id: publicacionId });
+          .insert({ [columnaActor]: userId, publicacion_id: publicacionId });
 
         if (error) {
           if (error.code === '23505') {
@@ -102,7 +104,7 @@ export function useReposts({
         const { error } = await supabase
           .from('reposts')
           .delete()
-          .eq('usuario_id', userId)
+          .eq(columnaActor, userId)
           .eq('publicacion_id', publicacionId);
         if (error) throw error;
       }
@@ -117,7 +119,7 @@ export function useReposts({
       enVueloRef.current = false;
       setToggling(false);
     }
-  }, [yoRepostee, userId, publicacionId]);
+  }, [yoRepostee, userId, publicacionId, columnaActor]);
 
   return { reposts, yoRepostee, toggling, toggleRepost };
 }

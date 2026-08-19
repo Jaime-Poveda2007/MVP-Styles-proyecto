@@ -1,20 +1,17 @@
 // src/features/marcas/NavMarcas.tsx
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import PCatalogo from './catalogo/screens/PCatalogo';
-import PFormPrenda from './catalogo/screens/PFormPrenda';
-import PCrearPublicacionMarca from './publicaciones/PCrearPublicacionMarca';
-import PMetricasMarca from './metricas/PMetricasMarca';
-import { Prenda } from './catalogo/types';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Store, Compass } from 'lucide-react-native';
+import NavMarcasPanel from './NavMarcasPanel';
+import FeedNavigator from '../feed/NavFeed';
+import { C } from '../../shared/theme';
 
-export type MarcasStackParamList = {
-  Catalogo: undefined;
-  FormPrenda: { prenda?: Prenda } | undefined;
-  CrearPublicacion: undefined;
-  MetricasMarca: undefined;
+export type MarcasTabsParamList = {
+  PanelTab: undefined;
+  FeedTab: undefined;
 };
 
-const Stack = createNativeStackNavigator<MarcasStackParamList>();
+const Tab = createBottomTabNavigator<MarcasTabsParamList>();
 
 interface Props {
   marcaId: string;
@@ -23,42 +20,38 @@ interface Props {
 
 export default function NavMarcas({ marcaId, onCerrarSesion }: Props) {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Catalogo">
-        {({ navigation }) => (
-          <PCatalogo
-            onCrear={() => navigation.navigate('FormPrenda', {})}
-            onEditar={(prenda) => navigation.navigate('FormPrenda', { prenda })}
-            onCrearPublicacion={() => navigation.navigate('CrearPublicacion')}
-            onVerMetricas={() => navigation.navigate('MetricasMarca')}
-            onCerrarSesion={onCerrarSesion}
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: C.earth,
+        tabBarInactiveTintColor: C.muted,
+        tabBarStyle: { borderTopColor: C.border },
+      }}
+    >
+      <Tab.Screen
+        name="PanelTab"
+        options={{
+          title: 'Panel',
+          tabBarIcon: ({ color, size }) => <Store size={size} color={color} strokeWidth={2} />,
+        }}
+      >
+        {() => <NavMarcasPanel marcaId={marcaId} onCerrarSesion={onCerrarSesion} />}
+      </Tab.Screen>
+      <Tab.Screen
+        name="FeedTab"
+        options={{
+          title: 'Feed',
+          tabBarIcon: ({ color, size }) => <Compass size={size} color={color} strokeWidth={2} />,
+        }}
+      >
+        {() => (
+          <FeedNavigator
+            userId={marcaId}
+            esDeMarca
+            onVerPerfil={(targetUserId) => console.log('Ver perfil (no implementado para marca todavía):', targetUserId)}
           />
         )}
-      </Stack.Screen>
-      <Stack.Screen name="MetricasMarca">
-        {({ navigation }) => (
-          <PMetricasMarca marcaId={marcaId} onVolver={() => navigation.goBack()} />
-        )}
-      </Stack.Screen>
-      <Stack.Screen name="FormPrenda">
-        {({ navigation, route }) => (
-          <PFormPrenda
-            marcaId={marcaId}
-            prenda={route.params?.prenda}
-            onGuardado={() => navigation.goBack()}
-            onCancelar={() => navigation.goBack()}
-          />
-        )}
-      </Stack.Screen>
-      <Stack.Screen name="CrearPublicacion">
-        {({ navigation }) => (
-          <PCrearPublicacionMarca
-            marcaId={marcaId}
-            onPublicado={() => navigation.navigate('Catalogo')}
-            onCancelar={() => navigation.goBack()}
-          />
-        )}
-      </Stack.Screen>
-    </Stack.Navigator>
+      </Tab.Screen>
+    </Tab.Navigator>
   );
 }

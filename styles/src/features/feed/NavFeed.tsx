@@ -4,11 +4,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PCrearPublicacion from './screens/PCrearPublicacion';
 import PFeed from './PFeed';
 import PBusqueda from '../busqueda/PBusqueda';
+import PNotificaciones from '../notificaciones/PNotificaciones';
 
 export type FeedStackParamList = {
   Feed: { userId: string };
   CrearPublicacion: undefined;
   Busqueda: { terminoInicial?: string; userId: string };
+  Notificaciones: undefined;
 };
 
 const Stack = createNativeStackNavigator<FeedStackParamList>();
@@ -37,6 +39,16 @@ export default function FeedNavigator({ userId, onVerPerfil, esDeMarca = false }
             terminoInicial={route.params?.terminoInicial}
             onVolver={() => navigation.goBack()}
             esDeMarca={esDeMarca}
+            onVerPerfil={onVerPerfil}
+          />
+        )}
+      </Stack.Screen>
+      <Stack.Screen name="Notificaciones">
+        {({ navigation }) => (
+          <PNotificaciones
+            userId={userId}
+            esDeMarca={esDeMarca}
+            onVolver={() => navigation.goBack()}
             onVerPerfil={onVerPerfil}
           />
         )}

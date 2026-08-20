@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Plus } from 'lucide-react-native';
+import { Plus, Bell } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFeed } from './useFeed';
@@ -14,6 +14,7 @@ import { obtenerPublicacionPorId } from './services/publicacionesService';
 import { C } from '../../shared/theme';
 import BarraBusquedaHeader from '../busqueda/components/BarraBusquedaHeader';
 import EstadoError from '../../shared/components/EstadoError';
+import { useNotificaciones } from '../notificaciones/useNotificaciones';
 
 interface Props {
   userId: string;
@@ -28,6 +29,7 @@ export default function PFeed({ userId, onVerPerfil, esDeMarca = false }: Props)
   const { publicaciones, cargando, cargandoMas, error, hayMas, cargarPrimera, cargarMas, refrescar } = useFeed();
   const [refrescando, setRefrescando] = useState(false);
   const [detalle, setDetalle] = useState<Publicacion | null>(null);
+  const { noLeidas } = useNotificaciones(userId, esDeMarca);
 
   useEffect(() => { cargarPrimera(userId, esDeMarca); }, [userId, esDeMarca]);
 
@@ -72,6 +74,14 @@ export default function PFeed({ userId, onVerPerfil, esDeMarca = false }: Props)
           <BarraBusquedaHeader
             onBuscar={(termino) => navigation.navigate('Busqueda', { terminoInicial: termino, userId })}
           />
+          <TouchableOpacity style={f.campanaBtn} onPress={() => navigation.navigate('Notificaciones')}>
+            <Bell size={20} color={C.ink} strokeWidth={2} />
+            {noLeidas > 0 && (
+              <View style={f.badge}>
+                <Text style={f.badgeTexto}>{noLeidas > 9 ? '9+' : noLeidas}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -117,6 +127,9 @@ const f = StyleSheet.create({
   wordmark: { fontSize: 22, fontWeight: '800', letterSpacing: 0.5, color: C.ink },
   dot: { color: C.earth },
   headerDerecha: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  campanaBtn: { width: 20, height: 20, alignItems: 'center', justifyContent: 'center' },
+  badge: { position: 'absolute', top: -6, right: -8, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: C.earth, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3, borderWidth: 1.5, borderColor: C.white },
+  badgeTexto: { fontSize: 9, fontWeight: '700', color: C.white },
   fab: {
     position: 'absolute',
     bottom: 28,

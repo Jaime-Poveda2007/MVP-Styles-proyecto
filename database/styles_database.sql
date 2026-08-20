@@ -277,6 +277,32 @@ CREATE TABLE IF NOT EXISTS public.seguimientos (
   CONSTRAINT no_self_follow CHECK (seguidor_id <> seguido_id)
 );
 
+-- ─────────────────────────────────────────────────────────────
+-- 1.13 NOTIFICACIONES
+-- Panel de notificaciones: like/repost recibidos (usuario o marca) y,
+-- solo para marca, que etiqueten o reseñen una de sus prendas. Las
+-- filas SOLO las crean los triggers de la sección "TRIGGERS DE
+-- NOTIFICACIONES" (funciones SECURITY DEFINER) — no hay policy de
+-- INSERT para clientes, así nadie puede falsificar una notificación
+-- propia insertando directo desde la app.
+-- ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.notificaciones (
+  id                UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  usuario_id        UUID        REFERENCES public.usuarios(id) ON DELETE CASCADE,
+  marca_id          UUID        REFERENCES public.marcas(id)   ON DELETE CASCADE,
+  tipo              TEXT        NOT NULL CHECK (tipo IN ('like', 'repost', 'etiqueta', 'reseña')),
+  actor_usuario_id  UUID        REFERENCES public.usuarios(id) ON DELETE SET NULL,
+  actor_marca_id    UUID        REFERENCES public.marcas(id)   ON DELETE SET NULL,
+  publicacion_id    UUID        REFERENCES public.publicaciones(id) ON DELETE CASCADE,
+  prenda_id         UUID        REFERENCES public.prendas(id)  ON DELETE CASCADE,
+  leida             BOOLEAN     NOT NULL DEFAULT FALSE,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT notificaciones_tiene_destinatario CHECK (
+    (usuario_id IS NOT NULL AND marca_id IS NULL) OR
+    (usuario_id IS NULL AND marca_id IS NOT NULL)
+  )
+);
+
 
 -- ============================================================
 -- 2. FUNCIÓN updated_at
@@ -413,6 +439,12 @@ CREATE INDEX IF NOT EXISTS idx_seguimientos_seguidor_id
   ON public.seguimientos (seguidor_id);
 CREATE INDEX IF NOT EXISTS idx_seguimientos_seguido_id
   ON public.seguimientos (seguido_id);
+
+-- notificaciones
+CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario_id
+  ON public.notificaciones (usuario_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notificaciones_marca_id
+  ON public.notificaciones (marca_id, created_at DESC);
 
 
 -- ============================================================
@@ -734,6 +766,187 @@ CREATE POLICY "seguimientos_delete_own"
   USING (
     seguidor_id = (SELECT id FROM public.usuarios WHERE auth_id = auth.uid())
   );
+
+-- ─── NOTIFICACIONES ──────────────────────────────────────────
+-- Sin policy de INSERT: solo las crean los triggers SECURITY DEFINER
+-- de la sección siguiente, nunca un insert directo desde la app.
+ALTER TABLE public.notificaciones ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "notificaciones_select_own" ON public.notificaciones;
+DROP POLICY IF EXISTS "notificaciones_update_own" ON public.notificaciones;
+
+CREATE POLICY "notificaciones_select_own"
+  ON public.notificaciones FOR SELECT
+  USING (
+    usuario_id = (SELECT id FROM public.usuarios WHERE auth_id = auth.uid())
+    OR marca_id = (SELECT id FROM public.marcas WHERE auth_id = auth.uid())
+  );
+
+-- FOR UPDATE (marcar como leída) — el propio destinatario puede
+-- actualizar sus filas; el trigger no necesita esta policy porque
+-- corre como SECURITY DEFINER.
+CREATE POLICY "notificaciones_update_own"
+  ON public.notificaciones FOR UPDATE
+  USING (
+    usuario_id = (SELECT id FROM public.usuarios WHERE auth_id = auth.uid())
+    OR marca_id = (SELECT id FROM public.marcas WHERE auth_id = auth.uid())
+  );
+
+
+-- ============================================================
+-- TRIGGERS DE NOTIFICACIONES
+-- Cada función es SECURITY DEFINER a propósito: quien dispara el
+-- INSERT original (el que da like/repostea/etiqueta/reseña) casi
+-- nunca es el destinatario de la notificación, así que sin
+-- SECURITY DEFINER el propio RLS de "notificaciones" (sin policy de
+-- INSERT para clientes) bloquearía el insert que hace el trigger.
+-- Ejecutando como definer, el trigger puede escribir la notificación
+-- del destinatario sin necesidad de abrir INSERT a nadie más.
+-- ============================================================
+
+-- LIKE ───────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.fn_notificar_like()
+RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_destino_usuario UUID;
+  v_destino_marca   UUID;
+BEGIN
+  SELECT usuario_id, marca_id INTO v_destino_usuario, v_destino_marca
+  FROM public.publicaciones WHERE id = NEW.publicacion_id;
+
+  -- No notificar like a la propia publicación (ya bloqueado en el
+  -- cliente, pero se refuerza acá por si algún día cambia esa regla).
+  IF (v_destino_usuario IS NOT NULL AND v_destino_usuario = NEW.usuario_id)
+     OR (v_destino_marca IS NOT NULL AND v_destino_marca = NEW.marca_id) THEN
+    RETURN NEW;
+  END IF;
+
+  IF v_destino_usuario IS NULL AND v_destino_marca IS NULL THEN
+    RETURN NEW; -- publicación ya no existe o quedó sin autor
+  END IF;
+
+  INSERT INTO public.notificaciones (usuario_id, marca_id, tipo, actor_usuario_id, actor_marca_id, publicacion_id)
+  VALUES (v_destino_usuario, v_destino_marca, 'like', NEW.usuario_id, NEW.marca_id, NEW.publicacion_id);
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_notificar_like ON public.likes;
+CREATE TRIGGER trg_notificar_like
+  AFTER INSERT ON public.likes
+  FOR EACH ROW EXECUTE FUNCTION public.fn_notificar_like();
+
+-- REPOST ─────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.fn_notificar_repost()
+RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_destino_usuario UUID;
+  v_destino_marca   UUID;
+BEGIN
+  SELECT usuario_id, marca_id INTO v_destino_usuario, v_destino_marca
+  FROM public.publicaciones WHERE id = NEW.publicacion_id;
+
+  IF (v_destino_usuario IS NOT NULL AND v_destino_usuario = NEW.usuario_id)
+     OR (v_destino_marca IS NOT NULL AND v_destino_marca = NEW.marca_id) THEN
+    RETURN NEW;
+  END IF;
+
+  IF v_destino_usuario IS NULL AND v_destino_marca IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  INSERT INTO public.notificaciones (usuario_id, marca_id, tipo, actor_usuario_id, actor_marca_id, publicacion_id)
+  VALUES (v_destino_usuario, v_destino_marca, 'repost', NEW.usuario_id, NEW.marca_id, NEW.publicacion_id);
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_notificar_repost ON public.reposts;
+CREATE TRIGGER trg_notificar_repost
+  AFTER INSERT ON public.reposts
+  FOR EACH ROW EXECUTE FUNCTION public.fn_notificar_repost();
+
+-- ETIQUETA (solo si enlaza a una prenda real de catálogo, no a texto
+-- libre) ─────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.fn_notificar_etiqueta()
+RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_marca_destino UUID;
+  v_actor_usuario UUID;
+  v_actor_marca   UUID;
+BEGIN
+  IF NEW.prenda_id IS NULL THEN
+    RETURN NEW; -- etiqueta manual (texto libre): no hay marca real que notificar
+  END IF;
+
+  SELECT marca_id INTO v_marca_destino FROM public.prendas WHERE id = NEW.prenda_id;
+  IF v_marca_destino IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT usuario_id, marca_id INTO v_actor_usuario, v_actor_marca
+  FROM public.publicaciones WHERE id = NEW.publicacion_id;
+
+  -- No notificar si la propia marca se etiquetó a sí misma en su
+  -- propia publicación.
+  IF v_actor_marca IS NOT NULL AND v_actor_marca = v_marca_destino THEN
+    RETURN NEW;
+  END IF;
+
+  INSERT INTO public.notificaciones (marca_id, tipo, actor_usuario_id, actor_marca_id, publicacion_id, prenda_id)
+  VALUES (v_marca_destino, 'etiqueta', v_actor_usuario, v_actor_marca, NEW.publicacion_id, NEW.prenda_id);
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_notificar_etiqueta ON public.etiquetas;
+CREATE TRIGGER trg_notificar_etiqueta
+  AFTER INSERT ON public.etiquetas
+  FOR EACH ROW EXECUTE FUNCTION public.fn_notificar_etiqueta();
+
+-- RESEÑA (siempre de un usuario sobre una prenda; se dispara solo en
+-- reseñas nuevas — guardarReseña() hace upsert, y una fila ON
+-- CONFLICT DO UPDATE no dispara un trigger AFTER INSERT, así que
+-- editar una reseña existente no genera una notificación nueva)
+-- ─────────────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.fn_notificar_reseña()
+RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  v_marca_destino UUID;
+BEGIN
+  SELECT marca_id INTO v_marca_destino FROM public.prendas WHERE id = NEW.prenda_id;
+  IF v_marca_destino IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  INSERT INTO public.notificaciones (marca_id, tipo, actor_usuario_id, prenda_id)
+  VALUES (v_marca_destino, 'reseña', NEW.usuario_id, NEW.prenda_id);
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_notificar_reseña ON public.reseñas;
+CREATE TRIGGER trg_notificar_reseña
+  AFTER INSERT ON public.reseñas
+  FOR EACH ROW EXECUTE FUNCTION public.fn_notificar_reseña();
+
+-- Realtime: mismo criterio idempotente que supabase_realtime_likes.sql
+-- (histórico, ver nota de la sección de Storage) — "ALTER PUBLICATION
+-- ... ADD TABLE" lanza error si se corre dos veces sobre la misma
+-- tabla, así que se envuelve en un chequeo previo.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'notificaciones'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.notificaciones;
+  END IF;
+END $$;
 
 
 -- ============================================================

@@ -5,7 +5,7 @@
 // etiqueta o en la fila de "Prendas en este look" — mismo patrón que
 // PrendasRelacionadas.tsx (sustituye la vista con useState, no es una
 // ruta nueva del stack de navegación).
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
@@ -14,7 +14,7 @@ import FormularioReseña from '../components/FormularioReseña';
 import ListaReseñas from '../components/ListaReseñas';
 import { useReseña } from '../useReseña';
 import { listarReseñas, ReseñaConAutor } from '../reseñas.api';
-import { C } from '../../../shared/theme';
+import { useTheme } from '../../../shared/ThemeContext';
 import EstadoError from '../../../shared/components/EstadoError';
 
 interface Props {
@@ -28,6 +28,18 @@ interface Props {
 }
 
 export default function PReseñasPrenda({ prendaId, nombrePrenda, marcaNombre, usuarioId, onVolver, onVerPerfil, esDeMarca = false }: Props) {
+  const { C } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    safe:         { flex: 1, backgroundColor: C.white },
+    header:       { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
+    backBtn:      { width: 36, height: 36, borderRadius: 18, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' },
+    titulo:       { fontSize: 16, fontWeight: '700', color: C.ink },
+    subtitulo:    { fontSize: 12, color: C.muted, marginTop: 1 },
+    scroll:       { padding: 16, paddingBottom: 40 },
+    resumenRow:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
+    resumenTexto: { fontSize: 14, color: C.muted, fontWeight: '500' },
+    separador:    { height: 0.5, backgroundColor: C.border, marginVertical: 20 },
+  }), [C]);
   const { miReseña, promedio, total, guardando, guardar, eliminar } = useReseña({ prendaId, usuarioId });
 
   const [reseñas, setReseñas] = useState<ReseñaConAutor[]>([]);
@@ -94,15 +106,3 @@ export default function PReseñasPrenda({ prendaId, nombrePrenda, marcaNombre, u
     </SafeAreaView>
   );
 }
-
-const s = StyleSheet.create({
-  safe:         { flex: 1, backgroundColor: C.white },
-  header:       { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
-  backBtn:      { width: 36, height: 36, borderRadius: 18, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' },
-  titulo:       { fontSize: 16, fontWeight: '700', color: C.ink },
-  subtitulo:    { fontSize: 12, color: C.muted, marginTop: 1 },
-  scroll:       { padding: 16, paddingBottom: 40 },
-  resumenRow:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
-  resumenTexto: { fontSize: 14, color: C.muted, fontWeight: '500' },
-  separador:    { height: 0.5, backgroundColor: C.border, marginVertical: 20 },
-});

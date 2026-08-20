@@ -4,12 +4,13 @@
 // (src/lib/alerta.ts). Se monta una sola vez en App.tsx, por encima
 // de toda la navegación, así que un mismo modal sirve para toda la
 // app en vez de reimplementarlo pantalla por pantalla.
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { registrarListenerAlerta, EstadoAlerta, BotonAlerta, VarianteBoton } from '../../lib/alerta';
-import { C, R } from '../theme';
+import { useTheme } from '../ThemeContext';
 
 export default function AlertaHost() {
+  const { C, R } = useTheme();
   const [estado, setEstado] = useState<EstadoAlerta | null>(null);
   // Los botones se guardan en un ref porque no deben cambiar mientras
   // el modal cierra con la animación — evita que el texto/las acciones
@@ -24,9 +25,44 @@ export default function AlertaHost() {
     return () => registrarListenerAlerta(null);
   }, []);
 
+  const s = useMemo(() => StyleSheet.create({
+    backdrop: { flex: 1, backgroundColor: 'rgba(26,22,20,0.5)', alignItems: 'center', justifyContent: 'center', padding: 24 },
+    card: {
+      backgroundColor: C.white, borderRadius: R.card, width: '100%', maxWidth: 340,
+      paddingTop: 20, paddingBottom: 20, paddingHorizontal: 24, overflow: 'hidden',
+      shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 12,
+    },
+    acento: { position: 'absolute', top: 0, left: 0, right: 0, height: 4, backgroundColor: C.earth },
+    titulo: { fontSize: 17, fontWeight: '700', color: C.ink, letterSpacing: -0.3, marginTop: 4 },
+    mensaje: { fontSize: 14, color: C.muted, lineHeight: 20, marginTop: 8 },
+    botones: { marginTop: 20, gap: 10 },
+    botonesFila: { flexDirection: 'row' },
+    boton: { borderRadius: R.btn, paddingVertical: 13, alignItems: 'center', justifyContent: 'center' },
+    botonFlex: { flex: 1 },
+    botonPrimario: { backgroundColor: C.earth },
+    botonSecundario: { backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border },
+    botonPeligro: { backgroundColor: C.errorLight },
+    botonTexto: { fontSize: 14, fontWeight: '700' },
+    textoPrimario: { color: C.white },
+    textoSecundario: { color: C.ink },
+    textoPeligro: { color: C.error },
+  }), [C, R]);
+
   const cerrar = (boton: BotonAlerta) => {
     setEstado(null);
     boton.onPress?.();
+  };
+
+  const estiloBoton = (variante: VarianteBoton) => {
+    if (variante === 'primario') return s.botonPrimario;
+    if (variante === 'peligro') return s.botonPeligro;
+    return s.botonSecundario;
+  };
+
+  const estiloTextoBoton = (variante: VarianteBoton) => {
+    if (variante === 'primario') return s.textoPrimario;
+    if (variante === 'peligro') return s.textoPeligro;
+    return s.textoSecundario;
   };
 
   if (!estado) return null;
@@ -56,38 +92,3 @@ export default function AlertaHost() {
     </Modal>
   );
 }
-
-function estiloBoton(variante: VarianteBoton) {
-  if (variante === 'primario') return s.botonPrimario;
-  if (variante === 'peligro') return s.botonPeligro;
-  return s.botonSecundario;
-}
-
-function estiloTextoBoton(variante: VarianteBoton) {
-  if (variante === 'primario') return s.textoPrimario;
-  if (variante === 'peligro') return s.textoPeligro;
-  return s.textoSecundario;
-}
-
-const s = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(26,22,20,0.5)', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  card: {
-    backgroundColor: C.white, borderRadius: R.card, width: '100%', maxWidth: 340,
-    paddingTop: 20, paddingBottom: 20, paddingHorizontal: 24, overflow: 'hidden',
-    shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 12,
-  },
-  acento: { position: 'absolute', top: 0, left: 0, right: 0, height: 4, backgroundColor: C.earth },
-  titulo: { fontSize: 17, fontWeight: '700', color: C.ink, letterSpacing: -0.3, marginTop: 4 },
-  mensaje: { fontSize: 14, color: C.muted, lineHeight: 20, marginTop: 8 },
-  botones: { marginTop: 20, gap: 10 },
-  botonesFila: { flexDirection: 'row' },
-  boton: { borderRadius: R.btn, paddingVertical: 13, alignItems: 'center', justifyContent: 'center' },
-  botonFlex: { flex: 1 },
-  botonPrimario: { backgroundColor: C.earth },
-  botonSecundario: { backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border },
-  botonPeligro: { backgroundColor: C.errorLight },
-  botonTexto: { fontSize: 14, fontWeight: '700' },
-  textoPrimario: { color: C.white },
-  textoSecundario: { color: C.ink },
-  textoPeligro: { color: C.error },
-});

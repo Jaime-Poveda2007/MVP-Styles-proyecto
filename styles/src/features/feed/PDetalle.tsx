@@ -1,5 +1,5 @@
 // src/features/feed/PDetalle.tsx
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, useWindowDimensions, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, ExternalLink, Tag, Trash2, Search } from 'lucide-react-native';
@@ -12,7 +12,7 @@ import ImagenConCarga from '../../shared/components/ImagenConCarga';
 import { eliminarPublicacion } from './services/publicacionesService';
 import { registrarClicTienda } from './services/clicsTiendaService';
 import PrendasRelacionadas from '../etiquetas/components/PrendasRelacionadas';
-import { C } from '../../shared/theme';
+import { useTheme } from '../../shared/ThemeContext';
 import ResumenValoracion from '../reseñas/components/ResumenValoracion';
 import PReseñasPrenda from '../reseñas/screens/PReseñasPrenda';
 import { mostrarAlerta, confirmarAccion } from '../../lib/alerta';
@@ -42,10 +42,55 @@ function datosEtiqueta(etq: Etiqueta) {
 }
 
 export default function PDetalle({ publicacion: pub, userId, onVolver, onEliminado, onVerPerfil, esDeMarca = false }: Props) {
+  const { C } = useTheme();
   // useWindowDimensions (en vez de Dimensions.get fijo al montar) para que
   // el detalle se adapte si el dispositivo rota o si la ventana cambia de
   // tamaño (split-screen / web), corrigiendo la responsividad de esta pantalla.
   const { width } = useWindowDimensions();
+
+  const d = useMemo(() => StyleSheet.create({
+    safe: { flex: 1, backgroundColor: C.white },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
+    backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: C.border },
+    badge: { backgroundColor: C.earthDark, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4 },
+    headerDerecha: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    badgeText: { color: C.white, fontSize: 11, fontWeight: '700' },
+    imagenWrap: { position: 'relative', alignSelf: 'center' },
+    imagen: { width: '100%', height: '100%' },
+    etqPunto: { position: 'absolute', width: 28, height: 28, borderRadius: 14, backgroundColor: C.earth, borderWidth: 2, borderColor: C.white, alignItems: 'center', justifyContent: 'center', transform: [{ translateX: -14 }, { translateY: -14 }], elevation: 4 },
+    etqPuntoActivo: { backgroundColor: C.earthDark },
+    popup: { position: 'absolute', backgroundColor: 'rgba(26,22,20,0.92)', borderRadius: 12, padding: 12, minWidth: 140, maxWidth: 180, gap: 3, elevation: 8 },
+    popupNombre: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
+    popupMarca: { fontSize: 11, color: 'rgba(255,255,255,0.7)' },
+    popupEstilo: { fontSize: 10, color: 'rgba(255,255,255,0.55)', marginTop: 1 },
+    popupPrecio: { fontSize: 13, fontWeight: '600', color: C.earthLight, marginTop: 2 },
+    popupBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.earth, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5, marginTop: 6, alignSelf: 'flex-start' },
+    popupBtnText: { fontSize: 11, color: '#FFFFFF', fontWeight: '600' },
+    popupBtnSecundario: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5, marginTop: 6, alignSelf: 'flex-start' },
+    popupBtnSecundarioText: { fontSize: 10, color: '#FFFFFF', fontWeight: '600' },
+    relacionadasLink: { fontSize: 11, color: C.earth, fontWeight: '600', marginTop: 4 },
+    autorWrap: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 16 },
+    avatar: { width: 40, height: 40, borderRadius: 20, overflow: 'hidden' },
+    avatarPH: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
+    avatarLetra: { fontSize: 16, fontWeight: '700', color: C.earth },
+    autorNombre: { fontSize: 15, fontWeight: '700', color: C.ink },
+    autorSub: { fontSize: 13, color: C.muted },
+    seccion: { paddingHorizontal: 16, paddingBottom: 20 },
+    descripcion: { fontSize: 15, color: C.ink, lineHeight: 22 },
+    accionesWrap: { flexDirection: 'row', gap: 24, paddingHorizontal: 16, paddingBottom: 20, borderBottomWidth: 0.5, borderBottomColor: C.border, marginBottom: 20 },
+    accionBtn: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    accionCount: { fontSize: 15, color: C.muted, fontWeight: '500' },
+    seccionTitulo: { fontSize: 13, fontWeight: '600', color: C.muted, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 12 },
+    prendaRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
+    prendaIcono: { width: 36, height: 36, borderRadius: 10, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
+    prendaNombre: { fontSize: 14, fontWeight: '600', color: C.ink },
+    prendaMarca: { fontSize: 12, color: C.muted, marginTop: 2 },
+    prendaEstilo: { fontSize: 11, color: C.earth, marginTop: 2, fontWeight: '600' },
+    prendaDerecha: { alignItems: 'flex-end', gap: 4 },
+    prendaPrecio: { fontSize: 14, fontWeight: '700', color: C.ink },
+    verBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: C.earth, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
+    verBtnText: { fontSize: 11, color: C.earth, fontWeight: '600' },
+  }), [C]);
 
   // ── TODOS los hooks van arriba, antes de cualquier return condicional ──
   // (regla de React: el orden/cantidad de hooks debe ser el mismo en
@@ -230,7 +275,7 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
                     onPress={() => setRelacionadaSel(etqSel)}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <Search size={10} color={C.white} strokeWidth={2.5} />
+                    <Search size={10} color="#FFFFFF" strokeWidth={2.5} />
                     <Text style={d.popupBtnSecundarioText}>Ver prendas relacionadas</Text>
                   </TouchableOpacity>
                   {etqSel.prenda?.id && (
@@ -277,7 +322,7 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
               activeOpacity={esPropia ? 1 : 0.7}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <IconCorazon activo={yoLike} size={22} colorInactivo={C.muted} />
+              <IconCorazon activo={yoLike} size={22} colorActivo={C.earth} colorInactivo={C.muted} />
               <Text style={[d.accionCount, yoLike && { color: C.earth }]}>{likes} {likes === 1 ? 'like' : 'likes'}</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -287,7 +332,7 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
               activeOpacity={esPropia ? 1 : 0.7}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <IconRepost activo={yoRepostee} size={22} colorInactivo={C.muted} />
+              <IconRepost activo={yoRepostee} size={22} colorActivo={C.earth} colorInactivo={C.muted} />
               <Text style={[d.accionCount, yoRepostee && { color: C.success }]}>
                 {reposts} {reposts === 1 ? 'repost' : 'reposts'}
               </Text>
@@ -345,47 +390,3 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
     </SafeAreaView>
   );
 }
-
-const d = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: C.white },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: C.border },
-  badge: { backgroundColor: C.earthDark, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4 },
-  headerDerecha: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  badgeText: { color: C.white, fontSize: 11, fontWeight: '700' },
-  imagenWrap: { position: 'relative', alignSelf: 'center' },
-  imagen: { width: '100%', height: '100%' },
-  etqPunto: { position: 'absolute', width: 28, height: 28, borderRadius: 14, backgroundColor: C.earth, borderWidth: 2, borderColor: C.white, alignItems: 'center', justifyContent: 'center', transform: [{ translateX: -14 }, { translateY: -14 }], elevation: 4 },
-  etqPuntoActivo: { backgroundColor: C.earthDark },
-  popup: { position: 'absolute', backgroundColor: 'rgba(26,22,20,0.92)', borderRadius: 12, padding: 12, minWidth: 140, maxWidth: 180, gap: 3, elevation: 8 },
-  popupNombre: { fontSize: 13, fontWeight: '700', color: C.white },
-  popupMarca: { fontSize: 11, color: 'rgba(255,255,255,0.7)' },
-  popupEstilo: { fontSize: 10, color: 'rgba(255,255,255,0.55)', marginTop: 1 },
-  popupPrecio: { fontSize: 13, fontWeight: '600', color: C.earthLight, marginTop: 2 },
-  popupBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.earth, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5, marginTop: 6, alignSelf: 'flex-start' },
-  popupBtnText: { fontSize: 11, color: C.white, fontWeight: '600' },
-  popupBtnSecundario: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5, marginTop: 6, alignSelf: 'flex-start' },
-  popupBtnSecundarioText: { fontSize: 10, color: C.white, fontWeight: '600' },
-  relacionadasLink: { fontSize: 11, color: C.earth, fontWeight: '600', marginTop: 4 },
-  autorWrap: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 16 },
-  avatar: { width: 40, height: 40, borderRadius: 20, overflow: 'hidden' },
-  avatarPH: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
-  avatarLetra: { fontSize: 16, fontWeight: '700', color: C.earth },
-  autorNombre: { fontSize: 15, fontWeight: '700', color: C.ink },
-  autorSub: { fontSize: 13, color: C.muted },
-  seccion: { paddingHorizontal: 16, paddingBottom: 20 },
-  descripcion: { fontSize: 15, color: C.ink, lineHeight: 22 },
-  accionesWrap: { flexDirection: 'row', gap: 24, paddingHorizontal: 16, paddingBottom: 20, borderBottomWidth: 0.5, borderBottomColor: C.border, marginBottom: 20 },
-  accionBtn: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  accionCount: { fontSize: 15, color: C.muted, fontWeight: '500' },
-  seccionTitulo: { fontSize: 13, fontWeight: '600', color: C.muted, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 12 },
-  prendaRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
-  prendaIcono: { width: 36, height: 36, borderRadius: 10, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
-  prendaNombre: { fontSize: 14, fontWeight: '600', color: C.ink },
-  prendaMarca: { fontSize: 12, color: C.muted, marginTop: 2 },
-  prendaEstilo: { fontSize: 11, color: C.earth, marginTop: 2, fontWeight: '600' },
-  prendaDerecha: { alignItems: 'flex-end', gap: 4 },
-  prendaPrecio: { fontSize: 14, fontWeight: '700', color: C.ink },
-  verBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: C.earth, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
-  verBtnText: { fontSize: 11, color: C.earth, fontWeight: '600' },
-});

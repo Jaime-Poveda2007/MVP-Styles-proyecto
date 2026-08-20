@@ -1,8 +1,8 @@
 // src/features/busqueda/components/ResultadoMarcaRow.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
 import { ResultadoMarca } from '../busqueda.types';
-import { C } from '../../../shared/theme';
+import { useTheme } from '../../../shared/ThemeContext';
 
 interface Props {
   item: ResultadoMarca;
@@ -10,6 +10,16 @@ interface Props {
 }
 
 export default function ResultadoMarcaRow({ item, onPress }: Props) {
+  const { C } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    fila: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: C.border },
+    logo: { width: 44, height: 44, borderRadius: 10 },
+    logoPH: { width: 44, height: 44, borderRadius: 10, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
+    logoLetra: { fontSize: 16, fontWeight: '700', color: C.earth },
+    nombre: { fontSize: 14, fontWeight: '700', color: C.ink },
+    categoria: { fontSize: 12, color: C.muted, marginTop: 1 },
+  }), [C]);
+
   return (
     <Pressable style={s.fila} onPress={onPress}>
       {item.logo_url ? (
@@ -26,12 +36,3 @@ export default function ResultadoMarcaRow({ item, onPress }: Props) {
     </Pressable>
   );
 }
-
-const s = StyleSheet.create({
-  fila: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: C.border },
-  logo: { width: 44, height: 44, borderRadius: 10 },
-  logoPH: { width: 44, height: 44, borderRadius: 10, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
-  logoLetra: { fontSize: 16, fontWeight: '700', color: C.earth },
-  nombre: { fontSize: 14, fontWeight: '700', color: C.ink },
-  categoria: { fontSize: 12, color: C.muted, marginTop: 1 },
-});

@@ -8,7 +8,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Compass, CircleUserRound } from 'lucide-react-native';
 import FeedNavigator from '../feed/NavFeed';
 import NavPerfil from '../perfil/NavPerfil';
-import { C } from '../../shared/theme';
+import { useTheme } from '../../shared/ThemeContext';
 
 export type TabsParamList = {
   FeedTab: undefined;
@@ -24,13 +24,14 @@ interface Props {
 }
 
 export default function NavTabs({ userId, onCerrarSesion, onVerPerfil }: Props) {
+  const { C } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: C.earth,
         tabBarInactiveTintColor: C.muted,
-        tabBarStyle: { borderTopColor: C.border },
+        tabBarStyle: { borderTopColor: C.border, backgroundColor: C.white },
       }}
     >
       <Tab.Screen

@@ -5,7 +5,7 @@
 // todas como leídas (mismo criterio que la mayoría de apps: el badge
 // de la campana baja a 0 al entrar), pero la lista ya cargada sigue
 // mostrando un punto en las que estaban sin leer al momento de abrir.
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Heart, Repeat2, Tag, Star } from 'lucide-react-native';
@@ -17,7 +17,7 @@ import { obtenerPublicacionPorId } from '../feed/services/publicacionesService';
 import { Publicacion } from '../feed/types';
 import PReseñasPrenda from '../reseñas/screens/PReseñasPrenda';
 import { listarNotificaciones, marcarTodasLeidas, Notificacion } from './notificaciones.api';
-import { C } from '../../shared/theme';
+import { useTheme } from '../../shared/ThemeContext';
 
 interface Props {
   userId: string;
@@ -56,6 +56,22 @@ function tiempoRelativo(iso: string): string {
 }
 
 export default function PNotificaciones({ userId, esDeMarca = false, onVolver, onVerPerfil }: Props) {
+  const { C } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    safe:        { flex: 1, backgroundColor: C.white },
+    centro:      { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
+    backBtn:     { width: 36, height: 36, borderRadius: 18, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' },
+    titulo:      { fontSize: 16, fontWeight: '700', color: C.ink },
+    lista:       { padding: 16, gap: 4 },
+    fila:        { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
+    puntoNoLeida:{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: C.earth, marginTop: 8 },
+    puntoOculto: { backgroundColor: 'transparent' },
+    icono:       { width: 30, height: 30, borderRadius: 15, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
+    actorNombre: { fontSize: 13, fontWeight: '700', color: C.ink },
+    texto:       { fontSize: 13, color: C.ink, lineHeight: 18 },
+    tiempo:      { fontSize: 11, color: C.muted },
+  }), [C]);
   const [items, setItems] = useState<Notificacion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -171,19 +187,3 @@ export default function PNotificaciones({ userId, esDeMarca = false, onVolver, o
     </SafeAreaView>
   );
 }
-
-const s = StyleSheet.create({
-  safe:        { flex: 1, backgroundColor: C.white },
-  centro:      { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
-  backBtn:     { width: 36, height: 36, borderRadius: 18, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' },
-  titulo:      { fontSize: 16, fontWeight: '700', color: C.ink },
-  lista:       { padding: 16, gap: 4 },
-  fila:        { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
-  puntoNoLeida:{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: C.earth, marginTop: 8 },
-  puntoOculto: { backgroundColor: 'transparent' },
-  icono:       { width: 30, height: 30, borderRadius: 15, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
-  actorNombre: { fontSize: 13, fontWeight: '700', color: C.ink },
-  texto:       { fontSize: 13, color: C.ink, lineHeight: 18 },
-  tiempo:      { fontSize: 11, color: C.muted },
-});

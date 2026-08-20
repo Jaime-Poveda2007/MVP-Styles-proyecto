@@ -1,5 +1,5 @@
 // src/features/perfil/PMisReposts.tsx
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, FlatList, Image, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Repeat2, Trash2 } from 'lucide-react-native';
@@ -8,7 +8,7 @@ import PDetalle from '../feed/PDetalle';
 import { Publicacion } from '../feed/types';
 import EstadoVacio from '../../shared/components/EstadoVacio';
 import EstadoError from '../../shared/components/EstadoError';
-import { C, R } from '../../shared/theme';
+import { useTheme } from '../../shared/ThemeContext';
 import { mostrarAlerta } from '../../lib/alerta';
 
 interface Props {
@@ -18,6 +18,21 @@ interface Props {
 }
 
 export default function PMisReposts({ userId, onVolver, onVerPerfil }: Props) {
+  const { C, R } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    safe:          { flex: 1, backgroundColor: C.white },
+    header:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
+    backBtn:       { width: 36, height: 36, borderRadius: 18, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' },
+    titulo:        { fontSize: 16, fontWeight: '700', color: C.ink },
+    centro:        { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60, gap: 10, paddingHorizontal: 32 },
+    lista:         { padding: 16, gap: 4 },
+    fila:          { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: C.border },
+    thumb:         { width: 56, height: 56, borderRadius: R.input, backgroundColor: C.earthLight },
+    creditoRow:    { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 4 },
+    creditoTexto:  { fontSize: 11, color: C.muted, flexShrink: 1 },
+    descripcion:   { fontSize: 13, color: C.ink },
+    deshacerBtn:   { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  }), [C, R]);
   const [items, setItems] = useState<RepostConOriginal[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -125,18 +140,3 @@ export default function PMisReposts({ userId, onVolver, onVerPerfil }: Props) {
     </SafeAreaView>
   );
 }
-
-const s = StyleSheet.create({
-  safe:          { flex: 1, backgroundColor: C.white },
-  header:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
-  backBtn:       { width: 36, height: 36, borderRadius: 18, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' },
-  titulo:        { fontSize: 16, fontWeight: '700', color: C.ink },
-  centro:        { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60, gap: 10, paddingHorizontal: 32 },
-  lista:         { padding: 16, gap: 4 },
-  fila:          { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: C.border },
-  thumb:         { width: 56, height: 56, borderRadius: R.input, backgroundColor: C.earthLight },
-  creditoRow:    { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 4 },
-  creditoTexto:  { fontSize: 11, color: C.muted, flexShrink: 1 },
-  descripcion:   { fontSize: 13, color: C.ink },
-  deshacerBtn:   { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-});

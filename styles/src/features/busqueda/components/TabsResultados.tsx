@@ -3,9 +3,9 @@
 // 3 pestañas (pills) con contador — mismo lenguaje visual que los
 // chips de SelectorEstilo.tsx. Debajo, renderiza la lista de la
 // pestaña activa. No hace scroll horizontal porque solo son 3.
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Pressable, FlatList, StyleSheet } from 'react-native';
-import { C } from '../../../shared/theme';
+import { useTheme } from '../../../shared/ThemeContext';
 import EstadoVacio from '../../../shared/components/EstadoVacio';
 import { TabBusqueda, ResultadoPublicacion, ResultadoUsuario, ResultadoMarca } from '../busqueda.types';
 import ResultadoPublicacionRow from './ResultadoPublicacionRow';
@@ -35,6 +35,15 @@ export default function TabsResultados({
   tab, onCambiarTab, publicaciones, usuarios, marcas,
   cargando, huboBusqueda, onPressPublicacion, onPressUsuario, onPressMarca,
 }: Props) {
+  const { C } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    tabsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
+    chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.surface },
+    chipActivo: { backgroundColor: C.earth, borderColor: C.earth },
+    chipTexto: { fontSize: 13, color: C.ink, fontWeight: '500' },
+    chipTextoActivo: { color: C.white, fontWeight: '600' },
+    lista: { paddingHorizontal: 16, paddingBottom: 24 },
+  }), [C]);
   const contadores: Record<TabBusqueda, number> = {
     publicaciones: publicaciones.length,
     usuarios: usuarios.length,
@@ -103,12 +112,3 @@ export default function TabsResultados({
     </View>
   );
 }
-
-const s = StyleSheet.create({
-  tabsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.surface },
-  chipActivo: { backgroundColor: C.earth, borderColor: C.earth },
-  chipTexto: { fontSize: 13, color: C.ink, fontWeight: '500' },
-  chipTextoActivo: { color: C.white, fontWeight: '600' },
-  lista: { paddingHorizontal: 16, paddingBottom: 24 },
-});

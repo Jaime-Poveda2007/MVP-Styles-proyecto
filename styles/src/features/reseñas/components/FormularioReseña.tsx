@@ -4,12 +4,12 @@
 // llamar a useReseña directamente, porque vive junto a ListaReseñas
 // dentro de PReseñasPrenda.tsx y ambos comparten el mismo hook (un
 // solo canal de Realtime para esa prenda).
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { Trash2 } from 'lucide-react-native';
 import EstrellasSelector from './EstrellasSelector';
 import { Reseña } from '../reseñas.api';
-import { C, R } from '../../../shared/theme';
+import { useTheme } from '../../../shared/ThemeContext';
 import { mostrarAlerta, confirmarAccion } from '../../../lib/alerta';
 
 interface Props {
@@ -20,6 +20,17 @@ interface Props {
 }
 
 export default function FormularioReseña({ miReseña, guardando, onGuardar, onEliminar }: Props) {
+  const { C, R } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    wrap:             { gap: 10 },
+    label:            { fontSize: 13, fontWeight: '600', color: C.ink, marginTop: 6 },
+    input:            { backgroundColor: C.surface, borderWidth: 1, borderColor: C.border, borderRadius: R.input, padding: 12, minHeight: 60, textAlignVertical: 'top', color: C.ink, fontSize: 13 },
+    contador:         { alignSelf: 'flex-end', color: C.muted, fontSize: 11 },
+    acciones:         { flexDirection: 'row', gap: 10, alignItems: 'center' },
+    btnPrimario:      { flex: 1, backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 13, alignItems: 'center' },
+    btnPrimarioTexto: { color: C.white, fontWeight: '700', fontSize: 14 },
+    btnEliminar:      { width: 44, height: 44, borderRadius: R.btn, borderWidth: 1, borderColor: C.error, alignItems: 'center', justifyContent: 'center' },
+  }), [C, R]);
   const [estrellas, setEstrellas] = useState(0);
   const [comentario, setComentario] = useState('');
 
@@ -73,14 +84,3 @@ export default function FormularioReseña({ miReseña, guardando, onGuardar, onE
     </View>
   );
 }
-
-const s = StyleSheet.create({
-  wrap:             { gap: 10 },
-  label:            { fontSize: 13, fontWeight: '600', color: C.ink, marginTop: 6 },
-  input:            { backgroundColor: C.surface, borderWidth: 1, borderColor: C.border, borderRadius: R.input, padding: 12, minHeight: 60, textAlignVertical: 'top', color: C.ink, fontSize: 13 },
-  contador:         { alignSelf: 'flex-end', color: C.muted, fontSize: 11 },
-  acciones:         { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  btnPrimario:      { flex: 1, backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 13, alignItems: 'center' },
-  btnPrimarioTexto: { color: C.white, fontWeight: '700', fontSize: 14 },
-  btnEliminar:      { width: 44, height: 44, borderRadius: R.btn, borderWidth: 1, borderColor: C.error, alignItems: 'center', justifyContent: 'center' },
-});

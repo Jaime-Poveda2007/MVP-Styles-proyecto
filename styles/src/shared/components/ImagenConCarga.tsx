@@ -6,7 +6,7 @@
 // fade-in cuando termina de cargar.
 import React, { useRef, useState } from 'react';
 import { Animated, Easing, Image, ImageSourcePropType, StyleProp, ViewStyle, ImageResizeMode } from 'react-native';
-import { C } from '../theme';
+import { useTheme } from '../ThemeContext';
 
 interface Props {
   uri: string;
@@ -15,6 +15,7 @@ interface Props {
 }
 
 export default function ImagenConCarga({ uri, style, resizeMode = 'cover' }: Props) {
+  const { C } = useTheme();
   const [cargada, setCargada] = useState(false);
   const [fallo,   setFallo]   = useState(false);
   const opacidadImagen = useRef(new Animated.Value(0)).current;

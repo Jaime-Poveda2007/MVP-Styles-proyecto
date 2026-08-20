@@ -1,9 +1,10 @@
 // App.tsx
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './src/lib/supabase';
 import { asegurarPerfilUsuario } from './src/lib/perfil';
@@ -13,6 +14,7 @@ import HomeScreen from './src/features/Home/NavHome';
 import NavMarcas from './src/features/marcas/NavMarcas';
 import AlertaHost from './src/shared/components/AlertaHost';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { ThemeProvider, useTheme } from './src/shared/ThemeContext';
 
 type RootStackParamList = {
   Auth: undefined;
@@ -33,7 +35,8 @@ type EstadoApp =
   | 'marca-bloqueada'
   | 'marca-lista';
 
-export default function App() {
+function AppInterna() {
+  const { scheme, C } = useTheme();
   const [estado, setEstado] = useState<EstadoApp>('cargando');
   const [userId, setUserId] = useState<string | null>(null);
   const [marcaId, setMarcaId] = useState<string | null>(null);
@@ -79,10 +82,24 @@ export default function App() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  // Tema de React Navigation (color de fondo entre pantallas durante
+  // transiciones) — sigue el mismo modo que el resto de la app.
+  const navTheme = {
+    ...(scheme === 'dark' ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(scheme === 'dark' ? DarkTheme.colors : DefaultTheme.colors),
+      background: C.white,
+      card: C.white,
+      text: C.ink,
+      border: C.border,
+      primary: C.earth,
+    },
+  };
+
   if (estado === 'cargando') {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.white }}>
+        <ActivityIndicator color={C.earth} />
         <AlertaHost />
       </View>
     );
@@ -91,7 +108,8 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <NavigationContainer>
+        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+        <NavigationContainer theme={navTheme}>
           <AlertaHost />
           <RootStack.Navigator screenOptions={{ headerShown: false }}>
             {estado === 'listo' ? (
@@ -144,5 +162,13 @@ export default function App() {
         </NavigationContainer>
       </SafeAreaProvider>
     </GestureHandlerRootView>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppInterna />
+    </ThemeProvider>
   );
 }

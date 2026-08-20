@@ -4,9 +4,9 @@
 // que ya usaba PFeed.tsx (banner en vez de Alert.alert), consolidado
 // acá para adoptarlo también en pantallas que hoy solo muestran un
 // Alert sin dejar rastro visible ni forma de reintentar.
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { C } from '../theme';
+import { useTheme } from '../ThemeContext';
 
 interface Props {
   mensaje: string;
@@ -14,6 +14,13 @@ interface Props {
 }
 
 export default function EstadoError({ mensaje, onReintentar }: Props) {
+  const { C } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    banner: { backgroundColor: C.errorLight, marginHorizontal: 16, marginTop: 8, borderRadius: 8, padding: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+    texto: { flex: 1, fontSize: 13, color: C.error, textAlign: 'center' },
+    reintentar: { fontSize: 13, color: C.error, fontWeight: '700', textDecorationLine: 'underline' },
+  }), [C]);
+
   return (
     <View style={s.banner}>
       <Text style={s.texto}>{mensaje}</Text>
@@ -25,9 +32,3 @@ export default function EstadoError({ mensaje, onReintentar }: Props) {
     </View>
   );
 }
-
-const s = StyleSheet.create({
-  banner: { backgroundColor: C.errorLight, marginHorizontal: 16, marginTop: 8, borderRadius: 8, padding: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  texto: { flex: 1, fontSize: 13, color: C.error, textAlign: 'center' },
-  reintentar: { fontSize: 13, color: C.error, fontWeight: '700', textDecorationLine: 'underline' },
-});

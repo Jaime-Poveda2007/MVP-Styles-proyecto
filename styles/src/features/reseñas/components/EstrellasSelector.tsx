@@ -1,8 +1,8 @@
 // src/features/reseñas/components/EstrellasSelector.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Star } from 'lucide-react-native';
-import { C } from '../../../shared/theme';
+import { useTheme } from '../../../shared/ThemeContext';
 
 interface Props {
   valor: number;
@@ -12,6 +12,11 @@ interface Props {
 }
 
 export default function EstrellasSelector({ valor, onCambiar, size = 28, soloLectura = false }: Props) {
+  const { C } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    fila: { flexDirection: 'row', gap: 4 },
+  }), [C]);
+
   return (
     <View style={s.fila}>
       {[1, 2, 3, 4, 5].map((n) => (
@@ -22,7 +27,3 @@ export default function EstrellasSelector({ valor, onCambiar, size = 28, soloLec
     </View>
   );
 }
-
-const s = StyleSheet.create({
-  fila: { flexDirection: 'row', gap: 4 },
-});

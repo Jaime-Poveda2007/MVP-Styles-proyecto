@@ -8,7 +8,7 @@ import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import OnboardingEstilo from '../auth/onboarding/OnboardingEstilo';
 import { obtenerPreferencias, Preferencias } from './perfil.api';
-import { C } from '../../shared/theme';
+import { useTheme } from '../../shared/ThemeContext';
 
 interface Props {
   userId: string;
@@ -16,6 +16,7 @@ interface Props {
 }
 
 export default function PEditarPreferencias({ userId, onListo }: Props) {
+  const { C } = useTheme();
   const [preferencias, setPreferencias] = useState<Preferencias | null>(null);
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export default function PEditarPreferencias({ userId, onListo }: Props) {
 
   if (!preferencias) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.white }}>
         <ActivityIndicator color={C.earth} />
       </View>
     );

@@ -4,7 +4,7 @@
 // que el perfil propio (PPerfil.tsx) pero de solo lectura: sin email,
 // sin botones de edición, sin acceso a preferencias ni cierre de
 // sesión ajenos.
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
@@ -15,7 +15,7 @@ import { Publicacion } from '../feed/types';
 import { obtenerPerfilPublico, listarPublicacionesDeUsuario, PerfilUsuario } from './perfil.api';
 import { obtenerPublicacionPorId } from '../feed/services/publicacionesService';
 import EstadoError from '../../shared/components/EstadoError';
-import { C } from '../../shared/theme';
+import { useTheme } from '../../shared/ThemeContext';
 
 const PAGE_SIZE = 10;
 
@@ -28,6 +28,21 @@ interface Props {
 }
 
 export default function PPerfilPublico({ targetUserId, userId, onVolver, onVerPerfil, esDeMarca = false }: Props) {
+  const { C } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    safe:        { flex: 1, backgroundColor: C.white },
+    centrado:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    topBar:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
+    backBtn:     { width: 36, height: 36, borderRadius: 18, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' },
+    topBarTitulo:{ fontSize: 16, fontWeight: '700', color: C.ink },
+    header:      { alignItems: 'center', paddingTop: 16, paddingBottom: 16, paddingHorizontal: 24, borderBottomWidth: 0.5, borderBottomColor: C.border, gap: 4 },
+    avatar:      { width: 84, height: 84, borderRadius: 42, marginBottom: 8 },
+    avatarPH:    { alignItems: 'center', justifyContent: 'center', backgroundColor: C.earthLight },
+    avatarLetra: { fontSize: 30, fontWeight: '700', color: C.earth },
+    username:    { fontSize: 16, fontWeight: '700', color: C.ink },
+    nombre:      { fontSize: 13, color: C.muted },
+    bio:         { fontSize: 13, color: C.ink, textAlign: 'center', marginTop: 6, lineHeight: 18, paddingHorizontal: 8 },
+  }), [C]);
   const [perfil, setPerfil] = useState<PerfilUsuario | null>(null);
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -143,18 +158,3 @@ export default function PPerfilPublico({ targetUserId, userId, onVolver, onVerPe
     </SafeAreaView>
   );
 }
-
-const s = StyleSheet.create({
-  safe:        { flex: 1, backgroundColor: C.white },
-  centrado:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  topBar:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
-  backBtn:     { width: 36, height: 36, borderRadius: 18, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' },
-  topBarTitulo:{ fontSize: 16, fontWeight: '700', color: C.ink },
-  header:      { alignItems: 'center', paddingTop: 16, paddingBottom: 16, paddingHorizontal: 24, borderBottomWidth: 0.5, borderBottomColor: C.border, gap: 4 },
-  avatar:      { width: 84, height: 84, borderRadius: 42, marginBottom: 8 },
-  avatarPH:    { alignItems: 'center', justifyContent: 'center', backgroundColor: C.earthLight },
-  avatarLetra: { fontSize: 30, fontWeight: '700', color: C.earth },
-  username:    { fontSize: 16, fontWeight: '700', color: C.ink },
-  nombre:      { fontSize: 13, color: C.muted },
-  bio:         { fontSize: 13, color: C.ink, textAlign: 'center', marginTop: 6, lineHeight: 18, paddingHorizontal: 8 },
-});

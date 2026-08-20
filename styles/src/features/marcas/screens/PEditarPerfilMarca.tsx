@@ -5,10 +5,10 @@
 // usuario (selector de imagen + inputs con validación inline +
 // guardado atómico), combinado con los campos de ubicación/categoría
 // tal como los captura PRegistroMarca.tsx.
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TextInput, Image, TouchableOpacity, Pressable, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { C, R } from '../../../shared/theme';
+import { useTheme } from '../../../shared/ThemeContext';
 import {
   obtenerMarcaEditable, actualizarMarca, subirLogoDeMarca, validarDescripcionMarca,
   CATEGORIAS_MARCA, CategoriaMarca,
@@ -28,6 +28,35 @@ interface Props {
 interface FormErrors { nombre?: string; pais?: string; ciudad?: string; descripcion?: string }
 
 export default function PEditarPerfilMarca({ marcaId, onGuardado, onCancelar }: Props) {
+  const { C, R } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    safe:         { flex: 1, backgroundColor: C.white },
+    centrado:     { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    scroll:       { padding: 20, gap: 14, paddingBottom: 48, alignItems: 'stretch' },
+    topBar:       { paddingBottom: 4 },
+    backText:     { fontSize: 14, color: C.earth, fontWeight: '500' },
+    titulo:       { fontSize: 24, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginBottom: 4 },
+    logo:         { width: 100, height: 100, borderRadius: 20, backgroundColor: C.earthLight, alignSelf: 'center' },
+    logoVacio:    { alignItems: 'center', justifyContent: 'center' },
+    fila:         { flexDirection: 'row', gap: 12 },
+    filaDoble:    { flexDirection: 'row', gap: 12 },
+    botonSecundario: { flex: 1, borderWidth: 1, borderColor: C.border, borderRadius: R.btn, paddingVertical: 12, alignItems: 'center' },
+    textoSecundario: { color: C.ink, fontWeight: '500' },
+    campo:        { gap: 6 },
+    label:        { fontSize: 13, fontWeight: '500', color: C.muted },
+    input:        { backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: C.ink },
+    inputError:   { borderColor: C.error },
+    textarea:     { minHeight: 80, textAlignVertical: 'top' },
+    contador:     { alignSelf: 'flex-end', color: C.muted, fontSize: 12 },
+    errorText:    { fontSize: 12, color: C.error },
+    chipsFila:    { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    chip:         { paddingHorizontal: 14, paddingVertical: 9, borderRadius: R.chip, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.surface },
+    chipActivo:   { backgroundColor: C.earth, borderColor: C.earth },
+    chipTexto:    { fontSize: 13, color: C.ink, fontWeight: '500' },
+    chipTextoActivo: { color: C.white },
+    botonPrincipal: { backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
+    textoPrincipal: { color: C.white, fontWeight: '700', fontSize: 16 },
+  }), [C, R]);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [logoUri, setLogoUri] = useState<string | null>(null); // nuevo logo local, si se cambió
@@ -230,32 +259,3 @@ export default function PEditarPerfilMarca({ marcaId, onGuardado, onCancelar }: 
     </SafeAreaView>
   );
 }
-
-const s = StyleSheet.create({
-  safe:         { flex: 1, backgroundColor: C.white },
-  centrado:     { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  scroll:       { padding: 20, gap: 14, paddingBottom: 48, alignItems: 'stretch' },
-  topBar:       { paddingBottom: 4 },
-  backText:     { fontSize: 14, color: C.earth, fontWeight: '500' },
-  titulo:       { fontSize: 24, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginBottom: 4 },
-  logo:         { width: 100, height: 100, borderRadius: 20, backgroundColor: C.earthLight, alignSelf: 'center' },
-  logoVacio:    { alignItems: 'center', justifyContent: 'center' },
-  fila:         { flexDirection: 'row', gap: 12 },
-  filaDoble:    { flexDirection: 'row', gap: 12 },
-  botonSecundario: { flex: 1, borderWidth: 1, borderColor: C.border, borderRadius: R.btn, paddingVertical: 12, alignItems: 'center' },
-  textoSecundario: { color: C.ink, fontWeight: '500' },
-  campo:        { gap: 6 },
-  label:        { fontSize: 13, fontWeight: '500', color: C.muted },
-  input:        { backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: C.ink },
-  inputError:   { borderColor: C.error },
-  textarea:     { minHeight: 80, textAlignVertical: 'top' },
-  contador:     { alignSelf: 'flex-end', color: C.muted, fontSize: 12 },
-  errorText:    { fontSize: 12, color: C.error },
-  chipsFila:    { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip:         { paddingHorizontal: 14, paddingVertical: 9, borderRadius: R.chip, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.surface },
-  chipActivo:   { backgroundColor: C.earth, borderColor: C.earth },
-  chipTexto:    { fontSize: 13, color: C.ink, fontWeight: '500' },
-  chipTextoActivo: { color: C.white },
-  botonPrincipal: { backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
-  textoPrincipal: { color: C.white, fontWeight: '700', fontSize: 16 },
-});

@@ -5,19 +5,37 @@
 // animación y el TextInput se enfoca de inmediato — eso ya dispara el
 // teclado nativo en iOS/Android sin código adicional, y en web deja
 // escribir porque el foco ocurre dentro del mismo gesto de tap.
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   View, TextInput, TouchableOpacity, Animated,
   Easing, StyleSheet, Keyboard, Platform,
 } from 'react-native';
 import { Search, X } from 'lucide-react-native';
-import { C, R } from '../../../shared/theme';
+import { useTheme } from '../../../shared/ThemeContext';
 
 interface Props {
   onBuscar: (termino: string) => void; // se llama al enviar (returnKey "search")
 }
 
 export default function BarraBusquedaHeader({ onBuscar }: Props) {
+  const { C, R } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    iconBtn: {
+      width: 36, height: 36, borderRadius: 18,
+      alignItems: 'center', justifyContent: 'center',
+      backgroundColor: C.surface, borderWidth: 0.5, borderColor: C.border,
+    },
+    wrap: {
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      backgroundColor: C.surface, borderWidth: 1, borderColor: C.border,
+      borderRadius: R.input, paddingHorizontal: 10, height: 36,
+      overflow: 'hidden',
+    },
+    input: {
+      flex: 1, fontSize: 14, color: C.ink,
+      padding: 0,
+    },
+  }), [C, R]);
   const [expandido, setExpandido] = useState(false);
   const [termino, setTermino] = useState('');
   const anchoAnim = useRef(new Animated.Value(0)).current;
@@ -89,23 +107,3 @@ export default function BarraBusquedaHeader({ onBuscar }: Props) {
     </Animated.View>
   );
 }
-
-const s = StyleSheet.create({
-  iconBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: C.surface, borderWidth: 0.5, borderColor: C.border,
-  },
-  wrap: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: C.surface, borderWidth: 1, borderColor: C.border,
-    borderRadius: R.input, paddingHorizontal: 10, height: 36,
-    overflow: 'hidden',
-  },
-  input: {
-    flex: 1, fontSize: 14, color: C.ink,
-    // padding: 0 evita que Android agregue padding vertical por defecto
-    // y descuadre la altura de 36 del contenedor.
-    padding: 0,
-  },
-});

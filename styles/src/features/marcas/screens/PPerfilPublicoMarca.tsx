@@ -5,7 +5,7 @@
 // con su propia carga de datos — misma estructura visual que
 // PPerfilPublico.tsx (perfil de usuario) para el header, extendida con
 // el selector de pestañas de SelectorPestañasPerfil.tsx.
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
@@ -20,7 +20,7 @@ import TabPublicacionesMarca from '../perfil/components/TabPublicacionesMarca';
 import TabRepostsMarca from '../perfil/components/TabRepostsMarca';
 import TabCatalogoMarca from '../perfil/components/TabCatalogoMarca';
 import EstadoError from '../../../shared/components/EstadoError';
-import { C } from '../../../shared/theme';
+import { useTheme } from '../../../shared/ThemeContext';
 
 interface Props {
   targetMarcaId: string;
@@ -33,6 +33,24 @@ interface Props {
 export default function PPerfilPublicoMarca({
   targetMarcaId, userId, esDeMarca = false, onVolver, onVerPerfil,
 }: Props) {
+  const { C } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    safe:        { flex: 1, backgroundColor: C.white },
+    centrado:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    topBar:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
+    backBtn:     { width: 36, height: 36, borderRadius: 18, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' },
+    topBarTitulo:{ flex: 1, fontSize: 16, fontWeight: '700', color: C.ink, textAlign: 'center', marginHorizontal: 8 },
+    header:      { alignItems: 'center', paddingTop: 16, paddingBottom: 12, paddingHorizontal: 24, borderBottomWidth: 0.5, borderBottomColor: C.border, gap: 4 },
+    logo:        { width: 84, height: 84, borderRadius: 20, marginBottom: 8 },
+    logoPH:      { alignItems: 'center', justifyContent: 'center', backgroundColor: C.earthLight },
+    logoLetra:   { fontSize: 30, fontWeight: '700', color: C.earth },
+    nombre:      { fontSize: 16, fontWeight: '700', color: C.ink },
+    categoriaChip:{ backgroundColor: C.earthLight, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, marginTop: 6 },
+    categoriaTexto:{ fontSize: 11, fontWeight: '600', color: C.earthDark },
+    bio:         { fontSize: 13, color: C.ink, textAlign: 'center', marginTop: 8, lineHeight: 18, paddingHorizontal: 8 },
+    tabBody:     { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+    oculto:      { display: 'none' },
+  }), [C]);
   const [perfil, setPerfil] = useState<PerfilMarcaPublico | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -160,21 +178,3 @@ export default function PPerfilPublicoMarca({
     </SafeAreaView>
   );
 }
-
-const s = StyleSheet.create({
-  safe:        { flex: 1, backgroundColor: C.white },
-  centrado:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  topBar:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
-  backBtn:     { width: 36, height: 36, borderRadius: 18, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' },
-  topBarTitulo:{ flex: 1, fontSize: 16, fontWeight: '700', color: C.ink, textAlign: 'center', marginHorizontal: 8 },
-  header:      { alignItems: 'center', paddingTop: 16, paddingBottom: 12, paddingHorizontal: 24, borderBottomWidth: 0.5, borderBottomColor: C.border, gap: 4 },
-  logo:        { width: 84, height: 84, borderRadius: 20, marginBottom: 8 },
-  logoPH:      { alignItems: 'center', justifyContent: 'center', backgroundColor: C.earthLight },
-  logoLetra:   { fontSize: 30, fontWeight: '700', color: C.earth },
-  nombre:      { fontSize: 16, fontWeight: '700', color: C.ink },
-  categoriaChip:{ backgroundColor: C.earthLight, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, marginTop: 6 },
-  categoriaTexto:{ fontSize: 11, fontWeight: '600', color: C.earthDark },
-  bio:         { fontSize: 13, color: C.ink, textAlign: 'center', marginTop: 8, lineHeight: 18, paddingHorizontal: 8 },
-  tabBody:     { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  oculto:      { display: 'none' },
-});

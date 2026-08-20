@@ -5,11 +5,11 @@
 // (se llega por tab, igual que PPerfil.tsx de usuario) y con un botón
 // "Editar perfil". La pestaña Reposts se monta con esPropio para
 // mostrar el botón de deshacer.
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { Settings } from 'lucide-react-native';
+import { Settings, Moon, Sun } from 'lucide-react-native';
 import ImagenConCarga from '../../../shared/components/ImagenConCarga';
 import PDetalle from '../../feed/PDetalle';
 import { Publicacion } from '../../feed/types';
@@ -21,7 +21,7 @@ import TabPublicacionesMarca from '../perfil/components/TabPublicacionesMarca';
 import TabRepostsMarca from '../perfil/components/TabRepostsMarca';
 import TabCatalogoMarca from '../perfil/components/TabCatalogoMarca';
 import EstadoError from '../../../shared/components/EstadoError';
-import { C } from '../../../shared/theme';
+import { useTheme } from '../../../shared/ThemeContext';
 
 interface Props {
   marcaId: string;
@@ -30,6 +30,24 @@ interface Props {
 }
 
 export default function PPerfilMarca({ marcaId, onEditarPerfil, onVerPerfil }: Props) {
+  const { C, scheme, alternarTema } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    safe:        { flex: 1, backgroundColor: C.white },
+    centrado:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    header:      { alignItems: 'center', paddingTop: 16, paddingBottom: 12, paddingHorizontal: 24, borderBottomWidth: 0.5, borderBottomColor: C.border, gap: 4 },
+    logo:        { width: 84, height: 84, borderRadius: 20, marginBottom: 8 },
+    logoPH:      { alignItems: 'center', justifyContent: 'center', backgroundColor: C.earthLight },
+    logoLetra:   { fontSize: 30, fontWeight: '700', color: C.earth },
+    nombre:      { fontSize: 16, fontWeight: '700', color: C.ink },
+    categoriaChip:{ backgroundColor: C.earthLight, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, marginTop: 6 },
+    categoriaTexto:{ fontSize: 11, fontWeight: '600', color: C.earthDark },
+    bio:         { fontSize: 13, color: C.ink, textAlign: 'center', marginTop: 8, lineHeight: 18, paddingHorizontal: 8 },
+    accionesFila:{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, flexWrap: 'wrap', justifyContent: 'center' },
+    botonSecundario: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: C.border, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8 },
+    botonSecundarioTexto: { fontSize: 12, color: C.ink, fontWeight: '600' },
+    tabBody:     { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+    oculto:      { display: 'none' },
+  }), [C]);
   const [perfil, setPerfil] = useState<PerfilMarcaPublico | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,10 +138,19 @@ export default function PPerfilMarca({ marcaId, onEditarPerfil, onVerPerfil }: P
         <View style={s.categoriaChip}><Text style={s.categoriaTexto}>{perfil.categoria}</Text></View>
         {perfil.descripcion ? <Text style={s.bio}>{perfil.descripcion}</Text> : null}
 
-        <TouchableOpacity style={s.botonSecundario} onPress={onEditarPerfil}>
-          <Settings size={14} color={C.ink} strokeWidth={2} />
-          <Text style={s.botonSecundarioTexto}>Editar perfil</Text>
-        </TouchableOpacity>
+        <View style={s.accionesFila}>
+          <TouchableOpacity style={s.botonSecundario} onPress={onEditarPerfil}>
+            <Settings size={14} color={C.ink} strokeWidth={2} />
+            <Text style={s.botonSecundarioTexto}>Editar perfil</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.botonSecundario} onPress={alternarTema}>
+            {scheme === 'dark'
+              ? <Sun size={14} color={C.ink} strokeWidth={2} />
+              : <Moon size={14} color={C.ink} strokeWidth={2} />
+            }
+            <Text style={s.botonSecundarioTexto}>{scheme === 'dark' ? 'Modo claro' : 'Modo oscuro'}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <SelectorPestañasPerfil activa={tab} onCambiar={setTab} />
@@ -156,20 +183,3 @@ export default function PPerfilMarca({ marcaId, onEditarPerfil, onVerPerfil }: P
     </SafeAreaView>
   );
 }
-
-const s = StyleSheet.create({
-  safe:        { flex: 1, backgroundColor: C.white },
-  centrado:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  header:      { alignItems: 'center', paddingTop: 16, paddingBottom: 12, paddingHorizontal: 24, borderBottomWidth: 0.5, borderBottomColor: C.border, gap: 4 },
-  logo:        { width: 84, height: 84, borderRadius: 20, marginBottom: 8 },
-  logoPH:      { alignItems: 'center', justifyContent: 'center', backgroundColor: C.earthLight },
-  logoLetra:   { fontSize: 30, fontWeight: '700', color: C.earth },
-  nombre:      { fontSize: 16, fontWeight: '700', color: C.ink },
-  categoriaChip:{ backgroundColor: C.earthLight, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, marginTop: 6 },
-  categoriaTexto:{ fontSize: 11, fontWeight: '600', color: C.earthDark },
-  bio:         { fontSize: 13, color: C.ink, textAlign: 'center', marginTop: 8, lineHeight: 18, paddingHorizontal: 8 },
-  botonSecundario: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: C.border, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, marginTop: 12 },
-  botonSecundarioTexto: { fontSize: 12, color: C.ink, fontWeight: '600' },
-  tabBody:     { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  oculto:      { display: 'none' },
-});

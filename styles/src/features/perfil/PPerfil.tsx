@@ -5,10 +5,10 @@
 // módulo de perfil: editar perfil, editar preferencias de estilo,
 // ver los reposts propios (PMisReposts.tsx, antes huérfano) y cerrar
 // sesión (se mueve acá desde el botón temporal de PFeed.tsx).
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LogOut, Settings, Repeat2, Sparkles } from 'lucide-react-native';
+import { LogOut, Settings, Repeat2, Sparkles, Moon, Sun } from 'lucide-react-native';
 import ImagenConCarga from '../../shared/components/ImagenConCarga';
 import FeedGrid from '../feed/FeedGrid';
 import PDetalle from '../feed/PDetalle';
@@ -16,7 +16,7 @@ import { Publicacion } from '../feed/types';
 import { obtenerPerfilPropio, listarPublicacionesDeUsuario, PerfilUsuario } from './perfil.api';
 import { obtenerPublicacionPorId } from '../feed/services/publicacionesService';
 import EstadoError from '../../shared/components/EstadoError';
-import { C, R } from '../../shared/theme';
+import { useTheme } from '../../shared/ThemeContext';
 
 const PAGE_SIZE = 10;
 
@@ -32,6 +32,22 @@ interface Props {
 export default function PPerfil({
   userId, onEditarPerfil, onEditarPreferencias, onMisReposts, onCerrarSesion, onVerPerfil,
 }: Props) {
+  const { C, R, scheme, alternarTema } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    safe:        { flex: 1, backgroundColor: C.white },
+    centrado:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    header:      { alignItems: 'center', paddingTop: 16, paddingBottom: 12, paddingHorizontal: 24, borderBottomWidth: 0.5, borderBottomColor: C.border, gap: 4 },
+    avatar:      { width: 84, height: 84, borderRadius: 42, marginBottom: 8 },
+    avatarPH:    { alignItems: 'center', justifyContent: 'center', backgroundColor: C.earthLight },
+    avatarLetra: { fontSize: 30, fontWeight: '700', color: C.earth },
+    username:    { fontSize: 16, fontWeight: '700', color: C.ink },
+    nombre:      { fontSize: 13, color: C.muted },
+    bio:         { fontSize: 13, color: C.ink, textAlign: 'center', marginTop: 6, lineHeight: 18, paddingHorizontal: 8 },
+    accionesFila:{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14, flexWrap: 'wrap', justifyContent: 'center' },
+    botonSecundario: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: C.border, borderRadius: R.chip, paddingHorizontal: 10, paddingVertical: 8 },
+    botonSecundarioTexto: { fontSize: 12, color: C.ink, fontWeight: '600' },
+    iconBtn:     { width: 32, height: 32, borderRadius: 16, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' },
+  }), [C, R]);
   const [perfil, setPerfil] = useState<PerfilUsuario | null>(null);
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -149,6 +165,13 @@ export default function PPerfil({
             <Repeat2 size={14} color={C.ink} strokeWidth={2} />
             <Text style={s.botonSecundarioTexto}>Reposts</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={s.botonSecundario} onPress={alternarTema}>
+            {scheme === 'dark'
+              ? <Sun size={14} color={C.ink} strokeWidth={2} />
+              : <Moon size={14} color={C.ink} strokeWidth={2} />
+            }
+            <Text style={s.botonSecundarioTexto}>{scheme === 'dark' ? 'Modo claro' : 'Modo oscuro'}</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={s.iconBtn} onPress={onCerrarSesion}>
             <LogOut size={18} color={C.muted} strokeWidth={2} />
           </TouchableOpacity>
@@ -169,19 +192,3 @@ export default function PPerfil({
     </SafeAreaView>
   );
 }
-
-const s = StyleSheet.create({
-  safe:        { flex: 1, backgroundColor: C.white },
-  centrado:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  header:      { alignItems: 'center', paddingTop: 16, paddingBottom: 12, paddingHorizontal: 24, borderBottomWidth: 0.5, borderBottomColor: C.border, gap: 4 },
-  avatar:      { width: 84, height: 84, borderRadius: 42, marginBottom: 8 },
-  avatarPH:    { alignItems: 'center', justifyContent: 'center', backgroundColor: C.earthLight },
-  avatarLetra: { fontSize: 30, fontWeight: '700', color: C.earth },
-  username:    { fontSize: 16, fontWeight: '700', color: C.ink },
-  nombre:      { fontSize: 13, color: C.muted },
-  bio:         { fontSize: 13, color: C.ink, textAlign: 'center', marginTop: 6, lineHeight: 18, paddingHorizontal: 8 },
-  accionesFila:{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14 },
-  botonSecundario: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: C.border, borderRadius: R.chip, paddingHorizontal: 10, paddingVertical: 8 },
-  botonSecundarioTexto: { fontSize: 12, color: C.ink, fontWeight: '600' },
-  iconBtn:     { width: 32, height: 32, borderRadius: 16, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' },
-});

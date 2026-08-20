@@ -1,10 +1,10 @@
 // src/features/busqueda/components/ResultadoPublicacionRow.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Tag } from 'lucide-react-native';
 import ImagenConCarga from '../../../shared/components/ImagenConCarga';
 import { ResultadoPublicacion } from '../busqueda.types';
-import { C, R } from '../../../shared/theme';
+import { useTheme } from '../../../shared/ThemeContext';
 
 interface Props {
   item: ResultadoPublicacion;
@@ -12,6 +12,18 @@ interface Props {
 }
 
 export default function ResultadoPublicacionRow({ item, onPress }: Props) {
+  const { C, R } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    fila: { flexDirection: 'row', gap: 12, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: C.border, alignItems: 'center' },
+    thumbWrap: { width: 56, height: 56, borderRadius: R.input, overflow: 'hidden', backgroundColor: C.earthLight },
+    thumb: { width: '100%', height: '100%' },
+    badgePrenda: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 3 },
+    badgePrendaTexto: { fontSize: 12, fontWeight: '700', color: C.earthDark },
+    descripcion: { fontSize: 13, color: C.ink, lineHeight: 18 },
+    badgeMarca: { alignSelf: 'flex-start', backgroundColor: C.earthLight, borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2, marginTop: 4 },
+    badgeMarcaTexto: { fontSize: 10, color: C.earth, fontWeight: '700' },
+  }), [C, R]);
+
   return (
     <Pressable style={s.fila} onPress={onPress}>
       <View style={s.thumbWrap}>
@@ -41,14 +53,3 @@ export default function ResultadoPublicacionRow({ item, onPress }: Props) {
     </Pressable>
   );
 }
-
-const s = StyleSheet.create({
-  fila: { flexDirection: 'row', gap: 12, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: C.border, alignItems: 'center' },
-  thumbWrap: { width: 56, height: 56, borderRadius: R.input, overflow: 'hidden', backgroundColor: C.earthLight },
-  thumb: { width: '100%', height: '100%' },
-  badgePrenda: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 3 },
-  badgePrendaTexto: { fontSize: 12, fontWeight: '700', color: C.earthDark },
-  descripcion: { fontSize: 13, color: C.ink, lineHeight: 18 },
-  badgeMarca: { alignSelf: 'flex-start', backgroundColor: C.earthLight, borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2, marginTop: 4 },
-  badgeMarcaTexto: { fontSize: 10, color: C.earth, fontWeight: '700' },
-});

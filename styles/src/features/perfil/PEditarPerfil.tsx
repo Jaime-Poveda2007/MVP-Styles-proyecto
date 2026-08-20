@@ -3,10 +3,10 @@
 // RF-U10/RF-U11: edición de foto, nombre, username y biografía del
 // perfil propio. Mismo patrón visual que PFormPrenda.tsx (selector de
 // imagen galería/cámara + inputs con validación inline).
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TextInput, Image, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { C, R } from '../../shared/theme';
+import { useTheme } from '../../shared/ThemeContext';
 import {
   obtenerPerfilPropio, actualizarPerfil,
   seleccionarFotoDePerfil, tomarFotoDePerfil,
@@ -24,6 +24,29 @@ interface Props {
 interface FormErrors { username?: string; biografia?: string }
 
 export default function PEditarPerfil({ userId, onGuardado, onCancelar }: Props) {
+  const { C, R } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    safe:         { flex: 1, backgroundColor: C.white },
+    centrado:     { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    scroll:       { padding: 20, gap: 14, paddingBottom: 48, alignItems: 'stretch' },
+    topBar:       { paddingBottom: 4 },
+    backText:     { fontSize: 14, color: C.earth, fontWeight: '500' },
+    titulo:       { fontSize: 24, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginBottom: 4 },
+    avatar:       { width: 100, height: 100, borderRadius: 50, backgroundColor: C.earthLight, alignSelf: 'center' },
+    avatarVacio:  { alignItems: 'center', justifyContent: 'center' },
+    fila:         { flexDirection: 'row', gap: 12 },
+    botonSecundario: { flex: 1, borderWidth: 1, borderColor: C.border, borderRadius: R.btn, paddingVertical: 12, alignItems: 'center' },
+    textoSecundario: { color: C.ink, fontWeight: '500' },
+    campo:        { gap: 6 },
+    label:        { fontSize: 13, fontWeight: '500', color: C.muted },
+    input:        { backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: C.ink },
+    inputError:   { borderColor: C.error },
+    textarea:     { minHeight: 80, textAlignVertical: 'top' },
+    contador:     { alignSelf: 'flex-end', color: C.muted, fontSize: 12 },
+    errorText:    { fontSize: 12, color: C.error },
+    botonPrincipal: { backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
+    textoPrincipal: { color: C.white, fontWeight: '700', fontSize: 16 },
+  }), [C, R]);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [fotoUri, setFotoUri] = useState<string | null>(null); // nueva foto local, si se cambió
@@ -179,26 +202,3 @@ export default function PEditarPerfil({ userId, onGuardado, onCancelar }: Props)
     </SafeAreaView>
   );
 }
-
-const s = StyleSheet.create({
-  safe:         { flex: 1, backgroundColor: C.white },
-  centrado:     { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  scroll:       { padding: 20, gap: 14, paddingBottom: 48, alignItems: 'stretch' },
-  topBar:       { paddingBottom: 4 },
-  backText:     { fontSize: 14, color: C.earth, fontWeight: '500' },
-  titulo:       { fontSize: 24, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginBottom: 4 },
-  avatar:       { width: 100, height: 100, borderRadius: 50, backgroundColor: C.earthLight, alignSelf: 'center' },
-  avatarVacio:  { alignItems: 'center', justifyContent: 'center' },
-  fila:         { flexDirection: 'row', gap: 12 },
-  botonSecundario: { flex: 1, borderWidth: 1, borderColor: C.border, borderRadius: R.btn, paddingVertical: 12, alignItems: 'center' },
-  textoSecundario: { color: C.ink, fontWeight: '500' },
-  campo:        { gap: 6 },
-  label:        { fontSize: 13, fontWeight: '500', color: C.muted },
-  input:        { backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: C.ink },
-  inputError:   { borderColor: C.error },
-  textarea:     { minHeight: 80, textAlignVertical: 'top' },
-  contador:     { alignSelf: 'flex-end', color: C.muted, fontSize: 12 },
-  errorText:    { fontSize: 12, color: C.error },
-  botonPrincipal: { backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
-  textoPrincipal: { color: C.white, fontWeight: '700', fontSize: 16 },
-});

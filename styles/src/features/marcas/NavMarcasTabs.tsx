@@ -10,7 +10,7 @@ import { Store, Compass, CircleUserRound } from 'lucide-react-native';
 import NavMarcasPanel from './NavMarcasPanel';
 import FeedNavigator from '../feed/NavFeed';
 import NavPerfilMarca from './NavPerfilMarca';
-import { C } from '../../shared/theme';
+import { useTheme } from '../../shared/ThemeContext';
 
 export type MarcasTabsParamList = {
   PanelTab: undefined;
@@ -27,13 +27,14 @@ interface Props {
 }
 
 export default function NavMarcasTabs({ marcaId, onCerrarSesion, onVerPerfil }: Props) {
+  const { C } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: C.earth,
         tabBarInactiveTintColor: C.muted,
-        tabBarStyle: { borderTopColor: C.border },
+        tabBarStyle: { borderTopColor: C.border, backgroundColor: C.white },
       }}
     >
       <Tab.Screen

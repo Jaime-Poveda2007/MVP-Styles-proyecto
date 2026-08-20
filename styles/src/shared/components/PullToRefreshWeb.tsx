@@ -1,7 +1,7 @@
 // src/shared/components/PullToRefreshWeb.tsx
 import React, { useRef, useState } from 'react';
 import { Platform, Animated, StyleSheet, ActivityIndicator } from 'react-native';
-import { C } from '../theme';
+import { useTheme } from '../ThemeContext';
 
 const THRESHOLD = 70;
 
@@ -11,6 +11,7 @@ interface Props {
 }
 
 export default function PullToRefreshWeb({ onRefresh, children }: Props) {
+  const { C } = useTheme();
   const [activo, setActivo] = useState(false);
   const [refrescando, setRefrescando] = useState(false);
   const startY = useRef(0);

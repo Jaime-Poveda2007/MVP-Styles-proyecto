@@ -4,13 +4,13 @@
 // avatar, usuario, fecha, estrellas, comentario. Antes esto vivía
 // colapsado dentro de PDetalle.tsx; ahora vive siempre expandido
 // dentro de la pantalla dedicada PReseñasPrenda.tsx.
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import EstrellasSelector from './EstrellasSelector';
 import AutorInline from '../../../shared/components/AutorInline';
 import EstadoVacio from '../../../shared/components/EstadoVacio';
 import { ReseñaConAutor } from '../reseñas.api';
-import { C } from '../../../shared/theme';
+import { useTheme } from '../../../shared/ThemeContext';
 
 interface Props {
   reseñas: ReseñaConAutor[];
@@ -24,6 +24,16 @@ function formatearFecha(iso: string): string {
 }
 
 export default function ListaReseñas({ reseñas, cargando, onVerPerfil }: Props) {
+  const { C } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    lista:        { gap: 18 },
+    fila:         { flexDirection: 'row', gap: 10, borderBottomWidth: 0.5, borderBottomColor: C.border, paddingBottom: 14 },
+    filaHeader:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    username:     { fontSize: 13, fontWeight: '600', color: C.ink },
+    fecha:        { fontSize: 11, color: C.muted },
+    comentario:   { fontSize: 13, color: C.ink, marginTop: 4, lineHeight: 18 },
+  }), [C]);
+
   if (cargando) return <ActivityIndicator color={C.earth} style={{ marginTop: 16 }} />;
 
   if (reseñas.length === 0) {
@@ -53,12 +63,3 @@ export default function ListaReseñas({ reseñas, cargando, onVerPerfil }: Props
     </View>
   );
 }
-
-const s = StyleSheet.create({
-  lista:        { gap: 18 },
-  fila:         { flexDirection: 'row', gap: 10, borderBottomWidth: 0.5, borderBottomColor: C.border, paddingBottom: 14 },
-  filaHeader:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  username:     { fontSize: 13, fontWeight: '600', color: C.ink },
-  fecha:        { fontSize: 11, color: C.muted },
-  comentario:   { fontSize: 13, color: C.ink, marginTop: 4, lineHeight: 18 },
-});

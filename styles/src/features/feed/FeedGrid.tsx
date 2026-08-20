@@ -1,5 +1,5 @@
 // src/features/feed/FeedGrid.tsx
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   FlatList, View, ActivityIndicator,
   StyleSheet, RefreshControl, Text, Platform,
@@ -7,7 +7,7 @@ import {
 import { Publicacion } from './types';
 import FeedCard from './FeedCard';
 import EsqueletoFeed from './EsqueletoFeed';
-import { C } from '../../shared/theme';
+import { useTheme } from '../../shared/ThemeContext';
 import PullToRefreshWeb from '../../shared/components/PullToRefreshWeb';
 
 const GAP = 8;
@@ -31,6 +31,17 @@ export default function FeedGrid({
   publicaciones, userId, cargando, cargandoMas,
   hayMas, refrescando, onCargarMas, onRefrescar, onPressTarjeta, onVerPerfil, esDeMarca = false,
 }: Props) {
+  const { C } = useTheme();
+
+  const g = useMemo(() => StyleSheet.create({
+    content: { paddingHorizontal: PADDING, paddingTop: 10, paddingBottom: 20 },
+    row: { justifyContent: 'space-between', marginBottom: GAP },
+    footerLoader: { paddingVertical: 20, alignItems: 'center' },
+    empty: { flex: 1, alignItems: 'center', paddingTop: 80, gap: 12 },
+    emptyIcon: { fontSize: 48 },
+    emptyTitulo: { fontSize: 18, fontWeight: '700', color: C.ink },
+    emptySub: { fontSize: 14, color: C.muted, textAlign: 'center', paddingHorizontal: 32, lineHeight: 20 },
+  }), [C]);
 
   const keyExtractor = useCallback((item: Publicacion) => item.id, []);
 
@@ -83,13 +94,3 @@ return Platform.OS === 'web'
     ? <PullToRefreshWeb onRefresh={onRefrescar}>{lista}</PullToRefreshWeb>
     : lista;
 }
-
-const g = StyleSheet.create({
-  content: { paddingHorizontal: PADDING, paddingTop: 10, paddingBottom: 20 },
-  row: { justifyContent: 'space-between', marginBottom: GAP },
-  footerLoader: { paddingVertical: 20, alignItems: 'center' },
-  empty: { flex: 1, alignItems: 'center', paddingTop: 80, gap: 12 },
-  emptyIcon: { fontSize: 48 },
-  emptyTitulo: { fontSize: 18, fontWeight: '700', color: C.ink },
-  emptySub: { fontSize: 14, color: C.muted, textAlign: 'center', paddingHorizontal: 32, lineHeight: 20 },
-});

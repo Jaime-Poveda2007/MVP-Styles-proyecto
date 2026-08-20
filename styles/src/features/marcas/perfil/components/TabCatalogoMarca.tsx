@@ -3,13 +3,13 @@
 // Cuerpo de la pestaña "Catálogo" del perfil de marca (propio y
 // público) — grid virtualizado (hasta 200 prendas activas por marca,
 // LIMITE_PRENDAS_ACTIVAS) de TarjetaPrendaPublica.
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { listarPrendasActivasDeLaMarca } from '../../catalogo/services/prendasService';
 import { Prenda } from '../../catalogo/types';
 import TarjetaPrendaPublica from '../../catalogo/components/TarjetaPrendaPublica';
 import EstadoVacio from '../../../../shared/components/EstadoVacio';
-import { C } from '../../../../shared/theme';
+import { useTheme } from '../../../../shared/ThemeContext';
 
 interface Props {
   marcaId: string;
@@ -18,6 +18,12 @@ interface Props {
 }
 
 export default function TabCatalogoMarca({ marcaId, userId, onVerReseñas }: Props) {
+  const { C } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    centro: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    lista:  { paddingHorizontal: 12, paddingTop: 12, paddingBottom: 20 },
+    fila:   { justifyContent: 'space-between', marginBottom: 8 },
+  }), [C]);
   const [prendas, setPrendas] = useState<Prenda[]>([]);
   const [cargando, setCargando] = useState(true);
 
@@ -57,9 +63,3 @@ export default function TabCatalogoMarca({ marcaId, userId, onVerReseñas }: Pro
     />
   );
 }
-
-const s = StyleSheet.create({
-  centro: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  lista:  { paddingHorizontal: 12, paddingTop: 12, paddingBottom: 20 },
-  fila:   { justifyContent: 'space-between', marginBottom: 8 },
-});

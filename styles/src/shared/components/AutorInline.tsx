@@ -5,9 +5,9 @@
 // estaba duplicado en FeedCard.tsx, PDetalle.tsx y ListaReseñas.tsx.
 // Si se pasa "onPress" (RF-U10: toque en nombre/foto → perfil público),
 // se envuelve en TouchableOpacity; si no, es solo texto/imagen estático.
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { C } from '../theme';
+import { useTheme } from '../ThemeContext';
 
 interface Props {
   nombre: string | null;
@@ -18,6 +18,13 @@ interface Props {
 }
 
 export default function AutorInline({ nombre, fotoUrl, size = 18, onPress, nombreEstilo }: Props) {
+  const { C } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    fila:        { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
+    avatarPH:    { backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
+    avatarLetra: { fontWeight: '700', color: C.earth },
+    nombre:      { fontSize: 13, color: C.ink, fontWeight: '500', flexShrink: 1 },
+  }), [C]);
   const avatarEstilo = { width: size, height: size, borderRadius: size / 2 };
 
   const contenido = (
@@ -44,10 +51,3 @@ export default function AutorInline({ nombre, fotoUrl, size = 18, onPress, nombr
     </TouchableOpacity>
   );
 }
-
-const s = StyleSheet.create({
-  fila:        { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
-  avatarPH:    { backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
-  avatarLetra: { fontWeight: '700', color: C.earth },
-  nombre:      { fontSize: 13, color: C.ink, fontWeight: '500', flexShrink: 1 },
-});

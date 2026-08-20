@@ -1,8 +1,8 @@
 // src/features/busqueda/components/ResultadoUsuarioRow.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
 import { ResultadoUsuario } from '../busqueda.types';
-import { C } from '../../../shared/theme';
+import { useTheme } from '../../../shared/ThemeContext';
 
 interface Props {
   item: ResultadoUsuario;
@@ -10,6 +10,16 @@ interface Props {
 }
 
 export default function ResultadoUsuarioRow({ item, onPress }: Props) {
+  const { C } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    fila: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: C.border },
+    avatar: { width: 44, height: 44, borderRadius: 22 },
+    avatarPH: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
+    avatarLetra: { fontSize: 16, fontWeight: '700', color: C.earth },
+    username: { fontSize: 14, fontWeight: '700', color: C.ink },
+    nombre: { fontSize: 12, color: C.muted, marginTop: 1 },
+  }), [C]);
+
   return (
     <Pressable style={s.fila} onPress={onPress}>
       {item.foto_url ? (
@@ -26,12 +36,3 @@ export default function ResultadoUsuarioRow({ item, onPress }: Props) {
     </Pressable>
   );
 }
-
-const s = StyleSheet.create({
-  fila: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: C.border },
-  avatar: { width: 44, height: 44, borderRadius: 22 },
-  avatarPH: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
-  avatarLetra: { fontSize: 16, fontWeight: '700', color: C.earth },
-  username: { fontSize: 14, fontWeight: '700', color: C.ink },
-  nombre: { fontSize: 12, color: C.muted, marginTop: 1 },
-});

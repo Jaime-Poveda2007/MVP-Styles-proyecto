@@ -1,9 +1,9 @@
 // src/features/busqueda/PBusqueda.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, TextInput, StyleSheet, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, ChevronLeft } from 'lucide-react-native';
-import { C, R } from '../../shared/theme';
+import { useTheme } from '../../shared/ThemeContext';
 import { buscarPublicaciones, buscarUsuarios, buscarMarcas } from './busqueda.api';
 import { obtenerPublicacionPorId } from '../feed/services/publicacionesService';
 import { ResultadoPublicacion, ResultadoUsuario, ResultadoMarca, TabBusqueda } from './busqueda.types';
@@ -22,6 +22,18 @@ interface Props {
 }
 
 export default function PBusqueda({ userId, terminoInicial, onVolver, esDeMarca = false, onVerPerfil }: Props) {
+  const { C, R } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    safe: { flex: 1, backgroundColor: C.white },
+    header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10 },
+    backBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: C.surface, borderWidth: 0.5, borderColor: C.border },
+    inputWrap: {
+      flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8,
+      backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border,
+      borderRadius: R.input, paddingHorizontal: 14, paddingVertical: 10,
+    },
+    input: { flex: 1, fontSize: 14, color: C.ink },
+  }), [C, R]);
   const [termino, setTermino] = useState(terminoInicial ?? '');
   const [tab, setTab] = useState<TabBusqueda>('publicaciones');
   const [cargando, setCargando] = useState(false);
@@ -133,15 +145,3 @@ export default function PBusqueda({ userId, terminoInicial, onVolver, esDeMarca 
     </SafeAreaView>
   );
 }
-
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: C.white },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10 },
-  backBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: C.surface, borderWidth: 0.5, borderColor: C.border },
-  inputWrap: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border,
-    borderRadius: R.input, paddingHorizontal: 14, paddingVertical: 10,
-  },
-  input: { flex: 1, fontSize: 14, color: C.ink },
-});

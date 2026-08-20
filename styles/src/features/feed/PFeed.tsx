@@ -17,7 +17,7 @@ import EstadoError from '../../shared/components/EstadoError';
 
 interface Props {
   userId: string;
-  onVerPerfil: (targetUserId: string) => void;
+  onVerPerfil: (targetId: string, esDeMarca?: boolean) => void;
   esDeMarca?: boolean;
 }
 

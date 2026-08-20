@@ -15,7 +15,7 @@ import { C } from '../../../shared/theme';
 interface Props {
   reseñas: ReseñaConAutor[];
   cargando: boolean;
-  onVerPerfil?: (userId: string) => void;
+  onVerPerfil?: (targetId: string, esDeMarca?: boolean) => void;
 }
 
 function formatearFecha(iso: string): string {

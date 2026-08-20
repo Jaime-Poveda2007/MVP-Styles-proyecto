@@ -20,7 +20,7 @@ const Tab = createBottomTabNavigator<TabsParamList>();
 interface Props {
   userId: string;
   onCerrarSesion: () => void;
-  onVerPerfil: (targetUserId: string) => void;
+  onVerPerfil: (targetId: string, esDeMarca?: boolean) => void;
 }
 
 export default function NavTabs({ userId, onCerrarSesion, onVerPerfil }: Props) {

@@ -15,7 +15,7 @@ const Stack = createNativeStackNavigator<FeedStackParamList>();
 
 interface Props {
   userId: string;
-  onVerPerfil: (targetUserId: string) => void;
+  onVerPerfil: (targetId: string, esDeMarca?: boolean) => void;
   esDeMarca?: boolean;
 }
 
@@ -37,6 +37,7 @@ export default function FeedNavigator({ userId, onVerPerfil, esDeMarca = false }
             terminoInicial={route.params?.terminoInicial}
             onVolver={() => navigation.goBack()}
             esDeMarca={esDeMarca}
+            onVerPerfil={onVerPerfil}
           />
         )}
       </Stack.Screen>

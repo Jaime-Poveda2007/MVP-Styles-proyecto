@@ -1,17 +1,22 @@
 // src/features/marcas/NavMarcas.tsx
+//
+// Stack exterior de la sesión de marca: los tabs (Panel/Feed) más la
+// pantalla de perfil público (de usuario o de otra marca), registrada
+// acá arriba para que "navigate('PerfilPublico', ...)" funcione desde
+// cualquier punto profundo de los tabs — mismo patrón que NavHome.tsx
+// usa para la sesión de usuario.
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Store, Compass } from 'lucide-react-native';
-import NavMarcasPanel from './NavMarcasPanel';
-import FeedNavigator from '../feed/NavFeed';
-import { C } from '../../shared/theme';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import NavMarcasTabs from './NavMarcasTabs';
+import PPerfilPublico from '../perfil/PPerfilPublico';
+import PPerfilPublicoMarca from './screens/PPerfilPublicoMarca';
 
-export type MarcasTabsParamList = {
-  PanelTab: undefined;
-  FeedTab: undefined;
+export type MarcasStackParamList = {
+  Tabs: undefined;
+  PerfilPublico: { targetId: string; esDeMarca?: boolean };
 };
 
-const Tab = createBottomTabNavigator<MarcasTabsParamList>();
+const Stack = createNativeStackNavigator<MarcasStackParamList>();
 
 interface Props {
   marcaId: string;
@@ -20,38 +25,37 @@ interface Props {
 
 export default function NavMarcas({ marcaId, onCerrarSesion }: Props) {
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: C.earth,
-        tabBarInactiveTintColor: C.muted,
-        tabBarStyle: { borderTopColor: C.border },
-      }}
-    >
-      <Tab.Screen
-        name="PanelTab"
-        options={{
-          title: 'Panel',
-          tabBarIcon: ({ color, size }) => <Store size={size} color={color} strokeWidth={2} />,
-        }}
-      >
-        {() => <NavMarcasPanel marcaId={marcaId} onCerrarSesion={onCerrarSesion} />}
-      </Tab.Screen>
-      <Tab.Screen
-        name="FeedTab"
-        options={{
-          title: 'Feed',
-          tabBarIcon: ({ color, size }) => <Compass size={size} color={color} strokeWidth={2} />,
-        }}
-      >
-        {() => (
-          <FeedNavigator
-            userId={marcaId}
-            esDeMarca
-            onVerPerfil={(targetUserId) => console.log('Ver perfil (no implementado para marca todavía):', targetUserId)}
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Tabs">
+        {({ navigation }) => (
+          <NavMarcasTabs
+            marcaId={marcaId}
+            onCerrarSesion={onCerrarSesion}
+            onVerPerfil={(targetId, esDeMarca) => navigation.navigate('PerfilPublico', { targetId, esDeMarca })}
           />
         )}
-      </Tab.Screen>
-    </Tab.Navigator>
+      </Stack.Screen>
+      <Stack.Screen name="PerfilPublico">
+        {({ route, navigation }) => (
+          route.params.esDeMarca ? (
+            <PPerfilPublicoMarca
+              targetMarcaId={route.params.targetId}
+              userId={marcaId}
+              esDeMarca
+              onVolver={() => navigation.goBack()}
+              onVerPerfil={(targetId, esDeMarca) => navigation.navigate('PerfilPublico', { targetId, esDeMarca })}
+            />
+          ) : (
+            <PPerfilPublico
+              targetUserId={route.params.targetId}
+              userId={marcaId}
+              esDeMarca
+              onVolver={() => navigation.goBack()}
+              onVerPerfil={(targetId, esDeMarca) => navigation.navigate('PerfilPublico', { targetId, esDeMarca })}
+            />
+          )
+        )}
+      </Stack.Screen>
+    </Stack.Navigator>
   );
 }

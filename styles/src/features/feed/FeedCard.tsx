@@ -18,9 +18,8 @@ interface Props {
   item: Publicacion;
   userId: string;
   onPress: (item: Publicacion) => void;
-  // RF-U10: toque en nombre/foto → perfil público (solo autores usuario,
-  // no hay perfil público de marca todavía).
-  onVerPerfil?: (userId: string) => void;
+  // RF-U10: toque en nombre/foto → perfil público (usuario o marca).
+  onVerPerfil?: (targetId: string, esDeMarca?: boolean) => void;
   esDeMarca?: boolean;
 }
 
@@ -92,8 +91,8 @@ export default function FeedCard({ item, userId, onPress, onVerPerfil, esDeMarca
           size={18}
           nombreEstilo={s.autorNombre}
           onPress={
-            onVerPerfil && !item.es_de_marca
-              ? () => onVerPerfil(item.usuario_id ?? '')
+            onVerPerfil
+              ? () => onVerPerfil(item.es_de_marca ? (item.marca_id ?? '') : (item.usuario_id ?? ''), item.es_de_marca)
               : undefined
           }
         />

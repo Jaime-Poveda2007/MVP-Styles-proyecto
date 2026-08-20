@@ -22,11 +22,10 @@ interface Props {
   userId: string;
   onVolver: () => void;
   onEliminado: () => void;
-  // RF-U10: toque en nombre/foto del autor → perfil público. Opcional
-  // porque solo aplica a autores usuario (no hay perfil público de
-  // marca todavía) y porque no todos los puntos de montaje de
-  // PDetalle tienen navegación disponible.
-  onVerPerfil?: (userId: string) => void;
+  // RF-U10: toque en nombre/foto del autor → perfil público (usuario o
+  // marca). Opcional porque no todos los puntos de montaje de PDetalle
+  // tienen navegación disponible.
+  onVerPerfil?: (targetId: string, esDeMarca?: boolean) => void;
   esDeMarca?: boolean;
 }
 
@@ -151,6 +150,7 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
         usuarioId={userId}
         onVolver={() => setReseñaPrendaSel(null)}
         onVerPerfil={onVerPerfil}
+        esDeMarca={esDeMarca}
       />
     );
   }
@@ -249,12 +249,12 @@ export default function PDetalle({ publicacion: pub, userId, onVolver, onElimina
             })()}
           </View>
 
-          {/* Autor — toque en nombre/foto abre el perfil público (RF-U10) */}
+          {/* Autor — toque en nombre/foto abre el perfil público (usuario o marca) */}
           <TouchableOpacity
             style={d.autorWrap}
-            activeOpacity={onVerPerfil && !pub.es_de_marca ? 0.7 : 1}
-            disabled={!onVerPerfil || pub.es_de_marca}
-            onPress={() => onVerPerfil?.(pub.usuario_id ?? '')}
+            activeOpacity={onVerPerfil ? 0.7 : 1}
+            disabled={!onVerPerfil}
+            onPress={() => onVerPerfil?.(pub.es_de_marca ? (pub.marca_id ?? '') : (pub.usuario_id ?? ''), pub.es_de_marca)}
           >
             {fotoUrl
               ? <ImagenConCarga uri={fotoUrl} style={d.avatar} />

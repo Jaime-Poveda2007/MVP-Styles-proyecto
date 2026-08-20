@@ -23,10 +23,11 @@ interface Props {
   marcaNombre?: string | null;
   usuarioId: string;
   onVolver: () => void;
-  onVerPerfil?: (userId: string) => void;
+  onVerPerfil?: (targetId: string, esDeMarca?: boolean) => void;
+  esDeMarca?: boolean;
 }
 
-export default function PReseñasPrenda({ prendaId, nombrePrenda, marcaNombre, usuarioId, onVolver, onVerPerfil }: Props) {
+export default function PReseñasPrenda({ prendaId, nombrePrenda, marcaNombre, usuarioId, onVolver, onVerPerfil, esDeMarca = false }: Props) {
   const { miReseña, promedio, total, guardando, guardar, eliminar } = useReseña({ prendaId, usuarioId });
 
   const [reseñas, setReseñas] = useState<ReseñaConAutor[]>([]);
@@ -71,12 +72,17 @@ export default function PReseñasPrenda({ prendaId, nombrePrenda, marcaNombre, u
           </Text>
         </View>
 
-        <FormularioReseña
-          miReseña={miReseña}
-          guardando={guardando}
-          onGuardar={guardar}
-          onEliminar={eliminar}
-        />
+        {/* Las marcas no pueden dejar reseñas (la tabla reseñas exige un
+            usuario_id de verdad) — se les oculta el formulario y solo
+            ven el resumen/lista en solo lectura. */}
+        {!esDeMarca && (
+          <FormularioReseña
+            miReseña={miReseña}
+            guardando={guardando}
+            onGuardar={guardar}
+            onEliminar={eliminar}
+          />
+        )}
 
         <View style={s.separador} />
 

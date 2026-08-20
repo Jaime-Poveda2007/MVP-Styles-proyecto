@@ -11,11 +11,12 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import NavTabs from './NavTabs';
 import PPerfilPublico from '../perfil/PPerfilPublico';
+import PPerfilPublicoMarca from '../marcas/screens/PPerfilPublicoMarca';
 import { supabase } from '../../lib/supabase';
 
 export type HomeStackParamList = {
   Tabs: undefined;
-  PerfilPublico: { targetUserId: string };
+  PerfilPublico: { targetId: string; esDeMarca?: boolean };
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -38,18 +39,27 @@ export default function HomeNavigator({ userId, onCerrarSesion }: Props) {
           <NavTabs
             userId={userId}
             onCerrarSesion={cerrarSesion}
-            onVerPerfil={(targetUserId) => navigation.navigate('PerfilPublico', { targetUserId })}
+            onVerPerfil={(targetId, esDeMarca) => navigation.navigate('PerfilPublico', { targetId, esDeMarca })}
           />
         )}
       </Stack.Screen>
       <Stack.Screen name="PerfilPublico">
         {({ route, navigation }) => (
-          <PPerfilPublico
-            targetUserId={route.params.targetUserId}
-            userId={userId}
-            onVolver={() => navigation.goBack()}
-            onVerPerfil={(targetUserId) => navigation.navigate('PerfilPublico', { targetUserId })}
-          />
+          route.params.esDeMarca ? (
+            <PPerfilPublicoMarca
+              targetMarcaId={route.params.targetId}
+              userId={userId}
+              onVolver={() => navigation.goBack()}
+              onVerPerfil={(targetId, esDeMarca) => navigation.navigate('PerfilPublico', { targetId, esDeMarca })}
+            />
+          ) : (
+            <PPerfilPublico
+              targetUserId={route.params.targetId}
+              userId={userId}
+              onVolver={() => navigation.goBack()}
+              onVerPerfil={(targetId, esDeMarca) => navigation.navigate('PerfilPublico', { targetId, esDeMarca })}
+            />
+          )
         )}
       </Stack.Screen>
     </Stack.Navigator>

@@ -23,10 +23,11 @@ interface Props {
   targetUserId: string;
   userId: string;
   onVolver: () => void;
-  onVerPerfil: (targetUserId: string) => void;
+  onVerPerfil: (targetId: string, esDeMarca?: boolean) => void;
+  esDeMarca?: boolean;
 }
 
-export default function PPerfilPublico({ targetUserId, userId, onVolver, onVerPerfil }: Props) {
+export default function PPerfilPublico({ targetUserId, userId, onVolver, onVerPerfil, esDeMarca = false }: Props) {
   const [perfil, setPerfil] = useState<PerfilUsuario | null>(null);
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -76,7 +77,7 @@ export default function PPerfilPublico({ targetUserId, userId, onVolver, onVerPe
 
   const abrirDetalle = async (item: Publicacion) => {
     try {
-      setDetalle(await obtenerPublicacionPorId(item.id, userId));
+      setDetalle(await obtenerPublicacionPorId(item.id, userId, esDeMarca));
     } catch (e) {
       console.warn('No se pudo refrescar la publicación antes de abrirla:', e);
       setDetalle(item);
@@ -91,6 +92,7 @@ export default function PPerfilPublico({ targetUserId, userId, onVolver, onVerPe
         onVolver={() => setDetalle(null)}
         onEliminado={() => { setDetalle(null); cargar(); }}
         onVerPerfil={onVerPerfil}
+        esDeMarca={esDeMarca}
       />
     );
   }
@@ -134,6 +136,7 @@ export default function PPerfilPublico({ targetUserId, userId, onVolver, onVerPe
             onRefrescar={cargar}
             onPressTarjeta={abrirDetalle}
             onVerPerfil={onVerPerfil}
+            esDeMarca={esDeMarca}
           />
         </>
       )}

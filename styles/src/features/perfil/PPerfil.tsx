@@ -26,7 +26,7 @@ interface Props {
   onEditarPreferencias: () => void;
   onMisReposts: () => void;
   onCerrarSesion: () => void;
-  onVerPerfil: (targetUserId: string) => void;
+  onVerPerfil: (targetId: string, esDeMarca?: boolean) => void;
 }
 
 export default function PPerfil({

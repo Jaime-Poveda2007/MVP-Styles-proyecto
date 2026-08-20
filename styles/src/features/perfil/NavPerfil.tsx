@@ -21,7 +21,7 @@ const Stack = createNativeStackNavigator<PerfilStackParamList>();
 interface Props {
   userId: string;
   onCerrarSesion: () => void;
-  onVerPerfil: (targetUserId: string) => void;
+  onVerPerfil: (targetId: string, esDeMarca?: boolean) => void;
 }
 
 export default function NavPerfil({ userId, onCerrarSesion, onVerPerfil }: Props) {

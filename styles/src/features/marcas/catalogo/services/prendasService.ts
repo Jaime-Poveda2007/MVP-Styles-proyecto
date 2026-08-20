@@ -105,6 +105,21 @@ export async function listarPrendasDeLaMarca(marcaId: string): Promise<Prenda[]>
   return (data ?? []) as Prenda[];
 }
 
+// Catálogo público (solo prendas activas) — para el perfil público de
+// la marca. Se apoya en la policy RLS pública "prendas_select_activas"
+// ya existente, así que cualquier sesión puede consultarla. Sin
+// paginación: el catálogo está acotado por LIMITE_PRENDAS_ACTIVAS.
+export async function listarPrendasActivasDeLaMarca(marcaId: string): Promise<Prenda[]> {
+  const { data, error } = await supabase
+    .from('prendas')
+    .select('*')
+    .eq('marca_id', marcaId)
+    .eq('activa', true)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Prenda[];
+}
+
 // ── Mutaciones ────────────────────────────────────────────────────────
 export interface DatosPrenda {
   nombre: string;

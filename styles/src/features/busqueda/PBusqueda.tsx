@@ -18,9 +18,10 @@ interface Props {
   terminoInicial?: string;
   onVolver: () => void;
   esDeMarca?: boolean;
+  onVerPerfil: (targetId: string, esDeMarca?: boolean) => void;
 }
 
-export default function PBusqueda({ userId, terminoInicial, onVolver, esDeMarca = false }: Props) {
+export default function PBusqueda({ userId, terminoInicial, onVolver, esDeMarca = false, onVerPerfil }: Props) {
   const [termino, setTermino] = useState(terminoInicial ?? '');
   const [tab, setTab] = useState<TabBusqueda>('publicaciones');
   const [cargando, setCargando] = useState(false);
@@ -87,6 +88,7 @@ export default function PBusqueda({ userId, terminoInicial, onVolver, esDeMarca 
         onVolver={() => setDetalle(null)}
         onEliminado={() => setDetalle(null)}
         esDeMarca={esDeMarca}
+        onVerPerfil={onVerPerfil}
       />
     );
   }
@@ -125,14 +127,8 @@ export default function PBusqueda({ userId, terminoInicial, onVolver, esDeMarca 
         cargando={cargando}
         huboBusqueda={huboBusqueda}
         onPressPublicacion={abrirPublicacion}
-        onPressUsuario={(item) => {
-          // TODO: navegar a un perfil de usuario cuando exista esa pantalla.
-          console.log('Abrir perfil de usuario', item.id);
-        }}
-        onPressMarca={(item) => {
-          // TODO: navegar a un perfil/catálogo público de marca cuando exista.
-          console.log('Abrir perfil de marca', item.id);
-        }}
+        onPressUsuario={(item) => onVerPerfil(item.id)}
+        onPressMarca={(item) => onVerPerfil(item.id, true)}
       />
     </SafeAreaView>
   );

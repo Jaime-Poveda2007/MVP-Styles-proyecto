@@ -14,7 +14,7 @@ import { mostrarAlerta } from '../../lib/alerta';
 interface Props {
   userId: string;
   onVolver: () => void;
-  onVerPerfil?: (userId: string) => void;
+  onVerPerfil?: (targetId: string, esDeMarca?: boolean) => void;
 }
 
 export default function PMisReposts({ userId, onVolver, onVerPerfil }: Props) {

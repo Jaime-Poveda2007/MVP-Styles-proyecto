@@ -23,7 +23,7 @@ interface Props {
   onCargarMas: () => void;
   onRefrescar: () => void;
   onPressTarjeta: (item: Publicacion) => void;
-  onVerPerfil?: (userId: string) => void;
+  onVerPerfil?: (targetId: string, esDeMarca?: boolean) => void;
   esDeMarca?: boolean;
 }
 

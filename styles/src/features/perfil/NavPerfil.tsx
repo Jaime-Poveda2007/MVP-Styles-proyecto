@@ -22,9 +22,14 @@ interface Props {
   userId: string;
   onCerrarSesion: () => void;
   onVerPerfil: (targetId: string, esDeMarca?: boolean) => void;
+  // Antes Perfil era la raíz de su propio tab (sin "volver"). Ahora que
+  // se navega acá desde el menú joystick de Feed, se necesita una
+  // flecha de volver — opcional para no romper si en algún momento
+  // vuelve a montarse como raíz de algo.
+  onVolver?: () => void;
 }
 
-export default function NavPerfil({ userId, onCerrarSesion, onVerPerfil }: Props) {
+export default function NavPerfil({ userId, onCerrarSesion, onVerPerfil, onVolver }: Props) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Perfil">
@@ -36,6 +41,7 @@ export default function NavPerfil({ userId, onCerrarSesion, onVerPerfil }: Props
             onMisReposts={() => navigation.navigate('MisReposts')}
             onCerrarSesion={onCerrarSesion}
             onVerPerfil={onVerPerfil}
+            onVolver={onVolver}
           />
         )}
       </Stack.Screen>

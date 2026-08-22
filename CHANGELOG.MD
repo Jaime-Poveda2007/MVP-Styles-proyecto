@@ -32,3 +32,19 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.
 - Arquitectura inicial de base de datos en Supabase.
 - Tablas base: `usuarios`, `preferencias_usuario`, `marcas`, `prendas`, `publicaciones` y `likes`.
 - Trigger automático `handle_updated_at()` para refrescar la columna `updated_at` en modificaciones.
+
+## [1.3.0] - 2026-08-22
+
+### Added
+- Menú de navegación radial tipo **joystick** en el botón central del feed (`JoystickMenu`): mantener presionado + deslizar entre 4 opciones — Buscar, Perfil, Agregar publicación, Notificaciones.
+- Badge de notificaciones no leídas sobre el botón joystick, visible en todo momento (tope de 99).
+- Pantalla `Perfil` agregada al stack de navegación del feed (`FeedStackParamList`), accesible desde el joystick con flecha de volver.
+
+### Changed
+- Header del feed simplificado: se quitaron la barra de búsqueda y la campana de notificaciones (ambas ahora se navegan desde el joystick).
+- Navegación de sesión de usuario (`NavHome`) sin tab bar inferior: `FeedNavigator` se monta directo, sin el `Tab.Navigator` intermedio.
+- `PPerfil` ahora admite una flecha de "volver" (`onVolver`) para cuando se abre como pantalla del stack en vez de raíz de un tab.
+
+### Removed
+- Acción de "toque corto" en el botón central del feed (antes creaba una publicación directo). Crear publicación ahora solo se hace a través del menú joystick.
+- Tab bar inferior (Feed/Perfil) — reemplazado por el joystick como punto único de navegación entre Feed, Buscar, Perfil y Notificaciones.

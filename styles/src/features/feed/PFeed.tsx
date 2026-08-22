@@ -1,8 +1,7 @@
 // src/features/feed/PFeed.tsx
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Plus, Bell } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFeed } from './useFeed';
@@ -12,10 +11,10 @@ import { Publicacion } from './types';
 import { FeedStackParamList } from './NavFeed';
 import { obtenerPublicacionPorId } from './services/publicacionesService';
 import { useTheme } from '../../shared/ThemeContext';
-import BarraBusquedaHeader from '../busqueda/components/BarraBusquedaHeader';
 import EstadoError from '../../shared/components/EstadoError';
 import MensajeMotivacional from './MensajeMotivacional';
 import { useNotificaciones } from '../notificaciones/useNotificaciones';
+import JoystickMenu, { OpcionJoystick } from '../../shared/components/JoystickMenu';
 
 interface Props {
   userId: string;
@@ -31,34 +30,18 @@ export default function PFeed({ userId, onVerPerfil, esDeMarca = false }: Props)
   const { publicaciones, cargando, cargandoMas, error, hayMas, cargarPrimera, cargarMas, refrescar } = useFeed();
   const [refrescando, setRefrescando] = useState(false);
   const [detalle, setDetalle] = useState<Publicacion | null>(null);
+  // Ya no se usa para pintar una campana en el header (se sacó de acá):
+  // ahora "noLeidas" solo alimenta el badge del botón central del joystick.
   const { noLeidas } = useNotificaciones(userId, esDeMarca);
 
   const f = useMemo(() => StyleSheet.create({
     safe: { flex: 1, backgroundColor: C.white },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
+    // Header simplificado: ya no tiene barra de búsqueda ni campana de
+    // notificaciones — ambas se consolidaron en el menú joystick (ver
+    // más abajo, handleSeleccionJoystick), junto con Perfil.
+    header: { paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.border },
     wordmark: { fontSize: 22, fontWeight: '800', letterSpacing: 0.5, color: C.ink },
     dot: { color: C.earth },
-    headerDerecha: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    campanaBtn: { width: 20, height: 20, alignItems: 'center', justifyContent: 'center' },
-    badge: { position: 'absolute', top: -6, right: -8, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: C.earth, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3, borderWidth: 1.5, borderColor: C.white },
-    badgeTexto: { fontSize: 9, fontWeight: '700', color: C.white },
-    fab: {
-      position: 'absolute',
-      bottom: 28,
-      left: '50%',
-      marginLeft: -28,
-      width: 56,
-      height: 56,
-      borderRadius: 28,
-      backgroundColor: C.earth,
-      alignItems: 'center',
-      justifyContent: 'center',
-      shadowColor: C.earth,
-      shadowOpacity: 0.4,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 6 },
-      elevation: 8,
-    },
   }), [C]);
 
   useEffect(() => { cargarPrimera(userId, esDeMarca); }, [userId, esDeMarca]);
@@ -81,6 +64,31 @@ export default function PFeed({ userId, onVerPerfil, esDeMarca = false }: Props)
     }
   };
 
+  // Reutilizada por el caso 'agregar' del menú radial — ya no hay un
+  // toque corto que la dispare directamente.
+  const irACrearPublicacion = () => navigation.navigate('CrearPublicacion');
+
+  // Mantener presionado + deslizar: menú radial con las 4 acciones que
+  // antes estaban repartidas entre el header (buscar, campana) y el tab
+  // bar (perfil). Todas navegan dentro del mismo FeedStack (ver NavFeed.tsx,
+  // que ahora incluye la pantalla "Perfil" con su propia flecha de volver).
+  const handleSeleccionJoystick = (opcion: OpcionJoystick) => {
+    switch (opcion) {
+      case 'agregar':
+        irACrearPublicacion();
+        break;
+      case 'buscar':
+        navigation.navigate('Busqueda', { userId });
+        break;
+      case 'notificaciones':
+        navigation.navigate('Notificaciones');
+        break;
+      case 'perfil':
+        navigation.navigate('Perfil');
+        break;
+    }
+  };
+
   if (detalle) {
     return (
       <PDetalle
@@ -97,22 +105,10 @@ export default function PFeed({ userId, onVerPerfil, esDeMarca = false }: Props)
   return (
     <SafeAreaView style={f.safe} edges={['top']}>
 
-      {/* Header */}
+      {/* Header — solo la marca; búsqueda, notificaciones y perfil
+          ahora viven en el menú joystick */}
       <View style={f.header}>
         <Text style={f.wordmark}>styles<Text style={f.dot}>.</Text></Text>
-        <View style={f.headerDerecha}>
-          <BarraBusquedaHeader
-            onBuscar={(termino) => navigation.navigate('Busqueda', { terminoInicial: termino, userId })}
-          />
-          <TouchableOpacity style={f.campanaBtn} onPress={() => navigation.navigate('Notificaciones')}>
-            <Bell size={20} color={C.ink} strokeWidth={2} />
-            {noLeidas > 0 && (
-              <View style={f.badge}>
-                <Text style={f.badgeTexto}>{noLeidas > 9 ? '9+' : noLeidas}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
       </View>
 
       {/* Mensaje motivacional — solo para usuarios, invita a subir outfits */}
@@ -138,16 +134,15 @@ export default function PFeed({ userId, onVerPerfil, esDeMarca = false }: Props)
         esDeMarca={esDeMarca}
       />
 
-      {/* FAB — botón temporal de crear publicación (la marca publica desde
-          su propio flujo en el panel, no desde el feed general) */}
+      {/* Botón central — sin ícono propio ni acción por toque directo.
+          Mantener presionado + deslizar = menú radial con Buscar, Perfil,
+          Agregar publicación y Notificaciones (con badge de no leídas).
+          La marca sigue publicando desde su propio panel, no desde acá. */}
       {!esDeMarca && (
-        <TouchableOpacity
-          style={f.fab}
-          onPress={() => navigation.navigate('CrearPublicacion')}
-          activeOpacity={0.85}
-        >
-          <Plus size={24} color={C.white} strokeWidth={2.5} />
-        </TouchableOpacity>
+        <JoystickMenu
+          onSeleccionar={handleSeleccionJoystick}
+          notificacionesNoLeidas={noLeidas}
+        />
       )}
 
     </SafeAreaView>

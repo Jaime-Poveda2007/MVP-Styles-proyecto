@@ -8,7 +8,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LogOut, Settings, Repeat2, Sparkles, Moon, Sun } from 'lucide-react-native';
+import { ArrowLeft, LogOut, Settings, Repeat2, Sparkles, Moon, Sun } from 'lucide-react-native';
 import ImagenConCarga from '../../shared/components/ImagenConCarga';
 import FeedGrid from '../feed/FeedGrid';
 import PDetalle from '../feed/PDetalle';
@@ -27,16 +27,21 @@ interface Props {
   onMisReposts: () => void;
   onCerrarSesion: () => void;
   onVerPerfil: (targetId: string, esDeMarca?: boolean) => void;
+  // Se llega acá desde el menú joystick de Feed, no desde un tab, así
+  // que necesita su propia flecha de volver. Opcional por si en algún
+  // momento se vuelve a montar como raíz (sin nada a donde volver).
+  onVolver?: () => void;
 }
 
 export default function PPerfil({
-  userId, onEditarPerfil, onEditarPreferencias, onMisReposts, onCerrarSesion, onVerPerfil,
+  userId, onEditarPerfil, onEditarPreferencias, onMisReposts, onCerrarSesion, onVerPerfil, onVolver,
 }: Props) {
   const { C, R, scheme, alternarTema } = useTheme();
   const s = useMemo(() => StyleSheet.create({
     safe:        { flex: 1, backgroundColor: C.white },
     centrado:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
     header:      { alignItems: 'center', paddingTop: 16, paddingBottom: 12, paddingHorizontal: 24, borderBottomWidth: 0.5, borderBottomColor: C.border, gap: 4 },
+    volverBtn:   { position: 'absolute', top: 16, left: 16, width: 32, height: 32, borderRadius: 16, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center', zIndex: 1 },
     avatar:      { width: 84, height: 84, borderRadius: 42, marginBottom: 8 },
     avatarPH:    { alignItems: 'center', justifyContent: 'center', backgroundColor: C.earthLight },
     avatarLetra: { fontSize: 30, fontWeight: '700', color: C.earth },
@@ -144,6 +149,11 @@ export default function PPerfil({
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
       <View style={s.header}>
+        {onVolver && (
+          <TouchableOpacity style={s.volverBtn} onPress={onVolver}>
+            <ArrowLeft size={18} color={C.ink} strokeWidth={2} />
+          </TouchableOpacity>
+        )}
         {perfil.foto_url
           ? <ImagenConCarga uri={perfil.foto_url} style={s.avatar} />
           : <View style={[s.avatar, s.avatarPH]}><Text style={s.avatarLetra}>{perfil.nombre[0]?.toUpperCase() ?? '?'}</Text></View>

@@ -25,7 +25,10 @@ export interface PrendaCatalogo {
   nombre: string;
   marca_id: string;
   marca_nombre: string;
-  precio: number;
+  // Puede venir null desde buscar_prendas() (prendas sin precio cargado
+  // en el catálogo) — antes estaba tipado como "number" sin serlo en la
+  // práctica, lo que rompía el .toLocaleString() en SelectorTipoEtiqueta.
+  precio: number | null;
   imagen_url: string;
 }
 

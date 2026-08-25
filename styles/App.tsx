@@ -13,6 +13,8 @@ import AuthNavigator from './src/features/auth/NavDeAuntenticacion';
 import HomeScreen from './src/features/Home/NavHome';
 import NavMarcas from './src/features/marcas/NavMarcas';
 import AlertaHost from './src/shared/components/AlertaHost';
+import JoystickGlobal from './src/shared/components/JoystickGlobal';
+import { navigationRef } from './src/lib/navigationRef';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider, useTheme } from './src/shared/ThemeContext';
 
@@ -41,6 +43,7 @@ function AppInterna() {
   const [userId, setUserId] = useState<string | null>(null);
   const [marcaId, setMarcaId] = useState<string | null>(null);
   const [marcaBloqueada, setMarcaBloqueada] = useState<{ nombreMarca: string; estado: EstadoMarca } | null>(null);
+  const [rutaActual, setRutaActual] = useState<string | undefined>(undefined);
 
   const evaluarSesion = async (session: Session | null) => {
     if (!session) {
@@ -109,7 +112,12 @@ function AppInterna() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-        <NavigationContainer theme={navTheme}>
+        <NavigationContainer
+          ref={navigationRef}
+          theme={navTheme}
+          onReady={() => setRutaActual(navigationRef.getCurrentRoute()?.name)}
+          onStateChange={() => setRutaActual(navigationRef.getCurrentRoute()?.name)}
+        >
           <AlertaHost />
           <RootStack.Navigator screenOptions={{ headerShown: false }}>
             {estado === 'listo' ? (
@@ -159,6 +167,9 @@ function AppInterna() {
               </RootStack.Screen>
             )}
           </RootStack.Navigator>
+          {estado === 'listo' && userId && (
+            <JoystickGlobal userId={userId} rutaActual={rutaActual} />
+          )}
         </NavigationContainer>
       </SafeAreaProvider>
     </GestureHandlerRootView>

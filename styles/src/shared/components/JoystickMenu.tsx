@@ -19,7 +19,7 @@
 // Implementado 100% con react-native-gesture-handler + react-native-reanimated,
 // que ya están instalados en el proyecto (ver package.json) y ya corren
 // dentro de <GestureHandlerRootView> en App.tsx — cero dependencias nuevas.
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import {
   Gesture,
@@ -31,17 +31,19 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   useAnimatedRef,
+  useDerivedValue,
   measure,
   runOnJS,
   withTiming,
   interpolate,
+  interpolateColor,
   Extrapolation,
   SharedValue,
 } from 'react-native-reanimated';
-import { Search, Bell, CircleUserRound, Plus, LucideIcon } from 'lucide-react-native';
+import { Search, Bell, CircleUserRound, Plus, ArrowLeft, LucideIcon } from 'lucide-react-native';
 import { useTheme } from '../ThemeContext';
 
-export type OpcionJoystick = 'agregar' | 'buscar' | 'notificaciones' | 'perfil';
+export type OpcionJoystick = 'agregar' | 'buscar' | 'notificaciones' | 'perfil' | 'volver';
 
 interface OpcionDef {
   id: OpcionJoystick;
@@ -53,12 +55,18 @@ interface OpcionDef {
 }
 
 // 4 opciones: todo lo que antes vivía en el header (buscar, campana) y
-// en el tab bar (perfil) se navega solo desde acá.
-const OPCIONES: OpcionDef[] = [
+// en el tab bar (perfil) se navega solo desde acá. Solo se muestran
+// estando en Feed — en cualquier otra pantalla el joystick usa
+// OPCIONES_VOLVER en su lugar (ver prop `enFeed`).
+const OPCIONES_FEED: OpcionDef[] = [
   { id: 'buscar',         etiqueta: 'Buscar',              Icono: Search,          angulo: 160 },
   { id: 'perfil',         etiqueta: 'Perfil',              Icono: CircleUserRound, angulo: 113 },
   { id: 'agregar',        etiqueta: 'Agregar publicación', Icono: Plus,            angulo: 67 },
   { id: 'notificaciones', etiqueta: 'Notificaciones',      Icono: Bell,            angulo: 20 },
+];
+
+const OPCIONES_VOLVER: OpcionDef[] = [
+  { id: 'volver', etiqueta: 'Volver', Icono: ArrowLeft, angulo: 90 },
 ];
 
 const DURACION_APERTURA_MS = 140; // solo la animación de entrada/salida, ya no un umbral de espera
@@ -68,7 +76,9 @@ const TOLERANCIA_ANGULO = 45;     // si el dedo no está a menos de esto de ning
 const NOTIF_MAX = 99;             // tope del badge: 1, 2, ... 99, 99+ se muestra igual como "99"
 
 const BOTON_SIZE = 56;
-const ICONO_SIZE = 32;
+const CIRCULO_SIZE = 46;       // diámetro del círculo blanco/marca detrás de cada ícono del abanico
+const ICONO_GLYPH_SIZE = 22;   // tamaño del ícono lucide dentro del círculo
+const PLUS_CENTRAL_SIZE = 26;  // tamaño del ícono Plus central
 
 interface Props {
   onSeleccionar: (opcion: OpcionJoystick) => void;
@@ -76,11 +86,15 @@ interface Props {
   // leídas se muestra directo sobre el botón central — visible siempre,
   // no solo mientras se mantiene presionado.
   notificacionesNoLeidas?: number;
+  // true en Feed (abanico normal de 4 opciones), false en cualquier
+  // otra pantalla (abanico reemplazado por una única opción "Volver").
+  enFeed: boolean;
 }
 
-export default function JoystickMenu({ onSeleccionar, notificacionesNoLeidas = 0 }: Props) {
+export default function JoystickMenu({ onSeleccionar, notificacionesNoLeidas = 0, enFeed }: Props) {
   const { C } = useTheme();
   const botonRef = useAnimatedRef<Animated.View>();
+  const opciones = useMemo(() => (enFeed ? OPCIONES_FEED : OPCIONES_VOLVER), [enFeed]);
 
   const abierto = useSharedValue(0);        // progreso de apertura 0 -> 1 (solo animación)
   const seleccionIdx = useSharedValue(-1);  // -1 = ninguna opción resaltada
@@ -98,12 +112,12 @@ export default function JoystickMenu({ onSeleccionar, notificacionesNoLeidas = 0
   const cerrarMenuJS = useCallback(() => setMenuVisible(false), []);
 
   const actualizarEtiquetaJS = useCallback((idx: number) => {
-    setEtiquetaActual(idx >= 0 ? OPCIONES[idx].etiqueta : 'Desliza hacia una opción');
-  }, []);
+    setEtiquetaActual(idx >= 0 ? opciones[idx].etiqueta : 'Desliza hacia una opción');
+  }, [opciones]);
 
   const ejecutarJS = useCallback((idx: number) => {
-    if (idx >= 0 && idx < OPCIONES.length) onSeleccionar(OPCIONES[idx].id);
-  }, [onSeleccionar]);
+    if (idx >= 0 && idx < opciones.length) onSeleccionar(opciones[idx].id);
+  }, [onSeleccionar, opciones]);
 
   const gesto = Gesture.Pan()
     .minDistance(0)
@@ -139,8 +153,8 @@ export default function JoystickMenu({ onSeleccionar, notificacionesNoLeidas = 0
 
       let mejorIdx = -1;
       let mejorDiff = 999;
-      for (let i = 0; i < OPCIONES.length; i++) {
-        const diffCruda = Math.abs(anguloDedo - OPCIONES[i].angulo);
+      for (let i = 0; i < opciones.length; i++) {
+        const diffCruda = Math.abs(anguloDedo - opciones[i].angulo);
         const diff = Math.min(diffCruda, 360 - diffCruda);
         if (diff < mejorDiff) {
           mejorDiff = diff;
@@ -180,6 +194,12 @@ export default function JoystickMenu({ onSeleccionar, notificacionesNoLeidas = 0
     transform: [{ translateY: interpolate(abierto.value, [0, 1], [8, 0], Extrapolation.CLAMP) }],
   }));
 
+  const estiloPlusCentral = useAnimatedStyle(() => ({
+    transform: [
+      { rotate: `${interpolate(abierto.value, [0, 1], [0, 45], Extrapolation.CLAMP)}deg` },
+    ],
+  }));
+
   const textoBadge = notificacionesNoLeidas > NOTIF_MAX ? String(NOTIF_MAX) : String(notificacionesNoLeidas);
 
   return (
@@ -200,16 +220,18 @@ export default function JoystickMenu({ onSeleccionar, notificacionesNoLeidas = 0
       )}
 
       {/* Íconos del abanico */}
-      {menuVisible && OPCIONES.map((op, i) => (
+      {menuVisible && opciones.map((op, i) => (
         <OpcionIcono key={op.id} opcion={op} indice={i} abierto={abierto} seleccionIdx={seleccionIdx} />
       ))}
 
-      {/* Botón central — único elemento con el gesto. Ya no tiene ícono
-          propio (antes era un "+" que sugería una acción directa que ya
-          no existe); solo un círculo con el badge de notificaciones. */}
+      {/* Botón central — único elemento con el gesto. El "+" rota a una
+          "X" mientras el menú está abierto, señalando que soltar cierra
+          el abanico. */}
       <GestureDetector gesture={gesto}>
         <Animated.View ref={botonRef} style={[f.boton, { backgroundColor: C.earth, shadowColor: C.earth }, estiloBoton]}>
-          <View pointerEvents="none" style={f.anilloInterior} />
+          <Animated.View pointerEvents="none" style={[f.plusCentral, estiloPlusCentral]}>
+            <Plus size={PLUS_CENTRAL_SIZE} color={'#FFFFFF'} strokeWidth={2.5} />
+          </Animated.View>
           {notificacionesNoLeidas > 0 && (
             <View pointerEvents="none" style={[f.badge, { backgroundColor: C.ink, borderColor: C.white }]}>
               <Text style={[f.badgeTexto, { color: C.white }]}>{textoBadge}</Text>
@@ -234,33 +256,41 @@ function OpcionIcono({ opcion, indice, abierto, seleccionIdx }: OpcionIconoProps
   const dx = Math.cos(rad) * RADIO_ARMS;
   const dy = Math.sin(rad) * RADIO_ARMS;
 
-  // Sin fondo ni círculo propio por ícono: solo flotan sobre el mismo
-  // backdrop oscuro uniforme. El resaltado se nota con el agrandado
-  // (scale) y con el texto de arriba, no con una caja de color.
-  //
-  // Importante: NO se anima "opacity" acá (solo transform). Animar
-  // opacity + transform juntos sobre un Animated.View que está encima
-  // de un fondo ya translúcido hace que Android promueva la vista a una
-  // capa de hardware, que a veces se pinta con un recuadro visible
-  // detrás del ícono. Como en abierto=0 el ícono queda exactamente
-  // debajo del botón central (mismo punto, translate en 0), no hace
-  // falta ocultarlo con opacity — el propio botón ya lo tapa.
-  const estilo = useAnimatedStyle(() => {
-    const resaltado = seleccionIdx.value === indice;
-    return {
-      transform: [
-        { translateX: interpolate(abierto.value, [0, 1], [0, dx], Extrapolation.CLAMP) },
-        { translateY: interpolate(abierto.value, [0, 1], [0, -dy], Extrapolation.CLAMP) },
-        { scale: withTiming(resaltado ? 1.3 : 1, { duration: 120 }) },
-      ],
-    };
+  // Progreso 0..1 único que sincroniza color de fondo, escala y
+  // crossfade de íconos. El color del ícono (prop de un SVG anidado) no
+  // se puede animar como un style, así que se renderizan dos versiones
+  // (color marca / blanca) superpuestas y se cruza su opacity.
+  const resaltadoAnim = useDerivedValue(() => {
+    return withTiming(seleccionIdx.value === indice ? 1 : 0, { duration: 120 });
   });
+
+  const estiloCirculo = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(resaltadoAnim.value, [0, 1], ['#FFFFFF', C.earth]),
+    transform: [
+      { translateX: interpolate(abierto.value, [0, 1], [0, dx], Extrapolation.CLAMP) },
+      { translateY: interpolate(abierto.value, [0, 1], [0, -dy], Extrapolation.CLAMP) },
+      { scale: interpolate(resaltadoAnim.value, [0, 1], [1, 1.3], Extrapolation.CLAMP) },
+    ],
+  }));
+
+  const estiloIconoEarth = useAnimatedStyle(() => ({
+    opacity: interpolate(resaltadoAnim.value, [0, 1], [1, 0], Extrapolation.CLAMP),
+  }));
+
+  const estiloIconoBlanco = useAnimatedStyle(() => ({
+    opacity: resaltadoAnim.value,
+  }));
 
   const Icono = opcion.Icono;
 
   return (
-    <Animated.View pointerEvents="none" style={[f.iconoWrap, estilo]}>
-      <Icono size={26} color={C.earth} strokeWidth={2.2} />
+    <Animated.View pointerEvents="none" style={[f.iconoWrap, estiloCirculo]}>
+      <Animated.View style={[f.iconoCentro, estiloIconoEarth]}>
+        <Icono size={ICONO_GLYPH_SIZE} color={C.earth} strokeWidth={2.2} />
+      </Animated.View>
+      <Animated.View style={[f.iconoCentro, estiloIconoBlanco]}>
+        <Icono size={ICONO_GLYPH_SIZE} color={'#FFFFFF'} strokeWidth={2.2} />
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -283,28 +313,35 @@ const f = StyleSheet.create({
   },
   iconoWrap: {
     position: 'absolute',
-    bottom: 28 + BOTON_SIZE / 2 - ICONO_SIZE / 2,
+    bottom: 28 + BOTON_SIZE / 2 - CIRCULO_SIZE / 2,
     left: '50%',
-    marginLeft: -ICONO_SIZE / 2,
-    width: ICONO_SIZE,
-    height: ICONO_SIZE,
+    marginLeft: -CIRCULO_SIZE / 2,
+    width: CIRCULO_SIZE,
+    height: CIRCULO_SIZE,
+    borderRadius: CIRCULO_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent',
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  iconoCentro: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
     // Android le agrega una sombra rectangular por default a los
     // Animated.View de Reanimated que envuelven un SVG (el ícono),
-    // aunque no se pida — se anula explícitamente acá.
+    // aunque no se pida — se anula explícitamente acá. La sombra que sí
+    // queremos vive en iconoWrap, que no envuelve un SVG directamente.
     elevation: 0,
     shadowOpacity: 0,
     shadowColor: 'transparent',
   },
-  anilloInterior: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 3,
-    borderColor: '#000000',
-    backgroundColor: 'transparent',
+  plusCentral: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   etiquetaWrap: {
     position: 'absolute',

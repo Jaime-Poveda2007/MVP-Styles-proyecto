@@ -9,7 +9,7 @@
 // etiqueta se guarda como texto libre con la marca y el nombre que
 // escribió — que es exactamente lo que necesita el buscador de
 // "prendas relacionadas" para funcionar en ambos casos por igual.
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View, Text, Pressable, TextInput, FlatList, Image,
   ActivityIndicator, StyleSheet, KeyboardAvoidingView, Platform, Modal,
@@ -49,6 +49,15 @@ export default function SelectorTipoEtiqueta({
 
   const { estilos, loading: loadingEstilos } = useEstilos();
 
+  const puedeCerrar = useRef(false);
+  useEffect(() => {
+    const t = setTimeout(() => { puedeCerrar.current = true; }, 300);
+    return () => clearTimeout(t);
+  }, []);
+
+  const cerrarSiListo = () => {
+    if (puedeCerrar.current) onCerrar();
+  };
   useEffect(() => {
     const termino = `${marca} ${nombre}`.trim();
     const timeout = setTimeout(async () => {
@@ -106,7 +115,7 @@ export default function SelectorTipoEtiqueta({
       onRequestClose={onCerrar}
       statusBarTranslucent
     >
-      <Pressable style={s.backdrop} onPress={onCerrar} />
+      <Pressable style={s.backdrop} onPress={cerrarSiListo} />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -241,35 +250,35 @@ export default function SelectorTipoEtiqueta({
 }
 
 const s = StyleSheet.create({
-  backdrop:            { flex: 1, backgroundColor: 'rgba(26,22,20,0.5)' },
-  sheetWrap:           { position: 'absolute', bottom: 0, left: 0, right: 0 },
-  sheet:               { backgroundColor: C.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 28, maxHeight: 620 },
-  handle:              { width: 36, height: 4, borderRadius: 2, backgroundColor: C.border, alignSelf: 'center', marginBottom: 14 },
-  header:              { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
-  headerBtn:           { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  headerTitle:         { fontSize: 16, fontWeight: '700', color: C.ink },
-  form:                { gap: 14 },
-  campo:               { gap: 6 },
-  label:               { fontSize: 13, fontWeight: '500', color: C.muted },
-  opcional:            { fontWeight: '400', color: C.border },
-  hint:                { fontSize: 11, color: C.muted, lineHeight: 15 },
-  input:               { backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: C.ink },
-  inputConIcono:       { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, paddingHorizontal: 14, paddingVertical: 4 },
-  inputFlex:           { flex: 1, fontSize: 14, color: C.ink, paddingVertical: 10 },
-  sugerenciasWrap:     { gap: 6, backgroundColor: C.surface, borderRadius: R.card, padding: 10 },
-  sugerenciasTitulo:   { fontSize: 12, fontWeight: '600', color: C.muted },
-  resultRow:           { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
-  resultImg:           { width: 32, height: 32, borderRadius: 8, backgroundColor: C.earthLight },
-  resultImgPH:         { width: 32, height: 32, borderRadius: 8, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
-  resultNombre:        { fontSize: 13, fontWeight: '600', color: C.ink },
-  resultMarca:         { fontSize: 11, color: C.muted, marginTop: 1 },
-  resultPrecio:        { fontSize: 12, fontWeight: '700', color: C.earthDark },
-  enlazadaWrap:        { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.earthLight, borderRadius: R.card, paddingHorizontal: 12, paddingVertical: 10 },
-  enlazadaTexto:       { fontSize: 12, color: C.earthDark, fontWeight: '500', flex: 1 },
-  inputPrecioWrap:     { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, paddingLeft: 14 },
-  simbolo:             { fontSize: 14, color: C.muted, fontWeight: '600' },
-  inputPrecio:         { flex: 1, paddingHorizontal: 8, paddingVertical: 12, fontSize: 14, color: C.ink },
-  confirmarBtn:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 14, marginTop: 4 },
-  confirmarBtnDisabled:{ opacity: 0.4 },
-  confirmarText:       { fontSize: 15, fontWeight: '700', color: C.white },
+  backdrop: { flex: 1, backgroundColor: 'rgba(26,22,20,0.5)' },
+  sheetWrap: { position: 'absolute', bottom: 0, left: 0, right: 0 },
+  sheet: { backgroundColor: C.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 28, maxHeight: 620 },
+  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: C.border, alignSelf: 'center', marginBottom: 14 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+  headerBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { fontSize: 16, fontWeight: '700', color: C.ink },
+  form: { gap: 14 },
+  campo: { gap: 6 },
+  label: { fontSize: 13, fontWeight: '500', color: C.muted },
+  opcional: { fontWeight: '400', color: C.border },
+  hint: { fontSize: 11, color: C.muted, lineHeight: 15 },
+  input: { backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: C.ink },
+  inputConIcono: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, paddingHorizontal: 14, paddingVertical: 4 },
+  inputFlex: { flex: 1, fontSize: 14, color: C.ink, paddingVertical: 10 },
+  sugerenciasWrap: { gap: 6, backgroundColor: C.surface, borderRadius: R.card, padding: 10 },
+  sugerenciasTitulo: { fontSize: 12, fontWeight: '600', color: C.muted },
+  resultRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
+  resultImg: { width: 32, height: 32, borderRadius: 8, backgroundColor: C.earthLight },
+  resultImgPH: { width: 32, height: 32, borderRadius: 8, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center' },
+  resultNombre: { fontSize: 13, fontWeight: '600', color: C.ink },
+  resultMarca: { fontSize: 11, color: C.muted, marginTop: 1 },
+  resultPrecio: { fontSize: 12, fontWeight: '700', color: C.earthDark },
+  enlazadaWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.earthLight, borderRadius: R.card, paddingHorizontal: 12, paddingVertical: 10 },
+  enlazadaTexto: { fontSize: 12, color: C.earthDark, fontWeight: '500', flex: 1 },
+  inputPrecioWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: R.input, paddingLeft: 14 },
+  simbolo: { fontSize: 14, color: C.muted, fontWeight: '600' },
+  inputPrecio: { flex: 1, paddingHorizontal: 8, paddingVertical: 12, fontSize: 14, color: C.ink },
+  confirmarBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.earth, borderRadius: R.btn, paddingVertical: 14, marginTop: 4 },
+  confirmarBtnDisabled: { opacity: 0.4 },
+  confirmarText: { fontSize: 15, fontWeight: '700', color: C.white },
 });

@@ -10,6 +10,7 @@ import { obtenerPublicacionPorId } from './services/publicacionesService';
 import { useTheme } from '../../shared/ThemeContext';
 import EstadoError from '../../shared/components/EstadoError';
 import MensajeMotivacional from './MensajeMotivacional';
+import TutorialBienvenida from './TutorialBienvenida';
 
 interface Props {
   userId: string;
@@ -77,6 +78,9 @@ export default function PFeed({ userId, onVerPerfil, esDeMarca = false }: Props)
 
       {/* Mensaje motivacional — solo para usuarios, invita a subir outfits */}
       {!esDeMarca && <MensajeMotivacional />}
+
+      {/* Tutorial de bienvenida — solo para usuarios, una única vez */}
+      {!esDeMarca && <TutorialBienvenida />}
 
       {/* Error no bloqueante */}
       {error && !cargando && (

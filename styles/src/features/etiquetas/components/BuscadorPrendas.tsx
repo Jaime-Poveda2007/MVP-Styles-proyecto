@@ -89,7 +89,9 @@ export default function BuscadorPrendas({ onSeleccionar }: Props) {
               <Text style={s.resultNombre} numberOfLines={1}>{item.nombre}</Text>
               <Text style={s.resultMarca} numberOfLines={1}>{item.marca_nombre}</Text>
             </View>
-            <Text style={s.resultPrecio}>${item.precio.toLocaleString('es-CO')}</Text>
+            <Text style={s.resultPrecio}>
+              {item.precio != null ? `$${item.precio.toLocaleString('es-CO')}` : 'Sin precio'}
+            </Text>
           </Pressable>
         )}
       />

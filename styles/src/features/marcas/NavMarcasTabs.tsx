@@ -58,6 +58,7 @@ export default function NavMarcasTabs({ marcaId, onCerrarSesion, onVerPerfil }: 
             userId={marcaId}
             esDeMarca
             onVerPerfil={onVerPerfil}
+            onCerrarSesion={onCerrarSesion}
           />
         )}
       </Tab.Screen>

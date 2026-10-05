@@ -58,7 +58,7 @@ async function crearPerfil(session: Session): Promise<PerfilResultado> {
         email,
         username,
         fecha_nacimiento: fechaNacimiento,
-        email_confirmado: true,
+        email_confirmado: !!session.user.email_confirmed_at,
         onboarding_completo: false,
       })
       .select('id, onboarding_completo')

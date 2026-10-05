@@ -5,6 +5,7 @@ import LoginScreen from './screens/PLogin';
 import RegisterScreen from './screens/PRegistro';
 import EmailConfirmationScreen from './screens/PEmailConfirmacion';
 import ForgotPasswordScreen from './screens/PRecuperarPassword';
+import ResetPasswordScreen from './screens/PResetPassword';
 import OnboardingEstiloScreen from './screens/POnboardingEstilo';
 import LoginMarcaScreen from '../marcas/screens/PLoginMarca';
 import RegistroMarcaScreen from '../marcas/screens/PRegistroMarca';
@@ -14,8 +15,9 @@ import { EstadoMarca } from '../../lib/marcaPerfil';
 export type AuthStackParamList = {
   Login: { onLoginExitoso: () => void } | undefined;
   Register: undefined;
-  EmailConfirmation: { email: string };
+  EmailConfirmation: { email: string; enviarCodigo?: boolean };
   ForgotPassword: undefined;
+  ResetPassword: { email: string };
   OnboardingEstilo: { userId: string; onComplete: () => void };
   // ── Rutas de marca (RF-M01) ──────────────────────────────────────────
   LoginMarca: { onLoginExitosoMarca: () => void } | undefined;
@@ -53,6 +55,7 @@ export default function AuthNavigator({
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="EmailConfirmation" component={EmailConfirmationScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen
         name="OnboardingEstilo"
         component={OnboardingEstiloScreen}

@@ -104,6 +104,12 @@ export default function RegisterScreen({ navigation }: Props) {
         if (error.message.includes('already registered')) { setErrors(prev => ({ ...prev, email: 'Este correo ya está registrado' })); return; }
         throw error;
       }
+      // Con confirmación de correo activa, Supabase no devuelve error si el correo
+      // ya está registrado: devuelve un usuario "vacío" sin identidades.
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
+        setErrors(prev => ({ ...prev, email: 'Este correo ya está registrado' }));
+        return;
+      }
       if (data.user) {
         if (data.session) {
           // El proyecto de Supabase tiene confirmación de email desactivada

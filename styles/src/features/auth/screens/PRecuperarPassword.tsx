@@ -7,41 +7,24 @@ import { AuthStackParamList } from '../NavDeAuntenticacion';
 import { supabase } from '../../../lib/supabase';
 import { C, R } from '../../../shared/theme';
 import { mostrarAlerta } from '../../../lib/alerta';
+import { mensajeErrorOtp } from '../../../lib/authFlow';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
 export default function ForgotPasswordScreen({ navigation }: Props) {
   const [email,   setEmail]   = useState('');
   const [loading, setLoading] = useState(false);
-  const [enviado, setEnviado] = useState(false);
 
   const handleEnviar = async () => {
     if (!email.trim()) { mostrarAlerta('Campo requerido', 'Ingresa tu correo electrónico.'); return; }
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase());
+    const correo = email.trim().toLowerCase();
+    const { error } = await supabase.auth.resetPasswordForEmail(correo);
     setLoading(false);
-    if (error) { mostrarAlerta('Error', error.message); return; }
-    setEnviado(true);
+    if (error) { mostrarAlerta('Error', mensajeErrorOtp(error)); return; }
+    // No revelamos si el correo existe: siempre pasamos a la pantalla del código.
+    navigation.navigate('ResetPassword', { email: correo });
   };
-
-  if (enviado) {
-    return (
-      <SafeAreaView style={p.safe}>
-        <View style={p.container}>
-          <View style={p.iconWrap}><Text style={p.iconEmoji}>🔑</Text></View>
-          <Text style={p.eyebrow}>Listo</Text>
-          <Text style={p.titulo}>Correo enviado</Text>
-          <Text style={p.subtitulo}>
-            Si <Text style={{ color: C.ink, fontWeight: '600' }}>{email}</Text> está registrado, recibirás un enlace para restablecer tu contraseña.
-          </Text>
-          <Text style={p.hint}>Revisa tu bandeja de entrada y la carpeta de spam.</Text>
-          <TouchableOpacity style={p.btnPrimary} onPress={() => navigation.navigate('Login')} activeOpacity={0.85}>
-            <Text style={p.btnPrimaryText}>Volver al inicio de sesión</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={p.safe}>
@@ -55,7 +38,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
         <Text style={p.eyebrow}>Recuperar acceso</Text>
         <Text style={p.titulo}>¿Olvidaste tu contraseña?</Text>
         <Text style={p.subtitulo}>
-          Ingresa tu correo y te enviaremos un enlace para restablecerla.
+          Ingresa tu correo y te enviaremos un código para restablecerla.
         </Text>
 
         <View style={p.campo}>
@@ -75,7 +58,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
         </View>
 
         <TouchableOpacity style={[p.btnPrimary, loading && p.btnDisabled]} onPress={handleEnviar} disabled={loading} activeOpacity={0.85}>
-          {loading ? <ActivityIndicator color={C.white} /> : <Text style={p.btnPrimaryText}>Enviar enlace</Text>}
+          {loading ? <ActivityIndicator color={C.white} /> : <Text style={p.btnPrimaryText}>Enviar código</Text>}
         </TouchableOpacity>
 
       </View>

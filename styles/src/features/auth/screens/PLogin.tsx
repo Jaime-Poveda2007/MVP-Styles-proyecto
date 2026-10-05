@@ -40,6 +40,11 @@ export default function LoginScreen({ navigation, route }: Props) {
       });
 
       if (error) {
+        // Correo sin confirmar: no cuenta como intento fallido; se manda a verificar.
+        if (error.code === 'email_not_confirmed') {
+          navigation.navigate('EmailConfirmation', { email: email.trim().toLowerCase(), enviarCodigo: true });
+          return;
+        }
         const resultado = await registrarIntentoFallido(email);
         if (resultado.bloqueado) {
           mostrarAlerta('Cuenta bloqueada', 'Alcanzaste el límite de 5 intentos. Intenta en 15 minutos.');

@@ -71,6 +71,11 @@ export async function registrarMarca(input: RegistroMarcaInput): Promise<Registr
     throw error;
   }
   if (!data.user) throw new Error('No se pudo crear la cuenta de la marca.');
+  // Con confirmación de correo activa, un correo ya registrado no da error:
+  // Supabase devuelve un usuario sin identidades.
+  if (data.user.identities && data.user.identities.length === 0) {
+    throw new Error('Este correo ya está registrado.');
+  }
 
   return { requiereConfirmacion: !data.session };
 }

@@ -1,6 +1,8 @@
 // src/features/auth/NavDeAuntenticacion.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import BienvenidaScreen from './screens/PBienvenida';
 import LoginScreen from './screens/PLogin';
 import RegisterScreen from './screens/PRegistro';
 import EmailConfirmationScreen from './screens/PEmailConfirmacion';
@@ -11,8 +13,11 @@ import LoginMarcaScreen from '../marcas/screens/PLoginMarca';
 import RegistroMarcaScreen from '../marcas/screens/PRegistroMarca';
 import PendienteAprobacionScreen from '../marcas/screens/PPendienteAprobacion';
 import { EstadoMarca } from '../../lib/marcaPerfil';
+import { debeMostrarBienvenida } from '../../lib/bienvenida';
+import { C } from '../../shared/theme';
 
 export type AuthStackParamList = {
+  Welcome: undefined;
   Login: { onLoginExitoso: () => void } | undefined;
   Register: undefined;
   EmailConfirmation: { email: string; enviarCodigo?: boolean };
@@ -42,11 +47,28 @@ export default function AuthNavigator({
   onLoginExitosoMarca,
   marcaPendienteParams,
 }: Props) {
+  // Solo cuando se entra sin sesión (ruta por defecto 'Login') se decide si mostrar
+  // la bienvenida; en los demás casos (onboarding, marca pendiente) se respeta la ruta.
+  const [rutaInicial, setRutaInicial] = useState<keyof AuthStackParamList | null>(
+    initialRoute === 'Login' ? null : initialRoute,
+  );
+
+  useEffect(() => {
+    if (initialRoute !== 'Login') return;
+    let vivo = true;
+    debeMostrarBienvenida().then(mostrar => { if (vivo) setRutaInicial(mostrar ? 'Welcome' : 'Login'); });
+    return () => { vivo = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!rutaInicial) return <View style={{ flex: 1, backgroundColor: C.white }} />;
+
   return (
     <Stack.Navigator
-      initialRouteName={initialRoute}
+      initialRouteName={rutaInicial}
       screenOptions={{ headerShown: false }}
     >
+      <Stack.Screen name="Welcome" component={BienvenidaScreen} options={{ gestureEnabled: false }} />
       <Stack.Screen
         name="Login"
         component={LoginScreen}

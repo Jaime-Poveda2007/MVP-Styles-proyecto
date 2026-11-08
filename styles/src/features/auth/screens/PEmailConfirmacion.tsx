@@ -3,26 +3,29 @@
 // Verificación del correo con código de 8 dígitos (RF-U01).
 // Sirve para usuarios y para marcas (ambos usan supabase.auth.signUp).
 //
-// Al verificar con éxito, supabase crea la sesión y el listener
-// onAuthStateChange de App.tsx hace el resto (crear/leer el perfil y
-// mandar al onboarding o al panel de marca), igual que en el login.
+// Al verificar con éxito se cierra la sesión temporal, se muestra un mensaje
+// de confirmación y se manda a la pantalla de Login.
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Mail } from 'lucide-react-native';
 import { AuthStackParamList } from '../NavDeAuntenticacion';
 import { supabase } from '../../../lib/supabase';
 import { C, R } from '../../../shared/theme';
-import { mostrarAlerta } from '../../../lib/alerta';
+import { mostrarAlerta, mostrarBotones } from '../../../lib/alerta';
 import CampoCodigo from '../../../shared/components/CampoCodigo';
-import { LONGITUD_OTP, SEGUNDOS_REENVIO, mensajeErrorOtp } from '../../../lib/authFlow';
+import {
+  LONGITUD_OTP, SEGUNDOS_REENVIO, mensajeErrorOtp,
+  iniciarConfirmacionCorreo, terminarConfirmacionCorreo,
+} from '../../../lib/authFlow';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'EmailConfirmation'>;
 
 export default function EmailConfirmationScreen({ route, navigation }: Props) {
   const { email, enviarCodigo } = route.params ?? ({} as { email?: string; enviarCodigo?: boolean });
   const [codigo, setCodigo] = useState('');
-  const [verificando, setVerificando] = useState(false);
+  const [verificando, setVerificando] = useState(false);C
   const [reenviando, setReenviando] = useState(false);
   // El código ya se envió al registrarse, así que arrancamos con espera.
   const [espera, setEspera] = useState(SEGUNDOS_REENVIO);
@@ -49,17 +52,31 @@ export default function EmailConfirmationScreen({ route, navigation }: Props) {
     if (!silencioso) mostrarAlerta('Código enviado', 'Revisa tu bandeja de entrada y la carpeta de spam.');
   };
 
-  const verificar = async () => {
-    if (!email || codigo.length !== LONGITUD_OTP || verificando) return;
-    setVerificando(true);
-    const { error } = await supabase.auth.verifyOtp({ email, token: codigo, type: 'signup' });
-    setVerificando(false);
-    if (error) {
-      mostrarAlerta('Código incorrecto', mensajeErrorOtp({ ...error, code: error.code ?? 'otp_expired' }));
-      return;
-    }
-    // Éxito: onAuthStateChange (App.tsx) toma la sesión y cambia de pantalla.
-  };
+ const verificar = async () => {
+  if (!email || codigo.length !== LONGITUD_OTP || verificando) return;
+  setVerificando(true);
+  iniciarConfirmacionCorreo();
+  const { error } = await supabase.auth.verifyOtp({ email, token: codigo, type: 'signup' });
+  setVerificando(false);
+  if (error) {
+    terminarConfirmacionCorreo();
+    mostrarAlerta('Código incorrecto', mensajeErrorOtp({ ...error, code: error.code ?? 'otp_expired' }));
+    return;
+  }
+  mostrarBotones(
+    '¡Correo confirmado!',
+    'Tu cuenta ya está verificada. Inicia sesión para continuar.',
+    [{
+      texto: 'Iniciar sesión',
+      variante: 'primario',
+      onPress: async () => {
+        await supabase.auth.signOut({ scope: 'local' });
+        terminarConfirmacionCorreo();
+        navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+      },
+    }],
+  );
+};
 
   const listo = codigo.length === LONGITUD_OTP;
 
@@ -69,7 +86,7 @@ export default function EmailConfirmationScreen({ route, navigation }: Props) {
         <View style={e.container}>
 
           <View style={e.iconWrap}>
-            <Text style={e.iconEmoji}>✉️</Text>
+            <Mail size={36} color={C.earth} strokeWidth={1.8} />
           </View>
 
           <Text style={e.eyebrow}>Casi listo</Text>
@@ -113,7 +130,6 @@ const e = StyleSheet.create({
   safe:           { flex: 1, backgroundColor: C.white },
   container:      { flex: 1, paddingHorizontal: 32, paddingTop: 48, alignItems: 'center' },
   iconWrap:       { width: 80, height: 80, borderRadius: 24, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
-  iconEmoji:      { fontSize: 36 },
   eyebrow:        { fontSize: 12, fontWeight: '600', letterSpacing: 1.5, textTransform: 'uppercase', color: C.earth, marginBottom: 8 },
   titulo:         { fontSize: 26, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginBottom: 12, textAlign: 'center' },
   subtitulo:      { fontSize: 15, color: C.muted, textAlign: 'center', marginBottom: 4 },

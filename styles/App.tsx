@@ -15,7 +15,7 @@ import NavMarcas from './src/features/marcas/NavMarcas';
 import AlertaHost from './src/shared/components/AlertaHost';
 import JoystickGlobal from './src/shared/components/JoystickGlobal';
 import { navigationRef } from './src/lib/navigationRef';
-import { recuperacionActiva } from './src/lib/authFlow';
+import { recuperacionActiva, confirmacionCorreoActiva } from './src/lib/authFlow';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider, useTheme } from './src/shared/ThemeContext';
 
@@ -82,7 +82,7 @@ function AppInterna() {
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       // Durante "olvidé mi contraseña", verifyOtp crea una sesión temporal: no entrar al
       // Home hasta que la persona termine de cambiar la contraseña (ver authFlow.ts).
-      if (recuperacionActiva() || event === 'PASSWORD_RECOVERY') return;
+      if (recuperacionActiva() || confirmacionCorreoActiva() || event === 'PASSWORD_RECOVERY') return;
       evaluarSesion(session);
     });
 

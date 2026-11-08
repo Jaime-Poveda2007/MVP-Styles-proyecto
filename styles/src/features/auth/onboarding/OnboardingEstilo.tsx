@@ -5,46 +5,52 @@ import {
   StyleSheet, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  Shirt, Briefcase, Backpack, Leaf, Square, Dumbbell, Film, Crown, Link, GraduationCap,
+  Cloud, Wheat, Layers, Feather, Snowflake, Zap, Shield, Gem, Flower2, Check,
+  LucideIcon,
+} from 'lucide-react-native';
 import { supabase } from '../../../lib/supabase';
 import { mostrarBotones } from '../../../lib/alerta';
 import { C, R } from '../../../shared/theme';
 
-interface Opcion     { id: string; label: string; emoji: string; }
+// Cada opción lleva un icono; las de color usan un círculo del color en vez de icono.
+interface Opcion     { id: string; label: string; icono?: LucideIcon; color?: string; }
 interface Preferencias { estilos: string[]; telas: string[]; colores: string[]; }
 
 const ESTILOS: Opcion[] = [
-  { id: 'casual',      label: 'Casual',      emoji: '👕' },
-  { id: 'formal',      label: 'Formal',      emoji: '👔' },
-  { id: 'streetwear',  label: 'Streetwear',  emoji: '🧢' },
-  { id: 'boho',        label: 'Boho',        emoji: '🌿' },
-  { id: 'minimalista', label: 'Minimalista', emoji: '⬜' },
-  { id: 'sport',       label: 'Sport',       emoji: '🏃' },
-  { id: 'vintage',     label: 'Vintage',     emoji: '🎞️' },
-  { id: 'elegante',    label: 'Elegante',    emoji: '✨' },
-  { id: 'grunge',      label: 'Grunge',      emoji: '⛓️' },
-  { id: 'preppy',      label: 'Preppy',      emoji: '🎓' },
+  { id: 'casual',      label: 'Casual',      icono: Shirt },
+  { id: 'formal',      label: 'Formal',      icono: Briefcase },
+  { id: 'streetwear',  label: 'Streetwear',  icono: Backpack },
+  { id: 'boho',        label: 'Boho',        icono: Leaf },
+  { id: 'minimalista', label: 'Minimalista', icono: Square },
+  { id: 'sport',       label: 'Sport',       icono: Dumbbell },
+  { id: 'vintage',     label: 'Vintage',     icono: Film },
+  { id: 'elegante',    label: 'Elegante',    icono: Crown },
+  { id: 'grunge',      label: 'Grunge',      icono: Link },
+  { id: 'preppy',      label: 'Preppy',      icono: GraduationCap },
 ];
 
 const TELAS: Opcion[] = [
-  { id: 'algodon',     label: 'Algodón',     emoji: '🌸' },
-  { id: 'lino',        label: 'Lino',        emoji: '🌾' },
-  { id: 'denim',       label: 'Denim',       emoji: '🔵' },
-  { id: 'seda',        label: 'Seda',        emoji: '🪢' },
-  { id: 'lana',        label: 'Lana',        emoji: '🐑' },
-  { id: 'sintetico',   label: 'Sintético',   emoji: '⚡' },
-  { id: 'cuero',       label: 'Cuero',       emoji: '🖤' },
-  { id: 'terciopelo',  label: 'Terciopelo',  emoji: '💜' },
+  { id: 'algodon',     label: 'Algodón',     icono: Cloud },
+  { id: 'lino',        label: 'Lino',        icono: Wheat },
+  { id: 'denim',       label: 'Denim',       icono: Layers },
+  { id: 'seda',        label: 'Seda',        icono: Feather },
+  { id: 'lana',        label: 'Lana',        icono: Snowflake },
+  { id: 'sintetico',   label: 'Sintético',   icono: Zap },
+  { id: 'cuero',       label: 'Cuero',       icono: Shield },
+  { id: 'terciopelo',  label: 'Terciopelo',  icono: Gem },
 ];
 
 const COLORES: Opcion[] = [
-  { id: 'neutros',       label: 'Neutros',     emoji: '🤍' },
-  { id: 'tierra',        label: 'Tierra',      emoji: '🟫' },
-  { id: 'pasteles',      label: 'Pasteles',    emoji: '🩷' },
-  { id: 'oscuros',       label: 'Oscuros',     emoji: '🖤' },
-  { id: 'vivos',         label: 'Vivos',       emoji: '🔴' },
-  { id: 'monocromatico', label: 'Monocromas',  emoji: '⚫' },
-  { id: 'metalicos',     label: 'Metálicos',   emoji: '🥈' },
-  { id: 'estampados',    label: 'Estampados',  emoji: '🌺' },
+  { id: 'neutros',       label: 'Neutros',     color: '#D8CBB8' },
+  { id: 'tierra',        label: 'Tierra',      color: '#8B5E3C' },
+  { id: 'pasteles',      label: 'Pasteles',    color: '#F4C6D0' },
+  { id: 'oscuros',       label: 'Oscuros',     color: '#2B2623' },
+  { id: 'vivos',         label: 'Vivos',       color: '#E53935' },
+  { id: 'monocromatico', label: 'Monocromas',  color: '#8A8A8A' },
+  { id: 'metalicos',     label: 'Metálicos',   color: '#B4BCC4' },
+  { id: 'estampados',    label: 'Estampados',  icono: Flower2 },
 ];
 
 const PASOS = [
@@ -165,9 +171,11 @@ export default function OnboardingEstilo({
               onPress={() => toggleOpcion(opcion.id)}
               activeOpacity={0.75}
             >
-              <Text style={o.chipEmoji}>{opcion.emoji}</Text>
+              {opcion.icono
+                ? <opcion.icono size={26} color={sel ? C.earthDark : C.muted} strokeWidth={1.8} />
+                : <View style={[o.swatch, { backgroundColor: opcion.color }]} />}
               <Text style={[o.chipLabel, sel && o.chipLabelSel]}>{opcion.label}</Text>
-              {sel && <View style={o.checkDot}><Text style={{ fontSize: 9, color: C.white }}>✓</Text></View>}
+              {sel && <View style={o.checkDot}><Check size={10} color={C.white} strokeWidth={3} /></View>}
             </TouchableOpacity>
           );
         })}
@@ -216,7 +224,7 @@ const o = StyleSheet.create({
   grid:         { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 20, gap: 10, paddingBottom: 16 },
   chip:         { width: '47%', borderWidth: 1.5, borderColor: C.border, borderRadius: R.chip, paddingVertical: 14, paddingHorizontal: 12, alignItems: 'center', backgroundColor: C.surface, position: 'relative', gap: 6 },
   chipSel:      { borderColor: C.earth, backgroundColor: C.earthLight },
-  chipEmoji:    { fontSize: 26 },
+  swatch:       { width: 26, height: 26, borderRadius: 13, borderWidth: 1, borderColor: C.border },
   chipLabel:    { fontSize: 13, color: C.muted, fontWeight: '500', textAlign: 'center' },
   chipLabelSel: { color: C.earthDark, fontWeight: '600' },
   checkDot:     { position: 'absolute', top: 8, right: 8, width: 16, height: 16, borderRadius: 8, backgroundColor: C.earth, alignItems: 'center', justifyContent: 'center' },

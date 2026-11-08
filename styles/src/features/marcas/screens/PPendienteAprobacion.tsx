@@ -10,6 +10,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Hourglass, TriangleAlert } from 'lucide-react-native';
 import { AuthStackParamList } from '../../auth/NavDeAuntenticacion';
 import { supabase } from '../../../lib/supabase';
 import { C, R } from '../../../shared/theme';
@@ -29,7 +30,9 @@ export default function PPendienteAprobacion({ route, navigation }: Props) {
     <SafeAreaView style={s.safe}>
       <View style={s.container}>
         <View style={[s.iconWrap, esRechazada && s.iconWrapError]}>
-          <Text style={s.iconEmoji}>{esRechazada ? '⚠️' : '⏳'}</Text>
+          {esRechazada
+            ? <TriangleAlert size={36} color={C.error} strokeWidth={1.8} />
+            : <Hourglass size={36} color={C.earth} strokeWidth={1.8} />}
         </View>
 
         <Text style={s.eyebrow}>{esRechazada ? 'Solicitud no aprobada' : 'Solicitud en revisión'}</Text>
@@ -62,7 +65,6 @@ const s = StyleSheet.create({
   container:      { flex: 1, paddingHorizontal: 32, paddingTop: 80, alignItems: 'center' },
   iconWrap:       { width: 80, height: 80, borderRadius: 24, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center', marginBottom: 32 },
   iconWrapError:  { backgroundColor: C.errorLight },
-  iconEmoji:      { fontSize: 36 },
   eyebrow:        { fontSize: 12, fontWeight: '600', letterSpacing: 1.5, textTransform: 'uppercase', color: C.earth, marginBottom: 8, textAlign: 'center' },
   titulo:         { fontSize: 24, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginBottom: 16, textAlign: 'center' },
   subtitulo:      { fontSize: 15, color: C.muted, textAlign: 'center', lineHeight: 22, marginBottom: 40 },

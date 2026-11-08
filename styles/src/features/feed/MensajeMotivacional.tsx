@@ -14,12 +14,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../shared/ThemeContext';
 
 const MENSAJES = [
-  '✨ Comparte tu outfit de hoy y sé la inspiración de alguien más',
-  '📸 Tu estilo merece ser visto — sube tu look ahora',
-  '🔥 ¿Ya subiste tu outfit de esta semana?',
-  '💫 Cada look cuenta una historia — comparte el tuyo',
-  '👗 Inspira a la comunidad con tu estilo único',
-  '🌟 Publica tu outfit y descubre qué opinan los demás',
+  'Comparte tu outfit de hoy y sé la inspiración de alguien más',
+  'Tu estilo merece ser visto — sube tu look ahora',
+  '¿Ya subiste tu outfit de esta semana?',
+  'Cada look cuenta una historia — comparte el tuyo',
+  'Inspira a la comunidad con tu estilo único',
+  'Publica tu outfit y descubre qué opinan los demás',
 ];
 
 const INTERVALO_MS = 5000;

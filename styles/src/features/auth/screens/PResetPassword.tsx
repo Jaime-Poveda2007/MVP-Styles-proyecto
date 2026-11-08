@@ -12,7 +12,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Eye, EyeOff } from 'lucide-react-native';
+import { Eye, EyeOff, KeyRound } from 'lucide-react-native';
 import { AuthStackParamList } from '../NavDeAuntenticacion';
 import { supabase } from '../../../lib/supabase';
 import { C, R } from '../../../shared/theme';
@@ -116,7 +116,7 @@ export default function ResetPasswordScreen({ route, navigation }: Props) {
             <Text style={p.backText}>← Volver</Text>
           </TouchableOpacity>
 
-          <View style={p.iconWrap}><Text style={p.iconEmoji}>🔑</Text></View>
+          <View style={p.iconWrap}><KeyRound size={32} color={C.earth} strokeWidth={1.8} /></View>
           <Text style={p.eyebrow}>Recuperar acceso</Text>
           <Text style={p.titulo}>Crea una nueva contraseña</Text>
           <Text style={p.subtitulo}>
@@ -192,7 +192,6 @@ const p = StyleSheet.create({
   backBtn:        { paddingVertical: 8, marginBottom: 24 },
   backText:       { fontSize: 14, color: C.earth, fontWeight: '500' },
   iconWrap:       { width: 72, height: 72, borderRadius: 20, backgroundColor: C.earthLight, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
-  iconEmoji:      { fontSize: 32 },
   eyebrow:        { fontSize: 12, fontWeight: '600', letterSpacing: 1.5, textTransform: 'uppercase', color: C.earth, marginBottom: 6 },
   titulo:         { fontSize: 26, fontWeight: '700', color: C.ink, letterSpacing: -0.5, marginBottom: 10 },
   subtitulo:      { fontSize: 15, color: C.muted, lineHeight: 22, marginBottom: 24 },

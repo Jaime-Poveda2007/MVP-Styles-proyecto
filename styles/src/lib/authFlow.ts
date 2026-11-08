@@ -17,6 +17,15 @@ export const iniciarRecuperacion = () => { recuperandoPassword = true; };
 export const terminarRecuperacion = () => { recuperandoPassword = false; };
 export const recuperacionActiva = () => recuperandoPassword;
 
+// Mientras se confirma el correo (signup), verifyOtp crea una sesión. Con esta
+// bandera App.tsx la ignora, para que la persona vea el mensaje de éxito y
+// pase al Login en vez de saltar directo al onboarding / panel de marca.
+let confirmandoCorreo = false;
+
+export const iniciarConfirmacionCorreo = () => { confirmandoCorreo = true; };
+export const terminarConfirmacionCorreo = () => { confirmandoCorreo = false; };
+export const confirmacionCorreoActiva = () => confirmandoCorreo;
+
 export const soloDigitos = (v: string) => v.replace(/\D/g, '').slice(0, LONGITUD_OTP);
 
 // Mismas reglas que el registro (RF-U01): mín. 8, una mayúscula, un número.
